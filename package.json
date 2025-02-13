@@ -1,0 +1,13 @@
+{
+  "name": "chess-game",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "molgergo01 <mol.gergo01@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "packageManager": "yarn@4.6.0"
+}
