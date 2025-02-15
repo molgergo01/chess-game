@@ -14,7 +14,13 @@ const compat = new FlatCompat({
 
 export default [
     {
-        ignores: ['**/node_modules', '**/dist', '**/build', '**/.next']
+        ignores: [
+            '**/node_modules',
+            '**/dist',
+            '**/build',
+            '**/.next',
+            '**/.yarn'
+        ]
     },
     ...compat
         .extends(
@@ -38,7 +44,11 @@ export default [
             ],
 
             'react/display-name': 'off',
-            'react/no-unescaped-entities': 'off'
+            'react/no-unescaped-entities': 'off',
+            '@next/next/no-html-link-for-pages': [
+                'error',
+                'apps/frontend/src/app'
+            ]
         }
     },
     ...compat

@@ -1,27 +1,29 @@
 {
-  "name": "chess-game",
-  "version": "1.0.0",
-  "main": "index.js",
-  "author": "molgergo01 <mol.gergo01@gmail.com>",
-  "license": "MIT",
-  "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "packageManager": "yarn@4.6.0",
-  "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.24.0",
-    "@typescript-eslint/parser": "^8.24.0",
-    "eslint": "^9.20.1",
-    "eslint-config-next": "^15.1.7",
-    "eslint-config-prettier": "^10.0.1",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-prettier": "^5.2.3"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3.2.0",
-    "@eslint/js": "^9.20.0",
-    "globals": "^15.15.0"
-  }
+    "name": "chess-game",
+    "version": "0.2.0",
+    "author": "molgergo01 <mol.gergo01@gmail.com>",
+    "license": "MIT",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "packageManager": "yarn@4.6.0",
+    "devDependencies": {
+        "@eslint/eslintrc": "^3.2.0",
+        "@eslint/js": "^9.20.0",
+        "@typescript-eslint/eslint-plugin": "^8.24.0",
+        "@typescript-eslint/parser": "^8.24.0",
+        "eslint": "^9.20.1",
+        "eslint-plugin-import": "^2.31.0",
+        "globals": "^15.15.0",
+        "prettier": "^3.5.1",
+        "typescript": "^5.7.3"
+    },
+    "scripts": {
+        "lint": "eslint .",
+        "lint:fix": "eslint --fix .",
+        "format": "prettier --write .",
+        "lint-format:fix": "yarn lint:fix && yarn format"
+    }
 }
