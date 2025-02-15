@@ -1,14 +1,9 @@
 'use client';
 
+import { DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
+
 export default function LogoutButton() {
-    return (
-        <button
-            className="bg-red-500 px-4 py-2 text-white"
-            onClick={handleLogout}
-        >
-            Logout
-        </button>
-    );
+    return <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>;
 
     async function handleLogout() {
         await fetch('http://localhost:8080/api/auth/logout', {
