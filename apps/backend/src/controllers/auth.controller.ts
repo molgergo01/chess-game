@@ -4,24 +4,31 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/user';
 import { createUserIfNotExists } from '../repositories/user.repository';
 
-export function loginUser(req: Request, res: Response) {
+export async function loginUser(req: Request, res: Response) {
     console.log(`Login request received from ${req.hostname}`);
     const user = new User(req.user.id, req.user.name, req.user.email);
-    createUserIfNotExists(user);
+    try {
+        await createUserIfNotExists(user);
+    } catch (e) {
+        console.log(e);
+        res.status(500).redirect(`${env.FRONTEND_URL}/login?failedLogin`);
+        return;
+    }
     const token = jwt.sign(
         { id: user.id, email: user.email },
         env.JWT_SECRET!,
         { expiresIn: '7d' }
     );
 
-    res.cookie('token', token, { httpOnly: true }).redirect(
-        `${env.FRONTEND_URL}`
-    );
+    console.log('debug');
+    res.status(200)
+        .cookie('token', token, { httpOnly: true })
+        .redirect(`${env.FRONTEND_URL}`);
 }
 
 export function logoutUser(req: Request, res: Response) {
     console.log(`Logout request received from ${req.hostname}`);
-    res.clearCookie('token').json({ message: 'Logged out' });
+    res.status(200).clearCookie('token').json({ message: 'Logged out' });
 }
 
 export function verifyToken(req: Request, res: Response) {
@@ -35,7 +42,7 @@ export function verifyToken(req: Request, res: Response) {
 
     try {
         const decoded = jwt.verify(token, env.JWT_SECRET!);
-        res.json({ message: 'Authenticated', user: decoded });
+        res.status(200).json({ message: 'Authenticated', user: decoded });
         console.log('Successfully verified JWT');
     } catch {
         res.status(401).json({ message: 'Invalid token' });

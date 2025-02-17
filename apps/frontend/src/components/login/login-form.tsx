@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import LoginButton from './login-button';
 
-export function LoginForm({
+export default function LoginForm({
     className,
     ...props
 }: React.ComponentProps<'div'>) {
