@@ -10,7 +10,6 @@ passport.use(
             callbackURL: `http://localhost:${env.PORT}/api/auth/google/callback`
         },
         (accessToken, refreshToken, profile, done) => {
-            //Store in DB
             const user = {
                 id: profile.id,
                 name: profile.displayName,
@@ -20,13 +19,5 @@ passport.use(
         }
     )
 );
-
-passport.serializeUser((user, done) => {
-    done(null, user);
-});
-
-passport.deserializeUser((user, done) => {
-    done(null, user);
-});
 
 export default passport;

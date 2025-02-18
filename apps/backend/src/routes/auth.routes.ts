@@ -14,7 +14,10 @@ router.get(
 );
 router.get(
     '/google/callback',
-    passport.authenticate('google', { failureRedirect: '/google' }),
+    passport.authenticate('google', {
+        failureRedirect: '/google',
+        session: false
+    }),
     async (req, res) => {
         await loginUser(req, res);
     }
