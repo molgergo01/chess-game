@@ -3,7 +3,11 @@
 import { DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
 
 export default function LogoutButton() {
-    return <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>;
+    return (
+        <DropdownMenuItem onClick={handleLogout} data-cy={'logout-button'}>
+            Logout
+        </DropdownMenuItem>
+    );
 
     async function handleLogout() {
         await fetch('http://localhost:8080/api/auth/logout', {

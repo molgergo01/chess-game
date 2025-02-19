@@ -21,7 +21,8 @@ const config: Config = {
             lines: 80,
             statements: 80
         }
-    }
+    },
+    coverageProvider: 'v8'
 };
 
 export default config;

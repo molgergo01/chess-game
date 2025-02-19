@@ -56,3 +56,11 @@ build
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Webstorm
+.idea
+.swc
+
+# Cypress
+**/cypress/videos
+**/cypress/screenshots

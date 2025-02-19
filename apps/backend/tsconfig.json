@@ -1,12 +1,8 @@
 {
+    "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "target": "ES2024",
         "module": "CommonJS",
-        "outDir": "dist",
-        "rootDir": "src",
-        "strict": true,
-        "esModuleInterop": true,
-        "baseUrl": "."
+        "rootDir": "src"
     },
-    "exclude": ["tests", "jest.config.ts"]
+    "exclude": ["__tests__"]
 }
