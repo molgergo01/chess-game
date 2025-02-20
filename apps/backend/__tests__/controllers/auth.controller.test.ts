@@ -64,7 +64,9 @@ describe('Login User', () => {
         await loginUser(req as Request, res as Response);
 
         expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.redirect).toHaveBeenCalledWith('localhost:3000/login?failedLogin');
+        expect(res.redirect).toHaveBeenCalledWith(
+            'localhost:3000/login?failedLogin'
+        );
     });
 });
 

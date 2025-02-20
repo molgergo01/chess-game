@@ -8,6 +8,6 @@ export default defineConfig({
         token: process.env.TOKEN_NEVER_EXPIRES
     },
     e2e: {
-        setupNodeEvents(on, _config) {}
+        //setupNodeEvents(on, _config) {}
     }
 });

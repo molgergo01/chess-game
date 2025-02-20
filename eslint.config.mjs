@@ -26,7 +26,8 @@ export default [
         .extends(
             'next/core-web-vitals',
             'next/typescript',
-            'plugin:@typescript-eslint/recommended'
+            'plugin:@typescript-eslint/recommended',
+            'plugin:@next/next/recommended'
         )
         .map((config) => ({
             ...config,

@@ -10,7 +10,7 @@ jest.mock('../../src/config/db', () => ({
 
 describe('createUserIfNotExists', () => {
     test('should make call to DB with the correct SQL query and parameters', async () => {
-        const user = new User(1, 'name', 'email@email.com');
+        const user = new User('1', 'name', 'email@email.com');
         const expectedSql =
             'INSERT INTO chess_game.users VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING';
         const expectedParams = [user.id, user.name, user.email, DEFAULT_ELO];

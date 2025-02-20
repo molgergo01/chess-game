@@ -2,7 +2,12 @@
     "extends": "../../tsconfig.json",
     "compilerOptions": {
         "module": "CommonJS",
-        "rootDir": "src"
+        "rootDir": "src",
+        "outDir": "dist",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "strict": true
     },
-    "exclude": ["__tests__"]
+    "include": ["**/*.ts", "**/*.tsx", "src/types/**/*.d.ts"],
+    "exclude": ["__tests__", "./jest.config.ts", "./knexfile.js", "node_modules"]
 }

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"]
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "test:jest": {
+      "dependsOn": ["^test"],
+      "outputs": ["coverage/**"]
+    },
+    "test:cypress": {
+      "dependsOn": ["^test"]
+    },
+    "dev": {
+      "persistent": true,
+      "cache": false
+    }
+  }
+}

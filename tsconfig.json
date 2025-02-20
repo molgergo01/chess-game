@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
+        "moduleResolution": "node",
         "target": "ES2024",
-        "outDir": "dist",
         "strict": true,
         "esModuleInterop": true
     },
-    "exclude": ["node_modules"]
+    "exclude": ["node_modules", "**/cypress.config.ts", "**/cypress/**"]
 }

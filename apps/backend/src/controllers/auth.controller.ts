@@ -6,7 +6,7 @@ import { createUserIfNotExists } from '../repositories/user.repository';
 
 export async function loginUser(req: Request, res: Response) {
     console.log(`Login request received from ${req.hostname}`);
-    const user = new User(req.user.id, req.user.name, req.user.email);
+    const user = new User(req.user?.id, req.user?.name, req.user?.email);
     try {
         await createUserIfNotExists(user);
     } catch (e) {
