@@ -8,16 +8,26 @@ export default function LoginForm({
     ...props
 }: React.ComponentProps<'div'>) {
     return (
-        <div className={cn('flex flex-col gap-6', className)} {...props}>
+        <div
+            className={cn('flex flex-col gap-6', className)}
+            {...props}
+            data-cy="login-form"
+        >
             <Card className="overflow-hidden">
                 <CardContent className="grid p-0 md:grid-cols-2 items-center">
                     <div className="p-6 md:p-8">
                         <div className="flex flex-col gap-6 md:gap-20">
                             <div className="flex flex-col items-center text-center">
-                                <h1 className="text-2xl font-bold">
+                                <h1
+                                    className="text-2xl font-bold"
+                                    data-cy="login-header"
+                                >
                                     Welcome to Chess Game
                                 </h1>
-                                <p className="text-balance text-muted-foreground">
+                                <p
+                                    className="text-balance text-muted-foreground"
+                                    data-cy="login-subheader"
+                                >
                                     Login to your Chess Game account
                                 </p>
                             </div>
@@ -33,6 +43,7 @@ export default function LoginForm({
                             width={200}
                             height={200}
                             className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.4] dark:grayscale"
+                            data-cy="login-board-image"
                         />
                     </div>
                 </CardContent>

@@ -5,7 +5,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import LogoutButton from '../login/logout-button-dropdown';
+import LogoutButton from './logout-button-dropdown';
 
 export default function DropDownMenu() {
     return (

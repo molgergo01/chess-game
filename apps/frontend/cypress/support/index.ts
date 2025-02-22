@@ -1,4 +1,6 @@
 // cypress/support/index.ts
+import { mount } from 'cypress/react';
+
 export {};
 
 declare global {
@@ -10,8 +12,21 @@ declare global {
              * @example cy.dataCy('greeting')
              */
             getDataCy(value: string): Chainable;
-            applyToken(): Chainable;
-            applyInvalidToken(): Chainable;
+            /**
+             * Custom command to inject a token required to access most pages.
+             * @example cy.applyToken()
+             */
+            applyToken(): void;
+            /**
+             * Custom command to inject an invalid token which prevents access to most pages.
+             * @example cy.applyInvalidToken()
+             */
+            applyInvalidToken(): void;
+            /**
+             * Custom command to mount a Component to the DOM.
+             * @example cy.applyInvalidToken()
+             */
+            mount: typeof mount;
         }
     }
 }
