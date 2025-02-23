@@ -33,12 +33,14 @@ jobs:
       - name: Jest Test
         run: yarn test:jest
 
-      - name: Cypress run
+      - name: Cypress Component Test
         uses: cypress-io/github-action@v6
         with:
+          project: ./apps/frontend
           component: true
 
-      - name: Cypress run
+      - name: Cypress E2E Test
         uses: cypress-io/github-action@v6
         with:
+          project: ./apps/frontend
           start: yarn start
