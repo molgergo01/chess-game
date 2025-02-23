@@ -21,6 +21,12 @@
         "turbo": "^2.4.2"
     },
     "scripts": {
+        "build": "turbo run build",
+        "start": "turbo run start",
+        "test:jest": "turbo run test:jest",
+        "test:cypress-component": "turbo run test:cypress-component",
+        "test:cypress-e2e": "turbo run test:cypress-e2e",
+        "dev": "turbo run dev",
         "lint": "eslint .",
         "lint:fix": "eslint --fix .",
         "format": "prettier --write .",

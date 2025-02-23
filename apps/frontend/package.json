@@ -11,7 +11,8 @@
         "check-types": "tsc --noEmit",
         "test:cypress-open": "cypress open",
         "test:jest": "jest --passWithNoTests",
-        "test:cypress": "cypress run"
+        "test:cypress-component": "cypress run --component",
+        "test:cypress-e2e": "cypress run"
     },
     "dependencies": {
         "@radix-ui/react-dropdown-menu": "^2.1.6",
