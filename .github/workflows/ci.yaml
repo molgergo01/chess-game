@@ -11,13 +11,6 @@ jobs:
     name: Build and Test
     timeout-minutes: 15
     runs-on: ubuntu-latest
-    env:
-      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      TOKEN_NEVER_EXPIRES: ${{ secrets.TOKEN_NEVER_EXPIRES }}
-
-
 
     steps:
       - name: Check out code
@@ -31,6 +24,12 @@ jobs:
           node-version: 20
           cache: 'yarn'
 
+      - name: Set up dotenv environment variables
+        run: |
+          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> ./apps/backend/.env
+          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> ./apps/backend/.env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> ./apps/backend/.env
+          echo "TOKEN_NEVER_EXPIRES=${{ secrets.TOKEN_NEVER_EXPIRES }}" >> ./apps/frontend/.env
       - name: Install dependencies
         run: yarn
 
