@@ -35,4 +35,16 @@ describe('Login Flow', () => {
         cy.url().should('include', '/login');
         cy.getCookie('token').should('be.null');
     });
+    context('Login alert', () => {
+        it('Should render if login failed', () => {
+            cy.visit('http://localhost:3000/login?failedLogin');
+
+            cy.getDataCy('login-alert').should('exist');
+        });
+        it("Should not render if login didn't fail", () => {
+            cy.visit('http://localhost:3000/login');
+
+            cy.getDataCy('login-alert').should('not.exist');
+        });
+    });
 });
