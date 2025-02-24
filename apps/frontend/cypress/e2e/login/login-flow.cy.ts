@@ -32,8 +32,8 @@ describe('Login Flow', () => {
         cy.getDataCy('dropdown-open').click();
         cy.getDataCy('logout-button').click();
 
-        cy.url().should('include', '/login');
         cy.getCookie('token').should('be.null');
+        cy.url().should('include', '/login');
     });
     context('Login alert', () => {
         it('Should render if login failed', () => {
