@@ -42,6 +42,8 @@ describe('Login User', () => {
 
         await loginUser(req as Request, res as Response);
         expect(res.cookie).toHaveBeenCalledWith('token', 'tokenValue', {
+            domain: 'localhost',
+            path: '/',
             httpOnly: true,
             sameSite: 'lax'
         });
@@ -83,6 +85,8 @@ describe('Logout User', () => {
         logoutUser(req as Request, res as Response);
 
         expect(res.clearCookie).toHaveBeenCalledWith('token', {
+            domain: 'localhost',
+            path: '/',
             httpOnly: true,
             sameSite: 'lax'
         });

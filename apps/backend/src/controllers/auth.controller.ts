@@ -23,6 +23,8 @@ export async function loginUser(req: Request, res: Response) {
     console.log('debug');
     res.status(200)
         .cookie('token', token, {
+            domain: 'localhost',
+            path: '/',
             httpOnly: true,
             sameSite: 'lax'
         })
@@ -33,6 +35,8 @@ export function logoutUser(req: Request, res: Response) {
     console.log(`Logout request received from ${req.hostname}`);
     res.status(200)
         .clearCookie('token', {
+            domain: 'localhost',
+            path: '/',
             httpOnly: true,
             sameSite: 'lax'
         })
