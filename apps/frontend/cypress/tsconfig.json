@@ -1,13 +1,13 @@
 {
-  "compilerOptions": {
-    "target": "es5",
-    "lib": ["es5", "dom"],
-    "types": ["cypress", "node"],
-    "jsx": "preserve",
-    "esModuleInterop": true,
-    "paths": {
-      "@/*": ["../src/*"]
-    }
-  },
-  "include": ["./**/*.ts", "./**/*.tsx"],
+    "compilerOptions": {
+        "target": "es5",
+        "lib": ["es5", "dom"],
+        "types": ["cypress", "node"],
+        "jsx": "preserve",
+        "esModuleInterop": true,
+        "paths": {
+            "@/*": ["../src/*"]
+        }
+    },
+    "include": ["./**/*.ts", "./**/*.tsx"]
 }

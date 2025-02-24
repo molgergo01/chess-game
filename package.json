@@ -28,9 +28,11 @@
         "test:cypress-component": "turbo run test:cypress-component",
         "test:cypress-e2e": "turbo run test:cypress-e2e",
         "dev": "turbo run dev",
-        "lint": "eslint .",
-        "lint:fix": "eslint --fix .",
-        "format": "prettier --write .",
-        "lint-format:fix": "yarn lint:fix && yarn format"
+        "lint:eslint": "eslint .",
+        "lint:eslint-fix": "eslint --fix .",
+        "lint:prettier": "prettier --check .",
+        "lint:prettier-fix": "prettier --write .",
+        "lint:type-check": "turbo run lint:type-check",
+        "lint:fix": "yarn eslint-fix && yarn prettier-fix"
     }
 }
