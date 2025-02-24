@@ -53,3 +53,4 @@ jobs:
           browser: chrome
           project: ./apps/frontend
           start: yarn start
+          headed: true
