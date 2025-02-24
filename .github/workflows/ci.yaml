@@ -30,7 +30,7 @@ jobs:
           echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> ./apps/backend/.env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> ./apps/backend/.env
           echo "TOKEN_NEVER_EXPIRES=${{ secrets.TOKEN_NEVER_EXPIRES }}" >> ./apps/frontend/.env
-          echo "FRONTEND_URL=localhost:3000" >> ./apps/backend/.env
+          echo "FRONTEND_URL=http://localhost:3000" >> ./apps/backend/.env
       - name: Install dependencies
         run: yarn
 
