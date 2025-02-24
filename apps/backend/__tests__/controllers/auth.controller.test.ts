@@ -42,7 +42,8 @@ describe('Login User', () => {
 
         await loginUser(req as Request, res as Response);
         expect(res.cookie).toHaveBeenCalledWith('token', 'tokenValue', {
-            httpOnly: true
+            httpOnly: true,
+            sameSite: 'lax'
         });
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.redirect).toHaveBeenCalledWith('localhost:3000');
@@ -81,7 +82,10 @@ describe('Logout User', () => {
 
         logoutUser(req as Request, res as Response);
 
-        expect(res.clearCookie).toHaveBeenCalledWith('token');
+        expect(res.clearCookie).toHaveBeenCalledWith('token', {
+            httpOnly: true,
+            sameSite: 'lax'
+        });
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.json).toHaveBeenCalledWith({ message: 'Logged out' });
     });
