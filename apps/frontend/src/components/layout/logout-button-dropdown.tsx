@@ -1,5 +1,5 @@
 'use client';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 import { DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
 
@@ -11,13 +11,20 @@ export default function LogoutButton() {
     );
 
     async function handleLogout() {
-        axios
-            .post('http://localhost:8080/api/auth/logout')
-            .catch((e) => {
+        try {
+            await axios.post(
+                'http://localhost:8080/api/auth/logout',
+                {},
+                { withCredentials: true }
+            );
+
+            window.location.href = 'http://localhost:3000/login';
+        } catch (e) {
+            if (e instanceof AxiosError) {
                 console.error(e.response?.statusText);
-            })
-            .then(() => {
-                window.location.href = 'http://localhost:3000/login';
-            });
+            } else {
+                console.error(e);
+            }
+        }
     }
 }
