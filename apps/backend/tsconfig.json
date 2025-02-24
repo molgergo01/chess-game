@@ -9,5 +9,10 @@
         "strict": true
     },
     "include": ["**/*.ts", "**/*.tsx", "src/types/**/*.d.ts"],
-    "exclude": ["__tests__", "./jest.config.ts", "./knexfile.js", "node_modules"]
+    "exclude": [
+        "__tests__",
+        "./jest.config.ts",
+        "./knexfile.js",
+        "node_modules"
+    ]
 }

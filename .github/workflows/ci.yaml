@@ -1,56 +1,56 @@
 name: CI
 
 on:
-  push:
-    branches: ["main"]
-  pull_request:
-    types: [opened, synchronize]
+    push:
+        branches: ['main']
+    pull_request:
+        types: [opened, synchronize]
 
 jobs:
-  build:
-    name: Build and Test
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
+    build:
+        name: Build and Test
+        timeout-minutes: 15
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
+        steps:
+            - name: Check out code
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 2
 
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'yarn'
+            - name: Setup Node.js environment
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: 'yarn'
 
-      - name: Set up dotenv environment variables
-        run: |
-          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> ./apps/backend/.env
-          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> ./apps/backend/.env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> ./apps/backend/.env
-          echo "TOKEN_NEVER_EXPIRES=${{ secrets.TOKEN_NEVER_EXPIRES }}" >> ./apps/frontend/.env
-          echo "FRONTEND_URL=http://localhost:3000" >> ./apps/backend/.env
-      - name: Install dependencies
-        run: yarn
+            - name: Set up dotenv environment variables
+              run: |
+                  echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> ./apps/backend/.env
+                  echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> ./apps/backend/.env
+                  echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> ./apps/backend/.env
+                  echo "TOKEN_NEVER_EXPIRES=${{ secrets.TOKEN_NEVER_EXPIRES }}" >> ./apps/frontend/.env
+                  echo "FRONTEND_URL=http://localhost:3000" >> ./apps/backend/.env
+            - name: Install dependencies
+              run: yarn
 
-      - name: Build
-        run: yarn build
+            - name: Build
+              run: yarn build
 
-      - name: Jest Test
-        run: yarn test:jest
+            - name: Jest Test
+              run: yarn test:jest
 
-      - name: Cypress Component Test
-        uses: cypress-io/github-action@v6
-        with:
-          browser: chrome
-          project: ./apps/frontend
-          component: true
+            - name: Cypress Component Test
+              uses: cypress-io/github-action@v6
+              with:
+                  browser: chrome
+                  project: ./apps/frontend
+                  component: true
 
-      - name: Cypress E2E Test
-        uses: cypress-io/github-action@v6
-        with:
-          browser: chrome
-          project: ./apps/frontend
-          start: yarn start
-          headed: true
+            - name: Cypress E2E Test
+              uses: cypress-io/github-action@v6
+              with:
+                  browser: chrome
+                  project: ./apps/frontend
+                  start: yarn start
+                  headed: true
