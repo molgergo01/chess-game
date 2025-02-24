@@ -49,7 +49,7 @@ dist
 *.pem
 
 # env files
-.env*
+.env
 
 # vercel
 .vercel

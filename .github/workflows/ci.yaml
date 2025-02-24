@@ -52,4 +52,4 @@ jobs:
         with:
           browser: chrome
           project: ./apps/frontend
-          start: yarn dev
+          start: yarn start
