@@ -9,7 +9,17 @@ export default defineConfig({
     },
 
     e2e: {
-        //setupNodeEvents(on, _config) {}
+        setupNodeEvents(on, _config) {
+            on('task', {
+                log(message) {
+                    console.log(message);
+                    return null;
+                }
+            });
+
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            require('cypress-terminal-report/src/installLogsPrinter')(on);
+        }
     },
 
     component: {

@@ -18,7 +18,7 @@ export default function LogoutButton() {
                 { withCredentials: true }
             );
 
-            window.location.href = 'http://localhost:3000/asd';
+            window.location.href = 'http://localhost:3000/login';
         } catch (e) {
             if (e instanceof AxiosError) {
                 console.error(e.response?.statusText);
