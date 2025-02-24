@@ -8,6 +8,7 @@
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
+        "lint:type-check": "tsc --noEmit",
         "check-types": "tsc --noEmit",
         "test:cypress-open": "cypress open",
         "test:jest": "jest --passWithNoTests",
