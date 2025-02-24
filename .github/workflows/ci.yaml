@@ -51,6 +51,5 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           browser: chrome
-          headed: true
           project: ./apps/frontend
-          start: yarn start
+          start: yarn dev
