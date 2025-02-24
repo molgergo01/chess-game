@@ -15,9 +15,13 @@ describe('Main Page', () => {
             cy.getDataCy('dark-theme').click();
             cy.get('html').should('have.class', 'dark');
 
+            cy.wait(500);
+
             cy.getDataCy('mode-toggle-dropdown').click();
             cy.getDataCy('light-theme').click();
             cy.get('html').should('have.class', 'light');
+
+            cy.wait(500);
 
             cy.getDataCy('mode-toggle-dropdown').click();
             cy.getDataCy('system-theme').click();
