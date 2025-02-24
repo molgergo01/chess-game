@@ -21,7 +21,7 @@ export default function LogoutButton() {
             window.location.href = 'http://localhost:3000/login';
         } catch (e) {
             if (e instanceof AxiosError) {
-                console.error(e.response?.statusText);
+                console.error(e);
             } else {
                 console.error(e);
             }
