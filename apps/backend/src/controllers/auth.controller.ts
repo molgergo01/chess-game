@@ -22,13 +22,25 @@ export async function loginUser(req: Request, res: Response) {
 
     console.log('debug');
     res.status(200)
-        .cookie('token', token, { httpOnly: true })
+        .cookie('token', token, {
+            domain: 'localhost',
+            path: '/',
+            httpOnly: true,
+            sameSite: 'lax'
+        })
         .redirect(`${env.FRONTEND_URL}`);
 }
 
 export function logoutUser(req: Request, res: Response) {
     console.log(`Logout request received from ${req.hostname}`);
-    res.status(200).clearCookie('token').json({ message: 'Logged out' });
+    res.status(200)
+        .clearCookie('token', {
+            domain: 'localhost',
+            path: '/',
+            httpOnly: true,
+            sameSite: 'lax'
+        })
+        .json({ message: 'Logged out' });
 }
 
 export function verifyToken(req: Request, res: Response) {

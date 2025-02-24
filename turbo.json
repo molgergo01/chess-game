@@ -14,10 +14,15 @@
     },
     "test:jest": {
       "dependsOn": ["^test"],
-      "outputs": ["coverage/**"]
+      "cache": false
     },
-    "test:cypress": {
-      "dependsOn": ["^test"]
+    "test:cypress-component": {
+      "dependsOn": ["^test"],
+      "cache": false
+    },
+    "test:cypress-e2e": {
+      "dependsOn": ["^test"],
+      "cache": false
     },
     "dev": {
       "persistent": true,
