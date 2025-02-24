@@ -43,11 +43,14 @@ jobs:
       - name: Cypress Component Test
         uses: cypress-io/github-action@v6
         with:
+          browser: chrome
           project: ./apps/frontend
           component: true
 
       - name: Cypress E2E Test
         uses: cypress-io/github-action@v6
         with:
+          browser: chrome
+          headed: true
           project: ./apps/frontend
           start: yarn start
