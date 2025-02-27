@@ -1,24 +1,19 @@
 import { Server, Socket } from 'socket.io';
-import { move } from '../services/game.service';
+import { getFen, move } from '../services/game.service';
+import { MoveCallback, MoveData } from '../models/game';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const gameListener = (io: Server, socket: Socket) => {
-    const movePiece = function ({
-        gameId,
-        from,
-        to
-    }: {
-        gameId: string;
-        from: string;
-        to: string;
-    }) {
+    const movePiece = function (moveData: MoveData, callback: MoveCallback) {
+        let fen = getFen();
         try {
-            move(gameId, from, to);
+            fen = move(moveData.gameId, moveData.from, moveData.to);
         } catch (e) {
             console.log(e);
-            socket.emit('movePiece', 'Illegal move');
+            callback({ success: false, position: fen });
             return;
         }
-        socket.emit('movePiece', 'Successful move');
+        callback({ success: true, position: fen });
     };
 
     return { movePiece };
