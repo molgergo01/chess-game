@@ -3,7 +3,6 @@ import db from '../../src/config/db';
 import { User } from '../../src/models/user';
 import { DEFAULT_ELO } from '../../src/config/constants';
 
-// Mock db.none method
 jest.mock('../../src/config/db', () => ({
     none: jest.fn()
 }));
