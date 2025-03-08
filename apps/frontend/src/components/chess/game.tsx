@@ -3,13 +3,29 @@
 import { Chessboard } from 'react-chessboard';
 import { socket } from '@/lib/socket/socket.io';
 import { Piece, Square } from 'react-chessboard/dist/chessboard/types';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function Game({
     className,
     ...props
 }: React.ComponentProps<'div'>) {
     const [boardPosition, setBoardPosition] = useState<string>('start');
+
+    useEffect(() => {
+        const initializePosition = async () => {
+            const response = await socket.emitWithAck('getPosition', {
+                gameId: '1'
+            });
+            setBoardPosition(response.position);
+        };
+
+        initializePosition();
+
+        return () => {
+            console.log('Initialized Position');
+        };
+    }, [boardPosition]);
+
     return (
         <div className={className} {...props}>
             <Chessboard
@@ -40,7 +56,6 @@ function onDrop(
                 gameId: '1'
             })
             .then((response) => {
-                console.log(response.position);
                 setBoardPosition(response.position);
             });
 

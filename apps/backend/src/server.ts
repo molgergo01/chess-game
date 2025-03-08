@@ -13,11 +13,12 @@ const io = new Server(server, {
 });
 
 const onConnection = (socket: Socket) => {
-    const { movePiece } = gameListener(io, socket);
+    const { movePiece, getPosition } = gameListener(io, socket);
 
     console.log(`New connection on socket.io`);
 
     socket.on('movePiece', movePiece);
+    socket.on('getPosition', getPosition);
 };
 
 io.on('connection', onConnection);

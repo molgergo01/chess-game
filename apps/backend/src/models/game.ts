@@ -7,3 +7,11 @@ export interface MoveData {
 export interface MoveCallback {
     (response: { success: boolean; position: string }): void;
 }
+
+export interface PositionData {
+    gameId: string;
+}
+
+export interface PositionCallback {
+    (response: { position: string }): void;
+}

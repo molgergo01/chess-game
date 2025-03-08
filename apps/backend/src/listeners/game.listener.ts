@@ -1,6 +1,11 @@
 import { Server, Socket } from 'socket.io';
 import { getFen, move } from '../services/game.service';
-import { MoveCallback, MoveData } from '../models/game';
+import {
+    MoveCallback,
+    MoveData,
+    PositionCallback,
+    PositionData
+} from '../models/game';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const gameListener = (io: Server, socket: Socket) => {
@@ -16,7 +21,15 @@ const gameListener = (io: Server, socket: Socket) => {
         callback({ success: true, position: fen });
     };
 
-    return { movePiece };
+    const getPosition = function (
+        positionData: PositionData,
+        callback: PositionCallback
+    ) {
+        const fen = getFen();
+        callback({ position: fen });
+    };
+
+    return { movePiece, getPosition };
 };
 
 export default gameListener;
