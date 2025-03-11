@@ -9,7 +9,7 @@ export default function Game({
     className,
     ...props
 }: React.ComponentProps<'div'>) {
-    const [boardPosition, setBoardPosition] = useState<string>('start');
+    const [boardPosition, setBoardPosition] = useState<string>('');
 
     useEffect(() => {
         const initializePosition = async () => {
@@ -20,11 +20,7 @@ export default function Game({
         };
 
         initializePosition();
-
-        return () => {
-            console.log('Initialized Position');
-        };
-    }, [boardPosition]);
+    }, []);
 
     return (
         <div className={className} {...props}>
