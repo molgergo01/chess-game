@@ -5,7 +5,12 @@ export interface MoveData {
 }
 
 export interface MoveCallback {
-    (response: { success: boolean; position: string }): void;
+    (response: {
+        success: boolean;
+        position: string;
+        gameOver: boolean;
+        winner: Winner | null;
+    }): void;
 }
 
 export interface PositionData {
@@ -14,4 +19,10 @@ export interface PositionData {
 
 export interface PositionCallback {
     (response: { position: string }): void;
+}
+
+export enum Winner {
+    DRAW = 'd',
+    BLACK = 'b',
+    WHITE = 'w'
 }

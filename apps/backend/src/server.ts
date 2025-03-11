@@ -4,6 +4,7 @@ import gameListener from './listeners/game.listener';
 import { createServer } from 'node:http';
 import { Server, Socket } from 'socket.io';
 import corsConfig from './config/cors';
+import { resetGame } from './services/game.service';
 
 const PORT = env.PORT || 8080;
 const server = createServer(app);
@@ -19,6 +20,7 @@ const onConnection = (socket: Socket) => {
 
     socket.on('movePiece', movePiece);
     socket.on('getPosition', getPosition);
+    socket.on('resetGame', resetGame);
 };
 
 io.on('connection', onConnection);

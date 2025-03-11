@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { getFen, move } from '../services/game.service';
+import { getFen, getWinner, isGameOver, move } from '../services/game.service';
 import {
     MoveCallback,
     MoveData,
@@ -15,10 +15,20 @@ const gameListener = (io: Server, socket: Socket) => {
             fen = move(moveData.gameId, moveData.from, moveData.to);
         } catch (e) {
             console.log(e);
-            callback({ success: false, position: fen });
+            callback({
+                success: false,
+                position: fen,
+                gameOver: isGameOver(),
+                winner: getWinner()
+            });
             return;
         }
-        callback({ success: true, position: fen });
+        callback({
+            success: true,
+            position: fen,
+            gameOver: isGameOver(),
+            winner: getWinner()
+        });
     };
 
     const getPosition = function (
@@ -29,7 +39,11 @@ const gameListener = (io: Server, socket: Socket) => {
         callback({ position: fen });
     };
 
-    return { movePiece, getPosition };
+    const resetGame = function () {
+        resetGame();
+    };
+
+    return { movePiece, getPosition, resetGame };
 };
 
 export default gameListener;
