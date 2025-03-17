@@ -1,6 +1,7 @@
 'use client';
 
 import { Chessboard } from 'react-chessboard';
+import Fen, { BOARD_CONTENT, BoardContent } from 'chess-fen';
 import { socket } from '@/lib/socket/socket.io';
 import { Piece, Square } from 'react-chessboard/dist/chessboard/types';
 import React, { useEffect, useState } from 'react';
@@ -18,16 +19,18 @@ export default function Game({
     className,
     ...props
 }: React.ComponentProps<'div'>) {
-    const [boardPosition, setBoardPosition] = useState<string>('');
+    const [boardPosition, setBoardPosition] = useState<Fen>(
+        new Fen(Fen.emptyPosition)
+    );
     const [gameOver, setGameOver] = useState<boolean>(false);
-    const [winner, setWinner] = useState<string | null>(null);
+    const [winner, setWinner] = useState<'w' | 'b' | 'd' | null>(null);
 
     useEffect(() => {
         const initializePosition = async () => {
             const response = await socket.emitWithAck('getPosition', {
                 gameId: '1'
             });
-            setBoardPosition(response.position);
+            setBoardPosition(Fen.from(response.position));
         };
 
         initializePosition();
@@ -36,7 +39,7 @@ export default function Game({
     return (
         <div className={className} {...props}>
             <Chessboard
-                position={boardPosition}
+                position={boardPosition.toString()}
                 onPieceDrop={onDrop}
                 animationDuration={0}
             />
@@ -46,9 +49,9 @@ export default function Game({
                     <DialogHeader>
                         <DialogTitle>Game Over</DialogTitle>
                         <DialogDescription>
-                            {winner === 'w' && <p>White wins</p>}
-                            {winner === 'b' && <p>Black wins</p>}
-                            {winner === 'd' && <p>Draw</p>}
+                            {winner === 'w' && 'White wins'}
+                            {winner === 'b' && 'Black wins'}
+                            {winner === 'd' && 'Draw'}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -64,9 +67,10 @@ export default function Game({
         targetSquare: Square,
         piece: Piece
     ): boolean {
-        console.log(
-            `from: ${sourceSquare}, to: ${targetSquare}, piece: ${piece}`
-        );
+        const updatedPosition = boardPosition
+            .update(sourceSquare, BOARD_CONTENT[' '])
+            .update(targetSquare, mapPieceToBoardContent(piece));
+        setBoardPosition(updatedPosition);
 
         socket
             .emitWithAck('movePiece', {
@@ -75,10 +79,13 @@ export default function Game({
                 gameId: '1'
             })
             .then((response) => {
-                setBoardPosition(response.position);
-                setGameOver(response.gameOver);
-                setWinner(response.winner);
-                console.log(response);
+                if (!response.success) {
+                    setBoardPosition(Fen.from(response.position));
+                }
+                if (response.gameOver) {
+                    setGameOver(response.gameOver);
+                    setWinner(response.winner);
+                }
             });
 
         return true;
@@ -86,8 +93,18 @@ export default function Game({
 
     function resetGame() {
         socket.emit('resetGame');
-        setBoardPosition('start');
+        setBoardPosition(new Fen(Fen.startingPosition));
         setGameOver(false);
         setWinner(null);
+    }
+
+    function mapPieceToBoardContent(piece: Piece): BoardContent {
+        const color: string = piece.toString().charAt(0);
+        const pieceType: string = piece.toString().charAt(1);
+
+        const contentString =
+            color === 'w' ? pieceType.toUpperCase() : pieceType.toLowerCase();
+
+        return contentString as BoardContent;
     }
 }

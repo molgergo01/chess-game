@@ -3249,6 +3249,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chess-fen@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "chess-fen@npm:1.0.2"
+  checksum: 10c0/14327359b28a6ce81e07c5637c4dd5557419fc8de120ae16e7be87508bd1d208860cd6fc16a57a95e1b78da63d82b6231943215b91476ecc1f3697e503d3ad25
+  languageName: node
+  linkType: hard
+
 "chess-game-backend@workspace:apps/backend":
   version: 0.0.0-use.local
   resolution: "chess-game-backend@workspace:apps/backend"
@@ -3300,6 +3307,7 @@ __metadata:
     "@types/react": "npm:^19.0.10"
     "@types/react-dom": "npm:^19.0.4"
     axios: "npm:^1.7.9"
+    chess-fen: "npm:^1.0.2"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     cypress: "npm:^14.0.3"
