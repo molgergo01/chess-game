@@ -31,6 +31,10 @@ export default function Game({
                 gameId: '1'
             });
             setBoardPosition(Fen.from(response.position));
+            if (response.gameOver) {
+                setGameOver(true);
+                setWinner(response.winner);
+            }
         };
 
         initializePosition();

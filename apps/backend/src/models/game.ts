@@ -18,7 +18,11 @@ export interface PositionData {
 }
 
 export interface PositionCallback {
-    (response: { position: string }): void;
+    (response: {
+        position: string;
+        gameOver: boolean;
+        winner: Winner | null;
+    }): void;
 }
 
 export enum Winner {

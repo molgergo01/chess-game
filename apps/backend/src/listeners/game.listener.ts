@@ -5,7 +5,7 @@ import {
     MoveData,
     PositionCallback,
     PositionData
-} from '../models/game';
+} from '../models/game'; // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const gameListener = (io: Server, socket: Socket) => {
@@ -36,7 +36,11 @@ const gameListener = (io: Server, socket: Socket) => {
         callback: PositionCallback
     ) {
         const fen = getFen();
-        callback({ position: fen });
+        callback({
+            position: fen,
+            gameOver: isGameOver(),
+            winner: getWinner()
+        });
     };
 
     const resetGame = function () {
