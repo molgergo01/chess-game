@@ -55,7 +55,7 @@ describe('game listener', () => {
 
             expect(result).toEqual(expectedResponse);
 
-            expect(gameService.move).toHaveBeenCalled();
+            expect(gameService.move).toHaveBeenCalledWith('1', 'e2', 'e3');
         });
 
         it('should return unsuccessful response with current fen when move was not successful', async () => {
@@ -81,7 +81,7 @@ describe('game listener', () => {
 
             expect(result).toEqual(expectedResponse);
 
-            expect(gameService.move).toHaveBeenCalled();
+            expect(gameService.move).toHaveBeenCalledWith('1', 'e2', 'e5');
         });
     });
 
