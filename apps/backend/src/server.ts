@@ -4,7 +4,6 @@ import gameListener from './listeners/game.listener';
 import { createServer } from 'node:http';
 import { Server, Socket } from 'socket.io';
 import corsConfig from './config/cors';
-import { resetGame } from './services/game.service';
 
 const PORT = env.PORT || 8080;
 const server = createServer(app);
@@ -13,8 +12,8 @@ const io = new Server(server, {
     cors: corsConfig
 });
 
-const onConnection = (socket: Socket) => {
-    const { movePiece, getPosition } = gameListener(io, socket);
+export const onConnection = (socket: Socket) => {
+    const { movePiece, getPosition, resetGame } = gameListener(io, socket);
 
     console.log(`New connection on socket.io`);
 

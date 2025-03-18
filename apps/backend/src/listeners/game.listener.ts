@@ -1,11 +1,17 @@
 import { Server, Socket } from 'socket.io';
-import { getFen, getWinner, isGameOver, move } from '../services/game.service';
+import {
+    getFen,
+    getWinner,
+    isGameOver,
+    move,
+    reset
+} from '../services/game.service';
 import {
     MoveCallback,
     MoveData,
     PositionCallback,
     PositionData
-} from '../models/game'; // eslint-disable-next-line @typescript-eslint/no-unused-vars
+} from '../models/game';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const gameListener = (io: Server, socket: Socket) => {
@@ -44,7 +50,7 @@ const gameListener = (io: Server, socket: Socket) => {
     };
 
     const resetGame = function () {
-        resetGame();
+        reset();
     };
 
     return { movePiece, getPosition, resetGame };

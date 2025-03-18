@@ -26,6 +26,6 @@ export function getWinner(): Winner | null {
     return null;
 }
 
-export function resetGame(): void {
+export function reset(): void {
     game.reset();
 }
