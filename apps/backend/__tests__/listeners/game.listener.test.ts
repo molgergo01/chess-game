@@ -49,13 +49,19 @@ describe('game listener', () => {
                 {
                     from: 'e2',
                     to: 'e3',
-                    gameId: '1'
+                    gameId: '1',
+                    promotionPiece: 'wQ'
                 }
             );
 
             expect(result).toEqual(expectedResponse);
 
-            expect(gameService.move).toHaveBeenCalledWith('1', 'e2', 'e3');
+            expect(gameService.move).toHaveBeenCalledWith(
+                '1',
+                'e2',
+                'e3',
+                'wQ'
+            );
         });
 
         it('should return unsuccessful response with current fen when move was not successful', async () => {
@@ -75,13 +81,19 @@ describe('game listener', () => {
                 {
                     from: 'e2',
                     to: 'e5',
-                    gameId: '1'
+                    gameId: '1',
+                    promotionPiece: 'wQ'
                 }
             );
 
             expect(result).toEqual(expectedResponse);
 
-            expect(gameService.move).toHaveBeenCalledWith('1', 'e2', 'e5');
+            expect(gameService.move).toHaveBeenCalledWith(
+                '1',
+                'e2',
+                'e5',
+                'wQ'
+            );
         });
     });
 

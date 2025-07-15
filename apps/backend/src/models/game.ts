@@ -1,7 +1,8 @@
-export interface MoveData {
+export interface MoveRequest {
     from: string;
     to: string;
     gameId: string;
+    promotionPiece: string | undefined;
 }
 
 export interface MoveCallback {
@@ -13,7 +14,7 @@ export interface MoveCallback {
     }): void;
 }
 
-export interface PositionData {
+export interface PositionRequest {
     gameId: string;
 }
 

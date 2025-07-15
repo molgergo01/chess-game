@@ -29,7 +29,7 @@ describe('move', () => {
     it('should return correct fen on valid move', () => {
         const expected =
             'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-        const actual = move('1', 'e2', 'e3');
+        const actual = move('1', 'e2', 'e3', 'wQ');
 
         expect(actual).toBe(expected);
 
@@ -37,7 +37,8 @@ describe('move', () => {
             jest.requireMock('chess.js').Chess.mock.results[0].value;
         expect(mockChessInstance.move).toHaveBeenCalledWith({
             from: 'e2',
-            to: 'e3'
+            to: 'e3',
+            promotion: 'wQ'
         });
     });
 });
@@ -77,7 +78,7 @@ describe('getWinner', () => {
     });
 
     it('should return winner if game is not drawn', () => {
-        const expected = Winner.WHITE;
+        const expected = Winner.BLACK;
 
         const mockChessInstance =
             jest.requireMock('chess.js').Chess.mock.results[0].value;

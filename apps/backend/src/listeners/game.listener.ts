@@ -1,4 +1,3 @@
-import { Server, Socket } from 'socket.io';
 import {
     getFen,
     getWinner,
@@ -8,17 +7,21 @@ import {
 } from '../services/game.service';
 import {
     MoveCallback,
-    MoveData,
+    MoveRequest,
     PositionCallback,
-    PositionData
+    PositionRequest
 } from '../models/game';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const gameListener = (io: Server, socket: Socket) => {
-    const movePiece = function (moveData: MoveData, callback: MoveCallback) {
+const gameListener = () => {
+    const movePiece = function (moveData: MoveRequest, callback: MoveCallback) {
         let fen = getFen();
         try {
-            fen = move(moveData.gameId, moveData.from, moveData.to);
+            fen = move(
+                moveData.gameId,
+                moveData.from,
+                moveData.to,
+                moveData.promotionPiece
+            );
         } catch (e) {
             console.log(e);
             callback({
@@ -38,7 +41,7 @@ const gameListener = (io: Server, socket: Socket) => {
     };
 
     const getPosition = function (
-        positionData: PositionData,
+        positionData: PositionRequest,
         callback: PositionCallback
     ) {
         const fen = getFen();

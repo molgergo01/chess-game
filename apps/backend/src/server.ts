@@ -13,7 +13,7 @@ const io = new Server(server, {
 });
 
 export const onConnection = (socket: Socket) => {
-    const { movePiece, getPosition, resetGame } = gameListener(io, socket);
+    const { movePiece, getPosition, resetGame } = gameListener();
 
     console.log(`New connection on socket.io`);
 
@@ -24,6 +24,6 @@ export const onConnection = (socket: Socket) => {
 
 io.on('connection', onConnection);
 
-server.listen(env.PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
 });
