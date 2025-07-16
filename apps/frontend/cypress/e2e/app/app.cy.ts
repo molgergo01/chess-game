@@ -31,7 +31,7 @@ describe('Main Page', () => {
                 ).matches;
 
                 if (isDarkMode) {
-                    cy.get('html').should('have.class', 'dark'); // If using Tailwind's dark mode
+                    cy.get('html').should('have.class', 'dark');
                 } else {
                     cy.get('html').should('have.class', 'light');
                 }

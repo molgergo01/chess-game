@@ -5,17 +5,10 @@ const config: Config = {
     verbose: true,
     collectCoverage: true,
     collectCoverageFrom: [
-        '**/*.{js,ts,jsx,tsx}',
-        '!**/node_modules/**',
-        '!**/vendor/**',
-        '!**/knexfile.js',
-        '!**/migrations/**',
+        '**/lib/**/*.{js,ts,jsx,tsx}',
         '!**/config/**',
+        '!**/clients/**',
         '!**/models/**',
-        '!**/jest.config.ts',
-        '!**/server.ts',
-        '!**/dist/**',
-        '!**/coverage/**',
         '!**/*.d.ts'
     ],
     coverageDirectory: '<rootDir>/coverage',
@@ -27,7 +20,11 @@ const config: Config = {
             statements: 80
         }
     },
-    coverageProvider: 'v8'
+    coverageProvider: 'v8',
+    moduleNameMapper: {
+        '@/(.*)': '<rootDir>/src/$1'
+    },
+    testEnvironment: 'jsdom'
 };
 
 export default config;
