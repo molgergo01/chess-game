@@ -1,5 +1,11 @@
 import { PieceDataType } from 'react-chessboard';
 import Fen, { BOARD_CONTENT, BoardContent } from 'chess-fen';
+import { Color } from '@/lib/models/request/matchmaking';
+
+export function getTurnColor(boardPosition: Fen): Color | undefined {
+    if (boardPosition.toString() === Fen.emptyPosition) return undefined;
+    return boardPosition.toMove as Color;
+}
 
 export function mapPieceToBoardContent(
     piece: PieceDataType,

@@ -1,0 +1,21 @@
+{
+    "name": "chess-game-backend-core",
+    "version": "0.2.0",
+    "main": "src/server.ts",
+    "license": "MIT",
+    "private": true,
+    "dependencies": {
+        "chess.js": "^1.1.0",
+        "socket.io": "^4.8.1"
+    },
+    "devDependencies": {
+        "@types/socket.io": "^3.0.2"
+    },
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/server.js",
+        "dev": "ts-node-dev --respawn --transpile-only --require tsconfig-paths/register src/server.ts",
+        "test:jest": "jest",
+        "lint:type-check": "tsc --noEmit"
+    }
+}

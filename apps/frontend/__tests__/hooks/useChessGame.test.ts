@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { useChessGame } from '@/hooks/chess/useChessGame';
+import useChessGame from '@/hooks/chess/useChessGame';
 import * as fenUtils from '@/lib/utils/fen.utils';
 import * as gameClient from '@/lib/clients/game.client';
 import Fen from 'chess-fen';

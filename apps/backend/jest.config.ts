@@ -3,6 +3,7 @@ import type { Config } from 'jest';
 const config: Config = {
     preset: 'ts-jest',
     verbose: true,
+    projects: ['<rootDir>/auth/', '<rootDir>/core/', '<rootDir>/matchmaking/'],
     collectCoverage: true,
     collectCoverageFrom: [
         '**/*.{js,ts,jsx,tsx}',

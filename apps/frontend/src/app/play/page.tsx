@@ -1,9 +1,12 @@
-import Game from '@/components/chess/game';
+'use client';
 
-export default function PlayPage() {
+import Matchmaking from '@/components/matchmaking/matchmaking';
+import { MatchmakingSocketProvider } from '@/hooks/matchmaking/useMatchmakingSocket';
+
+export default function MatchMakePage() {
     return (
-        <div className={'flex place-content-center p-10'}>
-            <Game className={'md:max-w-xl max-w-sm flex-1'} />
-        </div>
+        <MatchmakingSocketProvider>
+            <Matchmaking className="flex place-content-center p-10" />;
+        </MatchmakingSocketProvider>
     );
 }
