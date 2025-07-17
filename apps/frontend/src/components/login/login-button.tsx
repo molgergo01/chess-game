@@ -1,10 +1,13 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
+import env from '@/lib/config/env';
 
 export default function LoginButton() {
+    const router = useRouter();
     const handleLogin = () => {
-        window.location.href = 'http://localhost:8080/api/auth/google';
+        router.push(`${env.REST_URLS.AUTH}/api/auth/google`);
     };
 
     return (

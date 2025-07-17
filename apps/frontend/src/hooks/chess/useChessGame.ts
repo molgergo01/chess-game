@@ -1,28 +1,70 @@
 import { useCallback, useEffect, useState } from 'react';
 import Fen from 'chess-fen';
-import { isPromotion, updatePosition } from '@/lib/utils/fen.utils';
-import { getPosition, movePiece, resetGame } from '@/lib/clients/game.client';
+import {
+    getTurnColor,
+    isPromotion,
+    updatePosition
+} from '@/lib/utils/fen.utils';
+import { getPosition, movePiece } from '@/lib/clients/core.socket.client';
 import { Winner } from '@/lib/models/response/game';
 import { PieceDropHandlerArgs } from 'react-chessboard';
+import { UpdatePositionRequest } from '@/lib/models/request/game';
+import { getCurrentUserColor } from '@/lib/utils/game.utils';
+import { Color } from '@/lib/models/request/matchmaking';
+import useGameId from '@/hooks/chess/useGameId';
+import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
+import { useAuth } from '@/hooks/auth/useAuth';
 
-export function useChessGame() {
+function useChessGame() {
+    const [gameId, setGameId] = useGameId();
     const [boardPosition, setBoardPosition] = useState<Fen>(
         new Fen(Fen.emptyPosition)
     );
     const [gameOver, setGameOver] = useState(false);
     const [winner, setWinner] = useState<Winner | null>(null);
+    const [color, setColor] = useState<Color | undefined>(undefined);
+    const [turnColor, setTurnColor] = useState<Color | undefined>(undefined);
+    const { socket } = useCoreSocket();
+    const { userId } = useAuth();
 
     useEffect(() => {
+        if (!gameId || !socket) return;
         const initializePosition = async () => {
-            const response = await getPosition();
+            const response = await getPosition(socket, gameId);
             setBoardPosition(new Fen(response.position));
             if (response.gameOver) {
                 setGameOver(true);
                 setWinner(response.winner);
+                setGameId(undefined);
             }
         };
         initializePosition();
-    }, []);
+    }, [gameId, socket, setGameId]);
+
+    useEffect(() => {
+        if (!socket) return;
+        const handleUpdatePosition = (request: UpdatePositionRequest) => {
+            setBoardPosition(new Fen(request.position));
+            if (request.isGameOver) {
+                setGameOver(true);
+                setWinner(request.winner);
+            }
+        };
+        socket.on('updatePosition', handleUpdatePosition);
+
+        return () => {
+            socket.off('updatePosition', handleUpdatePosition);
+        };
+    }, [socket]);
+
+    useEffect(() => {
+        if (!userId) return;
+        setColor(getCurrentUserColor(userId));
+    }, [userId]);
+
+    useEffect(() => {
+        setTurnColor(getTurnColor(boardPosition));
+    }, [boardPosition]);
 
     const onDrop = useCallback(
         ({
@@ -30,6 +72,7 @@ export function useChessGame() {
             targetSquare,
             piece
         }: PieceDropHandlerArgs): boolean => {
+            if (!gameId || !userId || !socket) return false;
             if (targetSquare === null) return false;
             const updatedPosition = updatePosition(
                 boardPosition,
@@ -46,37 +89,33 @@ export function useChessGame() {
             if (isPromotion(pieceType, color, targetSquareNumber))
                 promotionPiece = 'q';
 
-            movePiece(sourceSquare, targetSquare, promotionPiece).then(
-                (response) => {
-                    if (
-                        !response.success ||
-                        response.position !== updatedPosition.toString()
-                    ) {
-                        setBoardPosition(new Fen(response.position));
-                    }
-                    if (response.gameOver) {
-                        setGameOver(true);
-                        setWinner(response.winner);
-                    }
+            movePiece(
+                socket,
+                gameId,
+                sourceSquare,
+                targetSquare,
+                promotionPiece
+            ).then((response) => {
+                if (
+                    !response.success ||
+                    response.position !== updatedPosition.toString()
+                ) {
+                    setBoardPosition(new Fen(response.position));
                 }
-            );
+            });
             return true;
         },
-        [boardPosition]
+        [boardPosition, gameId, userId, socket]
     );
 
-    const reset = useCallback(() => {
-        resetGame();
-        setBoardPosition(new Fen(Fen.startingPosition));
-        setGameOver(false);
-        setWinner(null);
-    }, []);
-
     return {
+        color,
         boardPosition,
+        turnColor,
         gameOver,
         winner,
-        onDrop,
-        reset
+        onDrop
     };
 }
+
+export default useChessGame;

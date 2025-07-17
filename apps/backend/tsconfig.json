@@ -1,14 +1,25 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
+        "baseUrl": ".",
+        "composite": true,
         "module": "CommonJS",
-        "rootDir": "src",
-        "outDir": "dist",
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "strict": true
+        "strict": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "paths": {
+            "chess-game-backend-common/*": ["common/src/*"]
+        }
     },
-    "include": ["**/*.ts", "**/*.tsx", "src/types/**/*.d.ts"],
+    "references": [
+        { "path": "common" },
+        { "path": "core" },
+        { "path": "auth" },
+        { "path": "matchmaking" }
+    ],
+    //"include": ["**/*.ts", "**/*.tsx", "core/src/types/**/*.d.ts"],
     "exclude": [
         "__tests__",
         "./jest.config.ts",
