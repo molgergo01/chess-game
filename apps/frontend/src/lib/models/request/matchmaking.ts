@@ -3,8 +3,16 @@ export type JoinQueueRequest = {
 };
 
 export type MatchmakeMessage = {
-    players: { [key: string]: string };
+    players: Array<Player>;
     gameId: string;
+};
+
+export type Player = {
+    id: string;
+    color: string;
+    timer: {
+        remainingMs: number;
+    };
 };
 
 export enum Color {

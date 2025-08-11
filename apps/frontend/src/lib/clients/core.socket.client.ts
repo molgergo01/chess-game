@@ -1,9 +1,11 @@
 import {
     GetGameIdResponse,
+    GetTimesResponse,
     MoveResponse,
     PositionResponse
 } from '@/lib/models/response/game';
 import {
+    GetTimesRequest,
     JoinGameRequest,
     MoveRequest,
     PositionRequest
@@ -14,6 +16,16 @@ export function getGameId(socket: Socket): Promise<GetGameIdResponse> {
     return socket.emitWithAck('getGameId');
 }
 
+export function getTimes(
+    socket: Socket,
+    gameId: string
+): Promise<GetTimesResponse> {
+    const requestBody: GetTimesRequest = {
+        gameId: gameId
+    };
+
+    return socket.emitWithAck('getTimes', requestBody);
+}
 export function joinGame(socket: Socket, gameId: string) {
     const requestBody: JoinGameRequest = {
         gameId: gameId

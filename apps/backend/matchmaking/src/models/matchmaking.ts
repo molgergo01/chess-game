@@ -1,3 +1,5 @@
+import { Player } from './game';
+
 export interface JoinQueueRequest {
     userId: string;
     elo: number;
@@ -12,7 +14,7 @@ export type IsInQueueParams = {
 };
 
 export type MatchmakeMessage = {
-    players: { [key: string]: string };
+    players: Array<Player>;
     gameId: string;
 };
 

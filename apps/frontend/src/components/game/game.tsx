@@ -2,7 +2,8 @@
 
 import { Chessboard } from 'react-chessboard';
 import { useRouter } from 'next/navigation';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import Fen from 'chess-fen';
 import useChessGame from '@/hooks/chess/useChessGame';
 import ChatBox from '@/components/game/chat/chat-box';
 import {
@@ -15,11 +16,55 @@ import {
     DialogTitle
 } from '@/components/ui/dialog';
 import { Winner } from '@/lib/models/response/game';
+import Banner from '@/components/game/banner/banner';
+import { TimerRef } from '@/components/game/banner/timer';
+import { Color } from '@/lib/models/request/matchmaking';
 
 function Game({ className, ...props }: React.ComponentProps<'div'>) {
     const router = useRouter();
-    const { color, boardPosition, turnColor, gameOver, winner, onDrop } =
-        useChessGame();
+    const {
+        color,
+        boardPosition,
+        turnColor,
+        timesRemaining,
+        gameOver,
+        winner,
+        onDrop
+    } = useChessGame();
+
+    const whiteTimerRef = useRef<TimerRef>(null);
+    const blackTimerRef = useRef<TimerRef>(null);
+
+    const gameStarted = boardPosition.toString() !== Fen.startingPosition;
+
+    useEffect(() => {
+        if (!gameStarted || gameOver) return;
+
+        whiteTimerRef.current?.stop();
+        blackTimerRef.current?.stop();
+
+        if (timesRemaining) {
+            blackTimerRef.current?.setTimeLeft(
+                timesRemaining?.blackTimeRemaining
+            );
+            whiteTimerRef.current?.setTimeLeft(
+                timesRemaining?.whiteTimeRemaining
+            );
+        }
+
+        if (turnColor === Color.WHITE) {
+            whiteTimerRef.current?.start();
+        } else if (turnColor === Color.BLACK) {
+            blackTimerRef.current?.start();
+        }
+    }, [turnColor, gameStarted, gameOver, timesRemaining]);
+
+    useEffect(() => {
+        if (gameOver) {
+            whiteTimerRef.current?.stop();
+            blackTimerRef.current?.stop();
+        }
+    }, [gameOver]);
 
     const chessboardOptions = {
         position: boardPosition.toString(),
@@ -34,7 +79,11 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
 
     return (
         <div className={className} {...props}>
-            <div>badge1</div>
+            <Banner
+                playerColor={color === Color.WHITE ? Color.BLACK : Color.WHITE}
+                isOpponent={true}
+                timerRef={color === Color.WHITE ? blackTimerRef : whiteTimerRef}
+            />
             <div className="flex flex-col md:grid md:grid-rows-1 md:grid-cols-7 md:gap-4">
                 <div className="hidden md:block md:col-span-1" />
                 <div className="md:col-span-5 flex flex-col md:flex-row m-auto gap-2 h-full">
@@ -46,7 +95,11 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                     </div>
                 </div>
             </div>
-            <div>badge2</div>
+            <Banner
+                playerColor={color === Color.WHITE ? Color.WHITE : Color.BLACK}
+                isOpponent={false}
+                timerRef={color === Color.WHITE ? whiteTimerRef : blackTimerRef}
+            />
 
             <div className="text-center py-1 text-lg font-medium flex-shrink-0">
                 {turnColor && `${turnColor}'s turn`}

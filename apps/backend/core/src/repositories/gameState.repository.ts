@@ -1,19 +1,23 @@
 import redis from 'chess-game-backend-common/src/config/redis';
 import { injectable } from 'inversify';
-import { Color, StoredGameState } from '../models/game';
+import { StoredGameState } from '../models/game';
+import { Player, StoredPlayer } from '../models/player';
 
 @injectable()
 class GameStateRepository {
-    save(gameId: string, fen: string, players: Map<string, Color>) {
-        const playersObject = Object.fromEntries(players);
+    save(
+        gameId: string,
+        fen: string,
+        players: Array<Player>,
+        lastMoveEpoch: number,
+        startedAt: number
+    ) {
         redis.hSet(`game-state:${gameId}`, {
-            players: JSON.stringify(playersObject),
-            position: fen
+            players: JSON.stringify(players),
+            position: fen,
+            lastMoveEpoch: lastMoveEpoch,
+            startedAt: startedAt
         });
-    }
-
-    savePosition(gameId: string, fen: string) {
-        redis.hSet(`game-state:${gameId}`, 'position', fen);
     }
 
     async get(gameId: string): Promise<StoredGameState | null> {
@@ -23,10 +27,12 @@ class GameStateRepository {
         }
         try {
             return {
-                players: new Map<string, Color>(
-                    Object.entries(JSON.parse(data.players))
+                players: new Array<StoredPlayer>(JSON.parse(data.players)).flat(
+                    1
                 ),
-                position: data.position
+                position: data.position,
+                lastMoveEpoch: JSON.parse(data.lastMoveEpoch),
+                startedAt: JSON.parse(data.startedAt)
             };
         } catch (error) {
             console.error(error);
@@ -34,17 +40,8 @@ class GameStateRepository {
         }
     }
 
-    async getPlayers(gameId: string) {
-        const data = await redis.hGet(`game-state:${gameId}`, 'players');
-        if (!data) {
-            return null;
-        }
-
-        return new Map<string, Color>(Object.entries(JSON.parse(data)));
-    }
-
-    async getPosition(gameId: string): Promise<string | null> {
-        return redis.hGet(`game-state:${gameId}`, 'position');
+    async keys(): Promise<string[]> {
+        return redis.keys('game-state:*');
     }
 
     async removeGameState(gameId: string): Promise<void> {
