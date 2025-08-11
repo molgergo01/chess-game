@@ -6,6 +6,7 @@ import { MatchmakeMessage } from '../models/matchmaking';
 import CoreRestClient from '../clients/core.rest.client';
 import ConflictError from 'chess-game-backend-common/errors/conlfict.error';
 import NotFoundError from 'chess-game-backend-common/errors/not.found.error';
+import { Player } from '../models/game';
 
 @injectable()
 class MatchmakingService {
@@ -62,11 +63,8 @@ class MatchmakingService {
         await this.emitMatchmakeMessage(response.players, response.gameId);
     }
 
-    private async emitMatchmakeMessage(
-        players: { [key: string]: string },
-        gameId: string
-    ) {
-        const playerIds = Object.keys(players);
+    private async emitMatchmakeMessage(players: Array<Player>, gameId: string) {
+        const playerIds = players.map((player) => player.id);
         const socketIds = (
             await Promise.all(
                 playerIds.map(

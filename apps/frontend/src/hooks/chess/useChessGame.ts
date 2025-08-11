@@ -5,10 +5,18 @@ import {
     isPromotion,
     updatePosition
 } from '@/lib/utils/fen.utils';
-import { getPosition, movePiece } from '@/lib/clients/core.socket.client';
+import {
+    getPosition,
+    getTimes,
+    movePiece
+} from '@/lib/clients/core.socket.client';
 import { Winner } from '@/lib/models/response/game';
 import { PieceDropHandlerArgs } from 'react-chessboard';
-import { UpdatePositionRequest } from '@/lib/models/request/game';
+import {
+    GameUpdateMessage,
+    PlayerTimes,
+    TimeExpiredMessage
+} from '@/lib/models/request/game';
 import { getCurrentUserColor } from '@/lib/utils/game.utils';
 import { Color } from '@/lib/models/request/matchmaking';
 import useGameId from '@/hooks/chess/useGameId';
@@ -24,6 +32,9 @@ function useChessGame() {
     const [winner, setWinner] = useState<Winner | null>(null);
     const [color, setColor] = useState<Color | undefined>(undefined);
     const [turnColor, setTurnColor] = useState<Color | undefined>(undefined);
+    const [timesRemaining, setTimesRemaining] = useState<
+        PlayerTimes | undefined
+    >(undefined);
     const { socket } = useCoreSocket();
     const { userId } = useAuth();
 
@@ -43,17 +54,28 @@ function useChessGame() {
 
     useEffect(() => {
         if (!socket) return;
-        const handleUpdatePosition = (request: UpdatePositionRequest) => {
+        const handleUpdatePosition = (request: GameUpdateMessage) => {
             setBoardPosition(new Fen(request.position));
+            setTimesRemaining(request.playerTimes);
             if (request.isGameOver) {
                 setGameOver(true);
                 setWinner(request.winner);
             }
         };
+        const handleTimeExpired = (request: TimeExpiredMessage) => {
+            setGameOver(true);
+            setWinner(request.winner);
+            setTimesRemaining({
+                blackTimeRemaining: 0,
+                whiteTimeRemaining: 0
+            });
+        };
         socket.on('updatePosition', handleUpdatePosition);
+        socket.on('time-expired', handleTimeExpired);
 
         return () => {
             socket.off('updatePosition', handleUpdatePosition);
+            socket.off('time-expired', handleTimeExpired);
         };
     }, [socket]);
 
@@ -65,6 +87,23 @@ function useChessGame() {
     useEffect(() => {
         setTurnColor(getTurnColor(boardPosition));
     }, [boardPosition]);
+
+    useEffect(() => {
+        console.log('socket', socket);
+        console.log('gameId', gameId);
+        if (!socket || !gameId) return;
+        const initializeTimers = async () => {
+            const response = await getTimes(socket, gameId);
+            console.log('response', response);
+
+            setTimesRemaining({
+                blackTimeRemaining: response.playerTimes.blackTimeRemaining,
+                whiteTimeRemaining: response.playerTimes.whiteTimeRemaining
+            });
+        };
+
+        initializeTimers();
+    }, [socket, gameId]);
 
     const onDrop = useCallback(
         ({
@@ -112,6 +151,7 @@ function useChessGame() {
         color,
         boardPosition,
         turnColor,
+        timesRemaining,
         gameOver,
         winner,
         onDrop

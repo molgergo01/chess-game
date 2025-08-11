@@ -3,8 +3,16 @@ export type CreateGameRequest = {
 };
 
 export type CreateGameResponse = {
-    players: { [key: string]: string };
+    players: Array<Player>;
     gameId: string;
+};
+
+export type Player = {
+    id: string;
+    color: Color;
+    timer: {
+        remainingMs: number;
+    };
 };
 
 export enum Color {

@@ -1,9 +1,17 @@
-import { Color, GameCreated, GameState, Winner } from '../models/game';
+import {
+    Color,
+    GameCreated,
+    GameState,
+    PlayerTimes,
+    Winner
+} from '../models/game';
 import { Chess } from 'chess.js';
 import { v4 as uuidv4 } from 'uuid';
 import { inject, injectable } from 'inversify';
 import GameStateRepository from '../repositories/gameState.repository';
 import GameIdRepository from '../repositories/gameId.repository';
+import { Player } from '../models/player';
+import { Timer } from '../models/timer';
 
 @injectable()
 class GameService {
@@ -18,22 +26,37 @@ class GameService {
         this.games = new Map();
     }
 
-    async create(players: string[]): Promise<GameCreated> {
-        const playersWithColors = this.assignColorsToPlayers(players);
+    async create(playerIds: string[]): Promise<GameCreated> {
+        const playersWithColors = this.assignColorsToPlayers(playerIds);
         const id = uuidv4();
         const game = new Chess();
-        this.gameStateRepository.save(id, game.fen(), playersWithColors);
-        players.forEach((player) => {
+
+        const players: Array<Player> = [];
+        playersWithColors.forEach((value: Color, key: string) => {
+            const player: Player = {
+                id: key,
+                color: value,
+                timer: new Timer()
+            };
+            players.push(player);
+        });
+
+        const startedAt = Date.now();
+        this.gameStateRepository.save(id, game.fen(), players, 0, startedAt);
+        playerIds.forEach((player) => {
             this.gameIdRepository.save(player, id);
         });
+
         const gameState: GameState = {
-            players: playersWithColors,
-            game: game
+            players: players,
+            game: game,
+            lastMoveEpoch: 0,
+            startedAt: startedAt
         };
         this.games.set(id, gameState);
         return {
             gameId: id,
-            players: playersWithColors
+            players: players
         };
     }
 
@@ -41,26 +64,47 @@ class GameService {
         return this.gameIdRepository.getGameId(userId);
     }
 
+    async getTimes(
+        gameId: string,
+        requestTimeStamp: number | null = null
+    ): Promise<PlayerTimes> {
+        const gameState = await this.getGameState(gameId);
+
+        return this.getPlayerTimesFromGameState(gameState, requestTimeStamp);
+    }
+
     async move(
         userId: string,
         gameId: string,
         from: string,
         to: string,
-        promotionPiece: string | undefined
+        promotionPiece: string | undefined,
+        requestTimestamp: number
     ): Promise<string> {
         const gameState = await this.getGameState(gameId);
         const game = gameState.game;
-        const playersColors = await this.gameStateRepository.getPlayers(gameId);
-        if (!playersColors)
-            throw new Error(`Could not retrieve players for ${gameId}`);
-        const userColor = playersColors.get(userId);
-        if (!userColor)
+
+        const currentPlayer = gameState.players.find(
+            (player) => player.id === userId
+        );
+        if (!currentPlayer)
             throw new Error(`User ${userId} is not part of game ${gameId}`);
+        const userColor = currentPlayer.color;
 
         if (game.turn() !== userColor)
             throw new Error(`It is not ${userColor}'s turn`);
+
         game.move({ from: from, to: to, promotion: promotionPiece });
-        this.gameStateRepository.savePosition(gameId, game.fen());
+        this.refreshPlayerTimes(gameState, currentPlayer, requestTimestamp);
+        gameState.lastMoveEpoch = requestTimestamp;
+        this.gameStateRepository.save(
+            gameId,
+            game.fen(),
+            gameState.players,
+            requestTimestamp,
+            gameState.startedAt
+        );
+
         return game.fen();
     }
 
@@ -73,12 +117,24 @@ class GameService {
     async isGameOver(gameId: string): Promise<boolean> {
         const gameState = await this.getGameState(gameId);
         const game = gameState.game;
-        return game.isGameOver();
+        const timeRanOut = gameState.players.some(
+            (player) => player.timer.remainingMs <= 0
+        );
+        return game.isGameOver() || timeRanOut;
     }
 
     async getWinner(gameId: string): Promise<Winner | null> {
         const gameState = await this.getGameState(gameId);
         const game = gameState.game;
+
+        const timeRanOutPlayer = gameState.players.find(
+            (player) => player.timer.remainingMs <= 0
+        );
+        if (timeRanOutPlayer) {
+            return timeRanOutPlayer.color === Color.BLACK
+                ? Winner.WHITE
+                : Winner.BLACK;
+        }
         if (game.isDraw()) {
             return Winner.DRAW;
         } else if (game.isCheckmate()) {
@@ -103,11 +159,66 @@ class GameService {
             throw new Error(`Game with id ${gameId} could not be found`);
 
         gameState = {
-            players: storedGameState.players,
-            game: new Chess(storedGameState.position)
+            players: storedGameState.players.map((storedPlayer): Player => {
+                return {
+                    id: storedPlayer.id,
+                    color: storedPlayer.color,
+                    timer: new Timer(storedPlayer.timer.remainingMs)
+                };
+            }),
+            game: new Chess(storedGameState.position),
+            lastMoveEpoch: storedGameState.lastMoveEpoch,
+            startedAt: storedGameState.startedAt
         };
         this.games.set(gameId, gameState);
         return gameState;
+    }
+
+    private getCurrentPlayer(gameState: GameState): Player {
+        const turnColor = gameState.game.turn() as Color;
+
+        return gameState.players.find((player) => player.color === turnColor)!;
+    }
+
+    private refreshPlayerTimes(
+        gameState: GameState,
+        currentPlayer: Player,
+        requestTimestamp: number
+    ) {
+        if (gameState.lastMoveEpoch !== 0) {
+            currentPlayer.timer.decrementTimer(
+                requestTimestamp - gameState.lastMoveEpoch
+            );
+        }
+    }
+
+    private getPlayerTimesFromGameState(
+        gameState: GameState,
+        requestTimestamp: number | null = null
+    ): PlayerTimes {
+        const blackPlayer = gameState.players.find(
+            (player) => player.color === Color.BLACK
+        )!;
+        const whitePlayer = gameState.players.find(
+            (player) => player.color === Color.WHITE
+        )!;
+
+        let blackTimeRemaining = blackPlayer.timer.remainingMs;
+        let whiteTimeRemaining = whitePlayer.timer.remainingMs;
+
+        if (requestTimestamp && gameState.lastMoveEpoch !== 0) {
+            const elapsedTime = requestTimestamp - gameState.lastMoveEpoch;
+            if (gameState.game.turn() === Color.BLACK) {
+                blackTimeRemaining -= elapsedTime;
+            } else {
+                whiteTimeRemaining -= elapsedTime;
+            }
+        }
+
+        return {
+            blackTimeRemaining: blackTimeRemaining,
+            whiteTimeRemaining: whiteTimeRemaining
+        };
     }
 
     private assignColorsToPlayers(players: string[]): Map<string, Color> {

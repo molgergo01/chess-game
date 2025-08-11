@@ -1,4 +1,5 @@
 import { Chess } from 'chess.js';
+import { Player, StoredPlayer } from './player';
 
 export interface JoinGameRequest {
     gameId: string;
@@ -8,15 +9,29 @@ export type GetGameIdCallback = {
     (response: { gameId: string | null }): void;
 };
 
+export type GetTimesRequest = {
+    gameId: string;
+};
+
+export type GetTimesCallback = {
+    (response: { playerTimes: PlayerTimes }): void;
+};
+
+export type PlayerTimes = {
+    blackTimeRemaining: number;
+    whiteTimeRemaining: number;
+};
+
 export interface UpdatePositionRequest {
     position: string;
     isGameOver: boolean;
     winner: Winner | null;
+    playerTimes: PlayerTimes;
 }
 
 export type GameCreated = {
     gameId: string;
-    players: Map<string, Color>;
+    players: Array<Player>;
 };
 
 export interface MoveRequest {
@@ -47,18 +62,26 @@ export type CreateGameRequest = {
 };
 
 export type CreateGameResponse = {
-    players: { [key: string]: string };
+    players: Array<Player>;
     gameId: string;
 };
 
 export type StoredGameState = {
-    players: Map<string, Color>;
+    players: Array<StoredPlayer>;
     position: string;
+    lastMoveEpoch: number;
+    startedAt: number;
 };
 
 export type GameState = {
     game: Chess;
-    players: Map<string, Color>;
+    players: Array<Player>;
+    lastMoveEpoch: number;
+    startedAt: number;
+};
+
+export type TimeExpiredMessage = {
+    winner: Winner;
 };
 
 export enum Color {

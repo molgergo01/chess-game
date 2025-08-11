@@ -4,10 +4,19 @@ export interface JoinGameRequest {
     gameId: string;
 }
 
-export interface UpdatePositionRequest {
+export type GetTimesRequest = {
+    gameId: string;
+};
+
+export interface GameUpdateMessage {
     position: string;
     isGameOver: boolean;
     winner: Winner | null;
+    playerTimes: PlayerTimes;
+}
+
+export interface TimeExpiredMessage {
+    winner: Winner;
 }
 
 export interface MoveRequest {
@@ -21,6 +30,7 @@ export interface PositionRequest {
     gameId: string;
 }
 
-export interface ResetRequest {
-    gameId: string;
-}
+export type PlayerTimes = {
+    whiteTimeRemaining: number;
+    blackTimeRemaining: number;
+};
