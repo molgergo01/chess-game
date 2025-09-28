@@ -5,6 +5,7 @@ import NotFoundError from '../errors/not.found.error';
 import ConflictError from '../errors/conlfict.error';
 import InternalServerError from '../errors/internal.server.error';
 import UnauthorizedError from '../errors/unauthorized.error';
+import ForbiddenError from '../errors/forbidden.error';
 
 export function errorHandler(
     err: Error,
@@ -21,6 +22,10 @@ export function errorHandler(
     if (err instanceof UnauthorizedError) {
         res.status(401).json({ message: err.message });
         return;
+    }
+
+    if (err instanceof ForbiddenError) {
+        res.status(403).json({ message: err.message });
     }
 
     if (err instanceof NotFoundError) {

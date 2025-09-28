@@ -14,6 +14,14 @@ module.exports = {
             password: process.env.DB_PASSWORD
         }
     },
+    test: {
+        client: 'postgresql',
+        connection: {
+            database: process.env.DB_TEST_DATABASE,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD
+        }
+    },
 
     staging: {
         client: 'postgresql',

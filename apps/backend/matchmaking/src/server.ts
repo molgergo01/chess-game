@@ -3,7 +3,6 @@ import env from 'chess-game-backend-common/config/env';
 import { createServer } from 'node:http';
 import { Server, Socket } from 'socket.io';
 import corsConfig from 'chess-game-backend-common/config/cors';
-import matchmakingListener from './listeners/matchmaking.listener';
 import MatchmakingService from './services/matchmaking.service';
 import container from './config/container';
 
@@ -16,14 +15,13 @@ export const io = new Server(server, {
     cors: corsConfig
 });
 
+container.bind('SocketIO').toConstantValue(io);
+
 export const onConnection = (socket: Socket) => {
-    const { setSocketIdForUser } = matchmakingListener(io, socket);
     matchmakingService.setSocketIdForUser(
         socket.handshake.auth.userId,
         socket.id
     );
-
-    socket.on('setSocketIdForUser', setSocketIdForUser);
 };
 
 io.on('connection', onConnection);

@@ -1,10 +1,15 @@
-import redis from 'chess-game-backend-common/src/config/redis';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { StoredGameState } from '../models/game';
 import { Player, StoredPlayer } from '../models/player';
+import Redis from 'chess-game-backend-common/config/redis';
 
 @injectable()
 class GameStateRepository {
+    constructor(
+        @inject('Redis')
+        private readonly redis: typeof Redis
+    ) {}
+
     save(
         gameId: string,
         fen: string,
@@ -12,7 +17,7 @@ class GameStateRepository {
         lastMoveEpoch: number,
         startedAt: number
     ) {
-        redis.hSet(`game-state:${gameId}`, {
+        this.redis.hSet(`game-state:${gameId}`, {
             players: JSON.stringify(players),
             position: fen,
             lastMoveEpoch: lastMoveEpoch,
@@ -21,7 +26,7 @@ class GameStateRepository {
     }
 
     async get(gameId: string): Promise<StoredGameState | null> {
-        const data = await redis.hGetAll(`game-state:${gameId}`);
+        const data = await this.redis.hGetAll(`game-state:${gameId}`);
         if (!data) {
             return null;
         }
@@ -40,12 +45,12 @@ class GameStateRepository {
         }
     }
 
-    async keys(): Promise<string[]> {
-        return redis.keys('game-state:*');
+    async getKeys(): Promise<string[]> {
+        return this.redis.keys('game-state:*');
     }
 
-    async removeGameState(gameId: string): Promise<void> {
-        await redis.del(`game-state:${gameId}`);
+    async remove(gameId: string): Promise<void> {
+        await this.redis.del(`game-state:${gameId}`);
     }
 }
 

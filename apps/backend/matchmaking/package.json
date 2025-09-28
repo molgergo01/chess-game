@@ -16,7 +16,7 @@
         "build": "tsc",
         "start": "node dist/server.js",
         "dev": "ts-node-dev --respawn --transpile-only --require tsconfig-paths/register src/server.ts",
-        "test:jest": "jest",
+        "test:jest": "jest --passWithNoTests",
         "lint:type-check": "tsc --noEmit"
     }
 }

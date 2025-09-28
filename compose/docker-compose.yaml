@@ -6,6 +6,9 @@ services:
             - '5432:5432'
         environment:
             POSTGRES_PASSWORD: 'password'
+            POSTGRES_USER: 'postgres'
+        volumes:
+            - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     redis:
         image: 'redis:8.0.3-alpine'
         ports:

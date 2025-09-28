@@ -5,7 +5,7 @@ const config: Config = {
     verbose: true,
     collectCoverage: true,
     collectCoverageFrom: [
-        '**/*.{js,ts,jsx,tsx}',
+        'src/**/*.{js,ts}',
         '!**/node_modules/**',
         '!**/vendor/**',
         '!**/knexfile.js',
@@ -27,7 +27,11 @@ const config: Config = {
             statements: 80
         }
     },
-    coverageProvider: 'v8'
+    coverageProvider: 'v8',
+    moduleNameMapper: {
+        '^chess-game-backend-common/src/(.*)$': '<rootDir>/../common/src/$1',
+        '^chess-game-backend-common/(.*)$': '<rootDir>/../common/src/$1'
+    }
 };
 
 export default config;

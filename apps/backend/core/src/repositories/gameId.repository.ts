@@ -1,19 +1,23 @@
-import redis from 'chess-game-backend-common/src/config/redis';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
+import Redis from 'chess-game-backend-common/config/redis';
 
 @injectable()
 class GameIdRepository {
+    constructor(
+        @inject('Redis')
+        private readonly redis: typeof Redis
+    ) {}
     async save(userId: string, gameId: string) {
-        redis.set(`game-id:${userId}`, gameId);
+        this.redis.set(`game-id:${userId}`, gameId);
     }
 
-    async getGameId(userId: string): Promise<string | null> {
-        return redis.get(`game-id:${userId}`);
+    async get(userId: string): Promise<string | null> {
+        return this.redis.get(`game-id:${userId}`);
     }
 
-    async removeByGameId(gameId: string) {
+    async remove(gameId: string) {
         const pattern = 'game-id:*';
-        const keys = await redis.keys(pattern);
+        const keys = await this.redis.keys(pattern);
 
         if (keys.length === 0) {
             return;
@@ -22,14 +26,14 @@ class GameIdRepository {
         const keysToDelete: string[] = [];
 
         for (const key of keys) {
-            const value = await redis.get(key);
+            const value = await this.redis.get(key);
             if (value === gameId) {
                 keysToDelete.push(key);
             }
         }
 
         keysToDelete.forEach((key) => {
-            redis.del(key);
+            this.redis.del(key);
         });
     }
 }

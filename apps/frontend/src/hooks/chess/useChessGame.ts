@@ -70,11 +70,11 @@ function useChessGame() {
                 whiteTimeRemaining: 0
             });
         };
-        socket.on('updatePosition', handleUpdatePosition);
+        socket.on('update-position', handleUpdatePosition);
         socket.on('time-expired', handleTimeExpired);
 
         return () => {
-            socket.off('updatePosition', handleUpdatePosition);
+            socket.off('update-position', handleUpdatePosition);
             socket.off('time-expired', handleTimeExpired);
         };
     }, [socket]);

@@ -7,7 +7,6 @@ const config: Config = {
     collectCoverageFrom: [
         '**/lib/**/*.{js,ts,jsx,tsx}',
         '!**/config/**',
-        '!**/clients/**',
         '!**/models/**',
         '!**/*.d.ts'
     ],
@@ -24,7 +23,17 @@ const config: Config = {
     moduleNameMapper: {
         '@/(.*)': '<rootDir>/src/$1'
     },
-    testEnvironment: 'jsdom'
+    testEnvironment: 'jsdom',
+    transform: {
+        '^.+\\.tsx?$': [
+            'ts-jest',
+            {
+                tsconfig: {
+                    jsx: 'react'
+                }
+            }
+        ]
+    }
 };
 
 export default config;

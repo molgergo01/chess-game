@@ -10,7 +10,7 @@ export function authErrorHandler(
     next: NextFunction
 ): void {
     if (err instanceof FailedLoginError) {
-        res.status(500)
+        res.status(401)
             .json({ message: err.message })
             .redirect(`${env.FRONTEND_URL}/login?failedLogin`);
         return;

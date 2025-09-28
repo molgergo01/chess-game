@@ -7,13 +7,17 @@ import corsConfig from 'chess-game-backend-common/config/cors';
 import container from './config/container';
 import TimerWatcher from './services/timer.watcher';
 
+const timerWatcher = container.get(TimerWatcher);
+
 const PORT = env.PORTS.CORE || 8080;
 const server = createServer(app);
+
 export const io = new Server(server, {
     connectionStateRecovery: {},
     cors: corsConfig
 });
-const timerWatcher = container.get(TimerWatcher);
+
+container.bind('SocketIO').toConstantValue(io);
 
 export const onConnection = (socket: Socket) => {
     const { getGameId, getTimes, joinGame, movePiece, getPosition } =
