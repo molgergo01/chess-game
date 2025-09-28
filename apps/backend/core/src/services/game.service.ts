@@ -12,6 +12,9 @@ import GameStateRepository from '../repositories/gameState.repository';
 import GameIdRepository from '../repositories/gameId.repository';
 import { Player } from '../models/player';
 import { Timer } from '../models/timer';
+import BadRequestError from 'chess-game-backend-common/errors/bad.request.error';
+import NotFoundError from 'chess-game-backend-common/errors/not.found.error';
+import ForbiddenError from 'chess-game-backend-common/errors/forbidden.error';
 
 @injectable()
 class GameService {
@@ -61,7 +64,7 @@ class GameService {
     }
 
     async getGameId(userId: string): Promise<string | null> {
-        return this.gameIdRepository.getGameId(userId);
+        return this.gameIdRepository.get(userId);
     }
 
     async getTimes(
@@ -88,11 +91,13 @@ class GameService {
             (player) => player.id === userId
         );
         if (!currentPlayer)
-            throw new Error(`User ${userId} is not part of game ${gameId}`);
+            throw new ForbiddenError(
+                `User ${userId} is not part of game ${gameId}`
+            );
         const userColor = currentPlayer.color;
 
         if (game.turn() !== userColor)
-            throw new Error(`It is not ${userColor}'s turn`);
+            throw new ForbiddenError(`It is not ${userColor}'s turn`);
 
         game.move({ from: from, to: to, promotion: promotionPiece });
         this.refreshPlayerTimes(gameState, currentPlayer, requestTimestamp);
@@ -145,8 +150,8 @@ class GameService {
     }
 
     async reset(gameId: string): Promise<void> {
-        await this.gameStateRepository.removeGameState(gameId);
-        await this.gameIdRepository.removeByGameId(gameId);
+        await this.gameStateRepository.remove(gameId);
+        await this.gameIdRepository.remove(gameId);
         this.games.delete(gameId);
     }
 
@@ -156,7 +161,9 @@ class GameService {
 
         const storedGameState = await this.gameStateRepository.get(gameId);
         if (storedGameState === null)
-            throw new Error(`Game with id ${gameId} could not be found`);
+            throw new NotFoundError(
+                `Game with id ${gameId} could not be found`
+            );
 
         gameState = {
             players: storedGameState.players.map((storedPlayer): Player => {
@@ -172,12 +179,6 @@ class GameService {
         };
         this.games.set(gameId, gameState);
         return gameState;
-    }
-
-    private getCurrentPlayer(gameState: GameState): Player {
-        const turnColor = gameState.game.turn() as Color;
-
-        return gameState.players.find((player) => player.color === turnColor)!;
     }
 
     private refreshPlayerTimes(
@@ -223,7 +224,7 @@ class GameService {
 
     private assignColorsToPlayers(players: string[]): Map<string, Color> {
         if (players.length !== 2) {
-            throw new Error('Chess game requires exactly 2 players');
+            throw new BadRequestError('Chess game requires exactly 2 players');
         }
 
         const colors: Color[] = [Color.WHITE, Color.BLACK];

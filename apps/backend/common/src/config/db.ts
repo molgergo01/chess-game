@@ -3,14 +3,16 @@ import env from './env';
 
 const pgp = pgPromise();
 
-const dev = {
+const config = {
     host: env.DB_HOST,
     port: 5432,
-    database: env.DB_DATABASE,
+    database: env.NODE_ENV === 'test' ? env.DB_TEST_DATABASE : env.DB_DATABASE,
     user: env.DB_USER,
     password: env.DB_PASSWORD
 };
 
-const db = pgp(dev);
+console.log(env.NODE_ENV);
+
+const db = pgp(config);
 
 export default db;

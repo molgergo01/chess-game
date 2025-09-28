@@ -2,10 +2,16 @@ import type { Config } from 'jest';
 
 const config: Config = {
     verbose: true,
-    projects: ['<rootDir>/apps/backend/', '<rootDir>/apps/frontend/'],
+    projects: [
+        '<rootDir>/apps/backend/auth',
+        '<rootDir>/apps/backend/core',
+        '<rootDir>/apps/backend/matchmaking',
+        '<rootDir>/apps/frontend/'
+        // '<rootDir>/apps/backend/'
+    ],
     collectCoverage: true,
     collectCoverageFrom: [
-        '**/*.{js,ts,jsx,tsx}',
+        'src/**/*.{js,ts}',
         '!**/node_modules/**',
         '!**/vendor/**',
         '!**/knexfile.js',

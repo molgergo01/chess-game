@@ -5,8 +5,8 @@ import {
 import { inject, injectable } from 'inversify';
 import GameStateRepository from '../repositories/gameState.repository';
 import GameService from './game.service';
-import { io } from '../server';
-import { Color, TimeExpiredMessage, Winner } from '../models/game';
+import { Color, Winner } from '../models/game';
+import GameNotificationService from './game.notification.service';
 
 @injectable()
 class TimerWatcher {
@@ -17,6 +17,8 @@ class TimerWatcher {
         private readonly gameStateRepository: GameStateRepository,
         @inject(GameService)
         private readonly gameService: GameService,
+        @inject(GameNotificationService)
+        private readonly gameNotificationService: GameNotificationService,
         private watcherInterval: NodeJS.Timeout | null = null
     ) {
         this.watcherInterval = watcherInterval;
@@ -30,7 +32,7 @@ class TimerWatcher {
     }
 
     private async checkAllGames() {
-        const gameStateKeys = await this.gameStateRepository.keys();
+        const gameStateKeys = await this.gameStateRepository.getKeys();
         if (gameStateKeys.length === 0) {
             await this.stop();
             return;
@@ -77,10 +79,10 @@ class TimerWatcher {
 
     private async handleTimeExpired(gameId: string, winner: Winner) {
         await this.gameService.reset(gameId);
-        const message: TimeExpiredMessage = {
-            winner: winner
-        };
-        io.to(gameId).emit('time-expired', message);
+        this.gameNotificationService.sendTimerExpiredNotification(
+            gameId,
+            winner
+        );
     }
 
     private async stop() {

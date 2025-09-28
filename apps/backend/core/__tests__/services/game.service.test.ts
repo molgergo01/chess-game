@@ -1,152 +1,756 @@
 import {
-    getFen,
-    getWinner,
-    isGameOver,
-    move,
-    reset
-} from '../../src/services/game.service';
-import { Winner } from '../../src/models/game';
-import {
-    getGameState,
-    removeGameState
-} from '../../src/repositories/gameStateRepository';
+    Color,
+    GameCreated,
+    GameState,
+    StoredGameState,
+    Winner
+} from '../../src/models/game';
+import GameService from '../../src/services/game.service';
+import GameStateRepository from '../../src/repositories/gameState.repository';
+import GameIdRepository from '../../src/repositories/gameId.repository';
+import { Player, StoredPlayer } from '../../src/models/player';
+import { Timer } from '../../src/models/timer';
+import { v4 as uuidv4 } from 'uuid';
+import BadRequestError from 'chess-game-backend-common/errors/bad.request.error';
+import NotFoundError from 'chess-game-backend-common/errors/not.found.error';
+import ForbiddenError from 'chess-game-backend-common/errors/forbidden.error';
+import { Chess } from 'chess.js';
+import Fen from 'chess-fen';
 
-jest.mock('chess.js', () => {
-    return {
-        Chess: jest.fn().mockImplementation(() => ({
-            fen: jest
-                .fn()
-                .mockReturnValue(
-                    'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-                ),
-            move: jest.fn(),
-            isGameOver: jest.fn().mockReturnValue(false),
-            isDraw: jest.fn().mockReturnValue(true),
-            isCheckmate: jest.fn().mockReturnValue(false),
-            turn: jest.fn().mockReturnValue('w'),
-            reset: jest.fn()
-        }))
-    };
-});
+const mockGame = {
+    fen: jest.fn(),
+    move: jest.fn(),
+    isGameOver: jest.fn(),
+    isDraw: jest.fn(),
+    isCheckmate: jest.fn(),
+    turn: jest.fn()
+};
 
-jest.mock('../../src/repositories/gameStateRepository', () => ({
-    getGameState: jest
-        .fn()
-        .mockResolvedValue(
-            'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-        ),
-    saveGameState: jest.fn(),
-    removeGameState: jest.fn()
+jest.mock('chess.js', () => ({
+    Chess: jest.fn().mockImplementation(() => mockGame)
 }));
 
-describe('move', () => {
-    it('should return correct fen on valid move', async () => {
-        const expected =
-            'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-        const actual = await move('1', 'e2', 'e3', 'wQ');
+jest.mock('uuid', () => ({
+    v4: jest.fn()
+}));
 
-        expect(actual).toBe(expected);
+jest.spyOn(Math, 'random');
 
-        const mockChessInstance =
-            jest.requireMock('chess.js').Chess.mock.results[0].value;
-        expect(mockChessInstance.move).toHaveBeenCalledWith({
-            from: 'e2',
-            to: 'e3',
-            promotion: 'wQ'
+jest.mock('../../src/repositories/gameState.repository');
+jest.mock('../../src/repositories/gameId.repository');
+
+describe('Game Service', () => {
+    const NOW = 10000000;
+
+    let mockGameStateRepository: jest.Mocked<GameStateRepository>;
+    let mockGameIdRepository: jest.Mocked<GameIdRepository>;
+    let gameService: GameService;
+
+    let mockUuid = jest.fn();
+
+    beforeEach(() => {
+        mockUuid = jest.mocked(uuidv4);
+
+        jest.useFakeTimers();
+        jest.setSystemTime(NOW);
+
+        mockGameStateRepository = new GameStateRepository(
+            null as never
+        ) as jest.Mocked<GameStateRepository>;
+        mockGameStateRepository.save = jest.fn();
+        mockGameStateRepository.remove = jest.fn();
+        mockGameStateRepository.get = jest.fn();
+
+        mockGameIdRepository = new GameIdRepository(
+            null as never
+        ) as jest.Mocked<GameIdRepository>;
+        mockGameIdRepository.save = jest.fn();
+        mockGameIdRepository.get = jest.fn();
+        mockGameIdRepository.remove = jest.fn();
+
+        gameService = new GameService(
+            mockGameStateRepository,
+            mockGameIdRepository
+        );
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
+        jest.clearAllMocks();
+    });
+
+    describe('Create', () => {
+        it('should create game', async () => {
+            const playerIds = ['1234', '5678'];
+
+            const gameId = '0000';
+            mockUuid.mockReturnValue(gameId);
+
+            const player1: Player = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: new Timer()
+            };
+
+            const player2: Player = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: new Timer()
+            };
+
+            (Math.random as jest.Mock).mockReturnValue(0.6);
+
+            const fen = Fen.startingPosition;
+            mockGame.fen.mockReturnValue(fen);
+
+            const expectedResult: GameCreated = {
+                gameId: gameId,
+                players: [player1, player2]
+            };
+
+            const result = await gameService.create(playerIds);
+
+            expect(result).toEqual(expectedResult);
+
+            expect(mockGameStateRepository.save).toHaveBeenCalledWith(
+                gameId,
+                Fen.startingPosition,
+                [player1, player2],
+                0,
+                NOW
+            );
+            expect(mockGameIdRepository.save).toHaveBeenCalledWith(
+                player1.id,
+                gameId
+            );
+            expect(mockGameIdRepository.save).toHaveBeenCalledWith(
+                player2.id,
+                gameId
+            );
+        });
+
+        it('should throw error if less than 2 players are provided', async () => {
+            const playerIds = ['1234'];
+
+            await expect(gameService.create(playerIds)).rejects.toThrow(
+                BadRequestError
+            );
         });
     });
-    it('should throw error if game not found', async () => {
-        (getGameState as jest.Mock).mockResolvedValueOnce(null);
 
-        await expect(move('missingId', 'e2', 'e3', 'wQ')).rejects.toThrow(
-            'Game with id missingId could not be found'
-        );
-    });
-});
+    describe('Get Game Id', () => {
+        it('should return game id', async () => {
+            const gameId = '0000';
+            const userId = '1234';
+            mockGameIdRepository.get.mockResolvedValue(gameId);
 
-describe('getFen', () => {
-    it('should return correct fen', async () => {
-        const expected =
-            'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-        const actual = await getFen('1');
+            const result = await gameService.getGameId(userId);
 
-        expect(actual).toBe(expected);
-
-        const mockChessInstance =
-            jest.requireMock('chess.js').Chess.mock.results[0].value;
-        expect(mockChessInstance.fen).toHaveBeenCalled();
-    });
-    it('should throw error if game not found', async () => {
-        (getGameState as jest.Mock).mockResolvedValueOnce(null);
-
-        await expect(getFen('missingId')).rejects.toThrow(
-            'Game with id missingId could not be found'
-        );
-    });
-});
-
-describe('isGameOver', () => {
-    it('should return gameOver', async () => {
-        const actual = await isGameOver('1');
-
-        expect(actual).toBe(false);
-
-        const mockChessInstance =
-            jest.requireMock('chess.js').Chess.mock.results[0].value;
-        expect(mockChessInstance.isGameOver).toHaveBeenCalled();
-    });
-    it('should throw error if game not found', async () => {
-        (getGameState as jest.Mock).mockResolvedValueOnce(null);
-
-        await expect(isGameOver('missingId')).rejects.toThrow(
-            'Game with id missingId could not be found'
-        );
-    });
-});
-
-describe('getWinner', () => {
-    it('should return draw if game is drawn', async () => {
-        const expected = Winner.DRAW;
-        const actual = await getWinner('1');
-
-        expect(actual).toBe(expected);
+            expect(result).toEqual(gameId);
+            expect(mockGameIdRepository.get).toHaveBeenCalledWith(userId);
+        });
     });
 
-    it('should return winner if game is not drawn', async () => {
-        const expected = Winner.BLACK;
+    describe('Get Times', () => {
+        it('should return player times when whites turn', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
-        const mockChessInstance =
-            jest.requireMock('chess.js').Chess.mock.results[0].value;
-        mockChessInstance.isDraw.mockReturnValueOnce(false);
-        mockChessInstance.isCheckmate.mockReturnValueOnce(true);
+            mockGame.turn.mockReturnValue(Color.WHITE);
 
-        const actual = await getWinner('1');
+            const result = await gameService.getTimes('1234', NOW);
 
-        expect(actual).toBe(expected);
+            expect(result.whiteTimeRemaining).toEqual(500);
+            expect(result.blackTimeRemaining).toEqual(2000);
+        });
+
+        it('should return player times when blacks turn', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.turn.mockReturnValue(Color.BLACK);
+
+            const result = await gameService.getTimes('1234', NOW);
+
+            expect(result.whiteTimeRemaining).toEqual(1000);
+            expect(result.blackTimeRemaining).toEqual(1500);
+        });
+
+        it('should throw error if game not found', async () => {
+            mockGameStateRepository.get.mockResolvedValue(null);
+            await expect(gameService.getTimes('1234')).rejects.toThrow(
+                NotFoundError
+            );
+        });
     });
 
-    it('should return null if game is not over', async () => {
-        const mockChessInstance =
-            jest.requireMock('chess.js').Chess.mock.results[0].value;
-        mockChessInstance.isDraw.mockReturnValueOnce(false);
+    describe('Move', () => {
+        it('should return correct fen on valid move and update game state', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
-        const actual = await getWinner('1');
+            mockGame.turn.mockReturnValue(Color.WHITE);
 
-        expect(actual).toBeNull();
+            const expected = 'newFen';
+            mockGame.fen.mockReturnValue(expected);
+
+            const gameId = '0000';
+
+            const expectedUpdatedPlayer1: Player = {
+                id: player1.id,
+                color: player1.color,
+                timer: new Timer(player1.timer.remainingMs - elapsedTime)
+            };
+            const expectedUpdatedPlayer2: Player = {
+                id: player2.id,
+                color: player2.color,
+                timer: new Timer(player2.timer.remainingMs)
+            };
+
+            const result = await gameService.move(
+                player1.id,
+                gameId,
+                'e2',
+                'e3',
+                'wQ',
+                NOW
+            );
+
+            expect(result).toBe(expected);
+
+            expect(mockGame.move).toHaveBeenCalledWith({
+                from: 'e2',
+                to: 'e3',
+                promotion: 'wQ'
+            });
+            expect(mockGameStateRepository.save).toHaveBeenCalledWith(
+                gameId,
+                expected,
+                [expectedUpdatedPlayer1, expectedUpdatedPlayer2],
+                NOW,
+                NOW
+            );
+        });
+
+        it('should throw error if player is not part of game', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            await expect(
+                gameService.move('missingId', '0000', 'e2', 'e3', 'wQ', NOW)
+            ).rejects.toThrow(ForbiddenError);
+        });
+
+        it('should throw error if not selected players turn', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+            mockGame.turn.mockReturnValue(Color.BLACK);
+
+            await expect(
+                gameService.move(player1.id, '0000', 'e2', 'e3', 'wQ', NOW)
+            ).rejects.toThrow(ForbiddenError);
+        });
+
+        it('should throw error if game not found', async () => {
+            mockGameStateRepository.get.mockResolvedValue(null);
+
+            await expect(
+                gameService.move('1234', 'missingId', 'e2', 'e3', 'wQ', NOW)
+            ).rejects.toThrow(NotFoundError);
+        });
     });
-    it('should throw error if game not found', async () => {
-        (getGameState as jest.Mock).mockResolvedValueOnce(null);
 
-        await expect(getWinner('missingId')).rejects.toThrow(
-            'Game with id missingId could not be found'
-        );
+    describe('Get Fen', () => {
+        it('should return correct fen', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const expected = Fen.startingPosition;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: expected,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+            mockGame.fen.mockReturnValue(expected);
+
+            const result = await gameService.getFen('0000');
+
+            expect(result).toBe(expected);
+
+            expect(mockGame.fen).toHaveBeenCalled();
+        });
+
+        it('should throw error if game not found', async () => {
+            mockGameStateRepository.get.mockResolvedValue(null);
+
+            await expect(gameService.getFen('missingId')).rejects.toThrow(
+                NotFoundError
+            );
+        });
     });
-});
 
-describe('resetGame', () => {
-    it('should reset game', async () => {
-        await reset('1');
+    describe('Is Game Over', () => {
+        it('should return false if game is not in checkmate and timer did not expire', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
-        expect(removeGameState).toHaveBeenCalledWith('1');
+            mockGame.isGameOver.mockReturnValue(false);
+
+            const result = await gameService.isGameOver('0000');
+
+            expect(result).toBe(false);
+
+            expect(mockGame.isGameOver).toHaveBeenCalled();
+        });
+
+        it('should return true if game is in checkmate', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.isGameOver.mockReturnValue(true);
+
+            const result = await gameService.isGameOver('0000');
+
+            expect(result).toBe(true);
+
+            expect(mockGame.isGameOver).toHaveBeenCalled();
+        });
+
+        it('should return true if timer expired', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 0
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.isGameOver.mockReturnValue(false);
+
+            const result = await gameService.isGameOver('0000');
+
+            expect(result).toBe(true);
+
+            expect(mockGame.isGameOver).toHaveBeenCalled();
+        });
+
+        it('should throw error if game not found', async () => {
+            mockGameStateRepository.get.mockResolvedValue(null);
+
+            await expect(gameService.isGameOver('missingId')).rejects.toThrow(
+                NotFoundError
+            );
+        });
+    });
+
+    describe('Get Winner', () => {
+        it('should return draw if game is drawn', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.isDraw.mockReturnValue(true);
+
+            const result = await gameService.getWinner('0000');
+
+            expect(result).toBe(Winner.DRAW);
+        });
+
+        it('should return winner if in checkmate', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.isDraw.mockReturnValue(false);
+            mockGame.isCheckmate.mockReturnValue(true);
+            mockGame.turn.mockReturnValue(Color.WHITE);
+
+            const result = await gameService.getWinner('0000');
+
+            expect(result).toBe(Winner.BLACK);
+        });
+
+        it('should return winner if timer expired', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 0
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            const result = await gameService.getWinner('0000');
+
+            expect(result).toEqual(Winner.BLACK);
+        });
+
+        it('should return null if game is ongoing', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const elapsedTime = 500;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - elapsedTime,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.isDraw.mockReturnValue(false);
+            mockGame.isCheckmate.mockReturnValue(false);
+
+            const result = await gameService.getWinner('0000');
+
+            expect(result).toEqual(null);
+        });
+
+        it('should throw error if game not found', async () => {
+            mockGameStateRepository.get.mockResolvedValue(null);
+
+            await expect(gameService.getWinner('missingId')).rejects.toThrow(
+                NotFoundError
+            );
+        });
+    });
+
+    describe('Reset Game', () => {
+        it('should reset game', async () => {
+            const gameId = '0000';
+
+            await gameService.reset(gameId);
+
+            expect(mockGameStateRepository.remove).toHaveBeenCalledWith(gameId);
+            expect(mockGameIdRepository.remove).toHaveBeenCalledWith(gameId);
+        });
+    });
+
+    describe('Get game state', () => {
+        it('should return game state from repository if not cached', async () => {
+            const player1Id = '1234';
+            const plyaer1Color = Color.WHITE;
+            const player1TimeRemaining = 1000;
+            const player1: StoredPlayer = {
+                id: player1Id,
+                color: plyaer1Color,
+                timer: {
+                    remainingMs: player1TimeRemaining
+                }
+            };
+            const player2Id = '5678';
+            const player2Color = Color.BLACK;
+            const player2TimeRemaining = 2000;
+            const player2: StoredPlayer = {
+                id: player2Id,
+                color: player2Color,
+                timer: {
+                    remainingMs: player2TimeRemaining
+                }
+            };
+            const fen = Fen.startingPosition;
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: fen,
+                lastMoveEpoch: NOW,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            const expectedGameState: GameState = {
+                players: [
+                    {
+                        id: player1Id,
+                        color: plyaer1Color,
+                        timer: new Timer(player1TimeRemaining)
+                    },
+                    {
+                        id: player2Id,
+                        color: player2Color,
+                        timer: new Timer(player2TimeRemaining)
+                    }
+                ],
+                game: new Chess(fen),
+                lastMoveEpoch: NOW,
+                startedAt: NOW
+            };
+
+            const gameId = '0000';
+
+            const result = await gameService.getGameState(gameId);
+
+            expect(result).toEqual(expectedGameState);
+            expect(mockGameStateRepository.get).toHaveBeenCalledWith(gameId);
+        });
+
+        it('should return game state from memory if cached', async () => {
+            const playerIds = ['1234', '5678'];
+
+            const gameId = '0000';
+            mockUuid.mockReturnValue(gameId);
+
+            const player1: Player = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: new Timer()
+            };
+
+            const player2: Player = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: new Timer()
+            };
+
+            (Math.random as jest.Mock).mockReturnValue(0.6);
+
+            const fen = Fen.startingPosition;
+            mockGame.fen.mockReturnValue(fen);
+
+            const expectedGameState: GameState = {
+                game: new Chess(fen),
+                players: [player1, player2],
+                lastMoveEpoch: 0,
+                startedAt: NOW
+            };
+
+            await gameService.create(playerIds);
+
+            const result = await gameService.getGameState(gameId);
+
+            expect(result).toEqual(expectedGameState);
+            expect(mockGameStateRepository.get).not.toHaveBeenCalled();
+        });
     });
 });

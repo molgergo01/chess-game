@@ -1,12 +1,11 @@
 import { inject, injectable } from 'inversify';
 import QueueRepository from '../repositories/queue.repository';
 import { SocketIdRepository } from '../repositories/socket.id.repository';
-import { io } from '../server';
-import { MatchmakeMessage } from '../models/matchmaking';
 import CoreRestClient from '../clients/core.rest.client';
 import ConflictError from 'chess-game-backend-common/errors/conlfict.error';
 import NotFoundError from 'chess-game-backend-common/errors/not.found.error';
 import { Player } from '../models/game';
+import MatchmakingNotificationService from './matchmaking.notification.service';
 
 @injectable()
 class MatchmakingService {
@@ -16,7 +15,9 @@ class MatchmakingService {
         @inject(SocketIdRepository)
         public readonly socketIdRepository: SocketIdRepository,
         @inject(CoreRestClient)
-        private readonly coreRestClient: CoreRestClient
+        private readonly coreRestClient: CoreRestClient,
+        @inject(MatchmakingNotificationService)
+        private readonly matchmakingNotificationService: MatchmakingNotificationService
     ) {}
 
     setSocketIdForUser(userId: string, socketId: string) {
@@ -79,12 +80,12 @@ class MatchmakingService {
         if (socketIds.length !== 2) {
             throw Error('Socket ids are missing for some players');
         }
-        const matchmakeMessage: MatchmakeMessage = {
-            players: players,
-            gameId: gameId
-        };
         socketIds.forEach((socketId) => {
-            io.to(socketId).emit('matchmake', matchmakeMessage);
+            this.matchmakingNotificationService.sendMatchmakeNotification(
+                socketId,
+                players,
+                gameId
+            );
         });
     }
 }

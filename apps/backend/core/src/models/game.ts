@@ -22,7 +22,7 @@ export type PlayerTimes = {
     whiteTimeRemaining: number;
 };
 
-export interface UpdatePositionRequest {
+export interface PositionUpdateNotification {
     position: string;
     isGameOver: boolean;
     winner: Winner | null;

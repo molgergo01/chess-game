@@ -1,6 +1,6 @@
 'use client';
 
-import {
+import React, {
     createContext,
     ReactNode,
     useContext,
@@ -26,7 +26,7 @@ export function CoreSocketProvider({ children }: CoreSocketProviderProps) {
     const { userId } = useAuth();
 
     useEffect(() => {
-        if (!userId || socket) return;
+        if (!userId) return;
 
         const socketInstance = initializeCoreSocket(userId);
         setSocket(socketInstance);
@@ -42,7 +42,7 @@ export function CoreSocketProvider({ children }: CoreSocketProviderProps) {
                 setSocket(null);
             }
         };
-    }, [userId, socket]);
+    }, [userId]);
 
     return (
         <CoreSocketContext.Provider value={{ socket }}>
