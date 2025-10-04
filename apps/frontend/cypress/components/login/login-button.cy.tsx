@@ -1,9 +1,10 @@
 import React from 'react';
 import LoginButton from '@/components/login/login-button';
+import { withAppRouter } from '../../support/component';
 
 describe('<LoginButton />', () => {
     beforeEach(() => {
-        cy.mount(<LoginButton />);
+        cy.mount(withAppRouter(<LoginButton />));
     });
 
     it('should render', () => {

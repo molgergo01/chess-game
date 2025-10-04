@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils/utils';
 
-// Example message data structure
 type Message = {
     id: number;
     text: string;
@@ -10,13 +9,21 @@ type Message = {
 };
 
 function ChatBox({ className, ...props }: React.ComponentProps<'div'>) {
-    // Example messages; replace with your state/props as needed
     const [messages, setMessages] = useState<Message[]>([
         { id: 1, text: 'Hello!', sender: 'other' },
         { id: 2, text: 'Hi there!', sender: 'me' },
         { id: 3, text: 'How are you?', sender: 'other' }
     ]);
     const [input, setInput] = useState('');
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     const handleSend = () => {
         if (input.trim()) {
@@ -31,12 +38,11 @@ function ChatBox({ className, ...props }: React.ComponentProps<'div'>) {
     return (
         <div
             className={cn(
-                'flex flex-col rounded-lg border bg-background shadow-md p-2',
+                'flex flex-col rounded-lg border bg-background shadow-md p-2 h-full',
                 className
             )}
             {...props}
         >
-            {/* Messages area */}
             <div className="flex-1 overflow-y-auto space-y-2 p-2 min-h-0">
                 {messages.map((msg) => (
                     <div
@@ -54,6 +60,7 @@ function ChatBox({ className, ...props }: React.ComponentProps<'div'>) {
                         </div>
                     </div>
                 ))}
+                <div ref={messagesEndRef} />
             </div>
             <div className="mt-2 flex-shrink-0">
                 <Textarea

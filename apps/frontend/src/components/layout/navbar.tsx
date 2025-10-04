@@ -12,14 +12,14 @@ import {
 } from '@/components/ui/navigation-menu';
 import DropDownMenu from './dropdown';
 
-export default function NavBar() {
+export default function NavBar({ className }: { className?: string }) {
     const pathName = usePathname();
     const isLoginPage = pathName === '/login';
 
     if (isLoginPage) return null;
 
     return (
-        <NavigationMenu>
+        <NavigationMenu className={className}>
             <NavigationMenuList>
                 <NavigationMenuItem>
                     <NavigationMenuTrigger>Item One</NavigationMenuTrigger>
