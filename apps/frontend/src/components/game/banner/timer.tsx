@@ -11,6 +11,7 @@ import {
 interface TimerProps {
     timeInMinutes: number;
     className?: string;
+    onTick?: (timeLeft: number) => void;
 }
 
 export interface TimerRef {
@@ -21,19 +22,52 @@ export interface TimerRef {
     setTimeLeft: (time: number) => void;
 }
 
+export const formatTime = (ms: number): string => {
+    const seconds = Math.round(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
+interface TimeDisplayProps {
+    timeLeft: number;
+    className?: string;
+    'data-cy'?: string;
+}
+
+export function TimeDisplay({ timeLeft, className, 'data-cy': dataCy }: TimeDisplayProps) {
+    return (
+        <div className={`flex items-center justify-center ${className || ''}`} data-cy={dataCy}>
+            <div className={`text-2xl`}>{formatTime(timeLeft)}</div>
+        </div>
+    );
+}
+
 const Timer = forwardRef<TimerRef, TimerProps>(
-    ({ timeInMinutes, className }, ref) => {
+    ({ timeInMinutes, onTick }, ref) => {
         const [timeLeft, setTimeLeft] = useState(timeInMinutes * 60 * 1000);
         const [lastUpdateTime, setLastUpdateTime] = useState<number>(0);
         const [isRunning, setIsRunning] = useState(false);
         const intervalRef = useRef<NodeJS.Timeout | null>(null);
+        const onTickRef = useRef(onTick);
+
+        useEffect(() => {
+            onTickRef.current = onTick;
+        }, [onTick]);
+
+        useEffect(() => {
+            onTickRef.current?.(timeLeft);
+        }, [timeLeft]);
 
         useImperativeHandle(ref, () => ({
             start: () => {
-                if (!isRunning && timeLeft > 0) {
-                    setIsRunning(true);
-                    setLastUpdateTime(Date.now());
-                }
+                setIsRunning((prev) => {
+                    if (!prev) {
+                        setLastUpdateTime(Date.now());
+                        return true;
+                    }
+                    return prev;
+                });
             },
             stop: () => {
                 setIsRunning(false);
@@ -47,7 +81,7 @@ const Timer = forwardRef<TimerRef, TimerProps>(
         }));
 
         useEffect(() => {
-            if (isRunning && timeLeft > 0) {
+            if (isRunning) {
                 intervalRef.current = setInterval(() => {
                     setTimeLeft((prevTime) => {
                         const currentTime = Date.now();
@@ -79,20 +113,7 @@ const Timer = forwardRef<TimerRef, TimerProps>(
             };
         }, [isRunning, lastUpdateTime, timeLeft]);
 
-        const formatTime = (ms: number): string => {
-            const seconds = Math.round(ms / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = seconds % 60;
-            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-        };
-
-        return (
-            <div
-                className={`flex items-center justify-center ${className || ''}`}
-            >
-                <div className={`text-2xl`}>{formatTime(timeLeft)}</div>
-            </div>
-        );
+        return null;
     }
 );
 

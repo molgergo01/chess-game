@@ -37,8 +37,8 @@ export default function RootLayout({
                         enableSystem
                         disableTransitionOnChange
                     >
-                        <div className="w-[100vw] h-[100vw] overflow-hidden">
-                            <NavBar />
+                        <div className="w-[100vw] h-[100vh] overflow-hidden flex flex-col">
+                            <NavBar className="hidden sm:block !flex-none" />
                             {children}
                         </div>
                     </ThemeProvider>

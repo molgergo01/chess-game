@@ -1,8 +1,9 @@
 import LoginForm from '@/components/login/login-form';
+import { withAppRouter } from '../../support/component';
 
 describe('<LoginForm />', () => {
     beforeEach(() => {
-        cy.mount(<LoginForm />);
+        cy.mount(withAppRouter(<LoginForm />));
     });
 
     it('should render with necessary elements', () => {

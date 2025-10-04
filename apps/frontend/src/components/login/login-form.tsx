@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import LoginButton from './login-button';
+import React from 'react';
 
 export default function LoginForm({
     className,
