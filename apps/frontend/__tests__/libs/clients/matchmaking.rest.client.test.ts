@@ -1,6 +1,10 @@
 jest.mock('axios');
 
-import { joinQueue, leaveQueue, isInQueue } from '@/lib/clients/matchmaking.rest.client';
+import {
+    joinQueue,
+    leaveQueue,
+    isInQueue
+} from '@/lib/clients/matchmaking.rest.client';
 import axios from 'axios';
 import env from '@/lib/config/env';
 

@@ -25,9 +25,7 @@ describe('Matchmaking Scheduler', () => {
 
         (CronJob.from as jest.Mock) = jest.fn().mockReturnValue(mockCronJob);
 
-        matchmakingScheduler = new MatchmakingScheduler(
-            mockMatchmakingService
-        );
+        matchmakingScheduler = new MatchmakingScheduler(mockMatchmakingService);
     });
 
     afterEach(() => {

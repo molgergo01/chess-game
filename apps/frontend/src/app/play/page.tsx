@@ -6,7 +6,7 @@ import { MatchmakingSocketProvider } from '@/hooks/matchmaking/useMatchmakingSoc
 export default function MatchMakePage() {
     return (
         <MatchmakingSocketProvider>
-            <Matchmaking className="flex place-content-center p-10" />;
+            <Matchmaking className="flex place-content-center p-10" />
         </MatchmakingSocketProvider>
     );
 }

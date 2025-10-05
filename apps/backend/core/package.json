@@ -5,11 +5,15 @@
     "license": "MIT",
     "private": true,
     "dependencies": {
+        "chess-game-backend-common": "workspace:*",
         "chess.js": "^1.1.0",
         "socket.io": "^4.8.1"
     },
     "devDependencies": {
-        "@types/socket.io": "^3.0.2"
+        "@types/jest": "^30.0.0",
+        "@types/socket.io": "^3.0.2",
+        "jest": "^30.2.0",
+        "ts-jest": "^29.4.4"
     },
     "scripts": {
         "build": "tsc",

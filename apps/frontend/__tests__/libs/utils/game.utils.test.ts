@@ -10,9 +10,11 @@ describe('getCurrentUserColor', () => {
         global.Storage.prototype.getItem = jest.fn(
             (key: string) => localStorageMock[key] || null
         );
-        global.Storage.prototype.setItem = jest.fn((key: string, value: string) => {
-            localStorageMock[key] = value;
-        });
+        global.Storage.prototype.setItem = jest.fn(
+            (key: string, value: string) => {
+                localStorageMock[key] = value;
+            }
+        );
     });
 
     afterEach(() => {

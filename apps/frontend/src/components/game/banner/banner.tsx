@@ -40,11 +40,17 @@ function Banner({
                     'flex flex-col justify-center shrink-0 items-center'
                 )}
             >
-                <Avatar className="size-12 flex-shrink-0 border-2" data-cy="banner-avatar">
+                <Avatar
+                    className="size-12 flex-shrink-0 border-2"
+                    data-cy="banner-avatar"
+                >
                     <AvatarImage src={avatarUrl} />
                     <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
-                <span className="text-center text-base sm:text-sm" data-cy="banner-player-color">
+                <span
+                    className="text-center text-base sm:text-sm"
+                    data-cy="banner-player-color"
+                >
                     {playerColor}
                 </span>
             </div>

@@ -11,9 +11,13 @@ describe('<LeaveMatchmakingButton />', () => {
         });
 
         // Mock leaveQueue API
-        cy.intercept('DELETE', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/*`, {
-            statusCode: 200
-        });
+        cy.intercept(
+            'DELETE',
+            `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/*`,
+            {
+                statusCode: 200
+            }
+        );
 
         cy.mount(withAuthAndRouter(<LeaveMatchmakingButton />));
     });
@@ -27,6 +31,9 @@ describe('<LeaveMatchmakingButton />', () => {
     });
 
     it('should display "Leave Queue" text', () => {
-        cy.getDataCy('matchmaking-button').should('contain.text', 'Leave Queue');
+        cy.getDataCy('matchmaking-button').should(
+            'contain.text',
+            'Leave Queue'
+        );
     });
 });

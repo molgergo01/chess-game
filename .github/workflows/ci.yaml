@@ -12,6 +12,25 @@ jobs:
         timeout-minutes: 15
         runs-on: ubuntu-latest
 
+        services:
+            postgres:
+                image: postgres:14.18-alpine
+                env:
+                    POSTGRES_PASSWORD: password
+                    POSTGRES_USER: postgres
+                options: >-
+                    --health-cmd pg_isready --health-interval 10s
+                    --health-timeout 5s --health-retries 5
+                ports:
+                    - 5432:5432
+            redis:
+                image: redis:8.0.3-alpine
+                options: >-
+                    --health-cmd "redis-cli ping" --health-interval 10s
+                    --health-timeout 5s --health-retries 5
+                ports:
+                    - 6379:6379
+
         steps:
             - name: Check out code
               uses: actions/checkout@v4
@@ -26,13 +45,36 @@ jobs:
 
             - name: Set up dotenv environment variables
               run: |
+                  echo "TOKEN_NEVER_EXPIRES=${{ secrets.TOKEN_NEVER_EXPIRES }}" >> ./apps/frontend/.env
+                  echo "NEXT_PUBLIC_CORE_ADDRESS=localhost:8080" >> ./apps/frontend/.env
+                  echo "NEXT_PUBLIC_MATCHMAKING_ADDRESS=localhost:8081" >> ./apps/frontend/.env
+                  echo "NEXT_PUBLIC_AUTH_ADDRESS=localhost:8082" >> ./apps/frontend/.env
                   echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> ./apps/backend/.env
                   echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> ./apps/backend/.env
                   echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> ./apps/backend/.env
-                  echo "TOKEN_NEVER_EXPIRES=${{ secrets.TOKEN_NEVER_EXPIRES }}" >> ./apps/frontend/.env
                   echo "FRONTEND_URL=http://localhost:3000" >> ./apps/backend/.env
+                  echo "DB_HOST=localhost" >> ./apps/backend/.env
+                  echo "DB_USER=postgres" >> ./apps/backend/.env
+                  echo "DB_PASSWORD=password" >> ./apps/backend/.env
+                  echo "DB_DATABASE=chess_game_db" >> ./apps/backend/.env
+                  echo "DB_TEST_DATABASE=chess_game_test" >> ./apps/backend/.env
+                  echo "REDIS_URL=redis://localhost:6379" >> ./apps/backend/.env
+                  echo "REDIS_DB=0" >> ./apps/backend/.env
+                  echo "REDIS_TEST_DB=1" >> ./apps/backend/.env
+                  cp ./apps/backend/.env ./apps/backend/core/.env
+                  cp ./apps/backend/.env ./apps/backend/matchmaking/.env
+                  cp ./apps/backend/.env ./apps/backend/auth/.env
+
+            - name: Initialize databases
+              run: |
+                  PGPASSWORD=password psql -h localhost -U postgres -d postgres -c "CREATE DATABASE chess_game_db;"
+                  PGPASSWORD=password psql -h localhost -U postgres -d postgres -c "CREATE DATABASE chess_game_test;"
+
             - name: Install dependencies
               run: yarn
+
+            - name: Run database migrations
+              run: cd apps/backend && npx knex migrate:latest --env test
 
             - name: Build
               run: yarn build

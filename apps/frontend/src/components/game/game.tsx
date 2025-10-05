@@ -89,7 +89,11 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
     };
 
     return (
-        <div className={`flex flex-col flex-1 min-h-0 ${className}`} data-cy="game-container" {...props}>
+        <div
+            className={`flex flex-col flex-1 min-h-0 ${className}`}
+            data-cy="game-container"
+            {...props}
+        >
             <Timer
                 ref={whiteTimerRef}
                 timeInMinutes={10}
@@ -101,7 +105,10 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                 onTick={handleBlackTimerTick}
             />
 
-            <div className="flex-grow-0 grid grid-cols-2 sm:hidden" data-cy="game-mobile-banners">
+            <div
+                className="flex-grow-0 grid grid-cols-2 sm:hidden"
+                data-cy="game-mobile-banners"
+            >
                 <Banner
                     className="rounded-r-3xl"
                     playerName={'joe biden'}
@@ -148,7 +155,10 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                             data-cy="game-desktop-banner-top"
                         />
 
-                        <div className="w-full max-w-[min(100vw,calc(100vh-22rem))] aspect-square mx-auto flex-shrink-0 sm:w-[min(500px,min(45vw,calc(100vh-12rem)))] sm:h-[min(500px,min(45vw,calc(100vh-12rem)))] lg:w-[min(650px,min(50vw,calc(100vh-10rem)))] lg:h-[min(650px,min(50vw,calc(100vh-10rem)))] sm:max-w-none sm:aspect-auto" data-cy="game-chessboard-container">
+                        <div
+                            className="w-full max-w-[min(100vw,calc(100vh-22rem))] aspect-square mx-auto flex-shrink-0 sm:w-[min(500px,min(45vw,calc(100vh-12rem)))] sm:h-[min(500px,min(45vw,calc(100vh-12rem)))] lg:w-[min(650px,min(50vw,calc(100vh-10rem)))] lg:h-[min(650px,min(50vw,calc(100vh-10rem)))] sm:max-w-none sm:aspect-auto"
+                            data-cy="game-chessboard-container"
+                        >
                             <Chessboard options={chessboardOptions} />
                         </div>
 
@@ -170,13 +180,19 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                         />
                     </div>
 
-                    <div className="flex-1 min-h-[200px] sm:min-h-0 sm:w-auto sm:min-w-[250px] sm:max-w-[350px] sm:self-stretch" data-cy="game-chatbox">
+                    <div
+                        className="flex-1 min-h-[200px] sm:min-h-0 sm:w-auto sm:min-w-[250px] sm:max-w-[350px] sm:self-stretch"
+                        data-cy="game-chatbox"
+                    >
                         <ChatBox className="h-full w-full" />
                     </div>
                 </div>
             </div>
 
-            <div className="sm:hidden mt-auto flex-shrink-0" data-cy="game-navbar">
+            <div
+                className="sm:hidden mt-auto flex-shrink-0"
+                data-cy="game-navbar"
+            >
                 <NavBar />
             </div>
 

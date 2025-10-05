@@ -35,9 +35,16 @@ interface TimeDisplayProps {
     'data-cy'?: string;
 }
 
-export function TimeDisplay({ timeLeft, className, 'data-cy': dataCy }: TimeDisplayProps) {
+export function TimeDisplay({
+    timeLeft,
+    className,
+    'data-cy': dataCy
+}: TimeDisplayProps) {
     return (
-        <div className={`flex items-center justify-center ${className || ''}`} data-cy={dataCy}>
+        <div
+            className={`flex items-center justify-center ${className || ''}`}
+            data-cy={dataCy}
+        >
             <div className={`text-2xl`}>{formatTime(timeLeft)}</div>
         </div>
     );

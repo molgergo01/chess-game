@@ -89,12 +89,9 @@ function useChessGame() {
     }, [boardPosition]);
 
     useEffect(() => {
-        console.log('socket', socket);
-        console.log('gameId', gameId);
         if (!socket || !gameId) return;
         const initializeTimers = async () => {
             const response = await getTimes(socket, gameId);
-            console.log('response', response);
 
             setTimesRemaining({
                 blackTimeRemaining: response.playerTimes.blackTimeRemaining,

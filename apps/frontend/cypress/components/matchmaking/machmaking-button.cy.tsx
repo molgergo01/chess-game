@@ -11,9 +11,13 @@ describe('<MatchmakingButton />', () => {
         });
 
         // Mock joinQueue API
-        cy.intercept('POST', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue`, {
-            statusCode: 200
-        });
+        cy.intercept(
+            'POST',
+            `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue`,
+            {
+                statusCode: 200
+            }
+        );
 
         cy.mount(withAuthAndRouter(<MatchmakingButton />));
     });

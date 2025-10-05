@@ -3,7 +3,7 @@ import QueueRepository from '../../src/repositories/queue.repository';
 import { SocketIdRepository } from '../../src/repositories/socket.id.repository';
 import CoreRestClient from '../../src/clients/core.rest.client';
 import MatchmakingNotificationService from '../../src/services/matchmaking.notification.service';
-import ConflictError from 'chess-game-backend-common/errors/conlfict.error';
+import ConflictError from 'chess-game-backend-common/errors/conflict.error';
 import NotFoundError from 'chess-game-backend-common/errors/not.found.error';
 import { Color, Player } from '../../src/models/game';
 

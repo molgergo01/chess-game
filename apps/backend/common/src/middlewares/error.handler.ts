@@ -2,7 +2,7 @@
 import { NextFunction, Request, Response } from 'express';
 import BadRequestError from '../errors/bad.request.error';
 import NotFoundError from '../errors/not.found.error';
-import ConflictError from '../errors/conlfict.error';
+import ConflictError from '../errors/conflict.error';
 import InternalServerError from '../errors/internal.server.error';
 import UnauthorizedError from '../errors/unauthorized.error';
 import ForbiddenError from '../errors/forbidden.error';

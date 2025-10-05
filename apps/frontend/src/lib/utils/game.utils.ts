@@ -5,7 +5,7 @@ export function getCurrentUserColor(userId: string): Color {
     if (!playerDataString) throw new Error('playerData not set');
 
     const playerData: Array<Player> = JSON.parse(playerDataString);
-    if (playerData.length != 2) throw new Error('playerData is corrupted');
+    if (playerData.length !== 2) throw new Error('playerData is corrupted');
 
     const currentPlayer = playerData.filter(
         (player: Player) => player.id === userId
