@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
-import env from 'chess-game-backend-common/src/config/env';
+import env from 'chess-game-backend-common/config/env';
 import AuthService from '../services/auth.service';
 
 @injectable()

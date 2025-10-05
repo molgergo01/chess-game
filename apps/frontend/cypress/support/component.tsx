@@ -43,5 +43,7 @@ export function withCoreSocket(component: React.ReactNode) {
 }
 
 export function withAllProviders(component: React.ReactNode) {
-    return withAppRouter(withAuth(withCoreSocket(withMatchmakingSocket(component))));
+    return withAppRouter(
+        withAuth(withCoreSocket(withMatchmakingSocket(component)))
+    );
 }

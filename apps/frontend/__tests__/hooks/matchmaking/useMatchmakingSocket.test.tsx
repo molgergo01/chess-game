@@ -200,7 +200,9 @@ describe('useMatchmakingSocket', () => {
 
             expect(() => {
                 renderHook(() => useMatchmakingSocket());
-            }).toThrow('useSocket must be used within MatchmakingSocketProvider');
+            }).toThrow(
+                'useSocket must be used within MatchmakingSocketProvider'
+            );
 
             consoleErrorSpy.mockRestore();
         });

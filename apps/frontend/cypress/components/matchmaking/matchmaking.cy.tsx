@@ -9,19 +9,31 @@ describe('<Matchmaking />', () => {
             body: { id: 'test-user-123', name: 'Test User' }
         }).as('getUser');
 
-        cy.intercept('POST', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue`, {
-            statusCode: 200
-        });
-        cy.intercept('DELETE', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/*`, {
-            statusCode: 200
-        });
+        cy.intercept(
+            'POST',
+            `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue`,
+            {
+                statusCode: 200
+            }
+        );
+        cy.intercept(
+            'DELETE',
+            `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/*`,
+            {
+                statusCode: 200
+            }
+        );
     });
 
     describe('when loading queue status', () => {
         beforeEach(() => {
-            cy.intercept('GET', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/*`, (req) => {
-                req.reply(() => new Promise(() => {})); // Never resolves
-            });
+            cy.intercept(
+                'GET',
+                `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/*`,
+                (req) => {
+                    req.reply(() => new Promise(() => {})); // Never resolves
+                }
+            );
 
             cy.mount(withAllProviders(<Matchmaking />));
         });
@@ -37,9 +49,13 @@ describe('<Matchmaking />', () => {
 
     describe('when not in queue', () => {
         beforeEach(() => {
-            cy.intercept('GET', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/*`, {
-                statusCode: 404
-            }).as('checkQueue');
+            cy.intercept(
+                'GET',
+                `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/*`,
+                {
+                    statusCode: 404
+                }
+            ).as('checkQueue');
 
             cy.mount(withAllProviders(<Matchmaking />));
             cy.wait('@getUser');
@@ -62,9 +78,13 @@ describe('<Matchmaking />', () => {
 
     describe('when in queue', () => {
         beforeEach(() => {
-            cy.intercept('GET', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/*`, {
-                statusCode: 200
-            }).as('checkQueue');
+            cy.intercept(
+                'GET',
+                `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/*`,
+                {
+                    statusCode: 200
+                }
+            ).as('checkQueue');
 
             cy.mount(withAllProviders(<Matchmaking />));
             cy.wait('@getUser');
@@ -81,7 +101,10 @@ describe('<Matchmaking />', () => {
         });
 
         it('should display "Leave Queue" text on button', () => {
-            cy.getDataCy('matchmaking-button').should('contain.text', 'Leave Queue');
+            cy.getDataCy('matchmaking-button').should(
+                'contain.text',
+                'Leave Queue'
+            );
         });
     });
 });

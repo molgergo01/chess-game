@@ -47,7 +47,7 @@ function Matchmaking({ className, ...props }: React.ComponentProps<'div'>) {
                 'playerData',
                 JSON.stringify(matchmakeMessage.players)
             );
-            //TODO Do something with player colors
+            // TODO make player data not store userid
             setIsQueued(false);
             router.push('/game');
         };

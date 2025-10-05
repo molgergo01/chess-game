@@ -5,12 +5,16 @@
     "license": "MIT",
     "private": true,
     "dependencies": {
+        "chess-game-backend-common": "workspace:*",
         "cookie-parser": "^1.4.7",
         "jsonwebtoken": "^9.0.2"
     },
     "devDependencies": {
         "@types/cookie-parser": "^1.4.8",
-        "@types/jsonwebtoken": "^9.0.8"
+        "@types/jest": "^30.0.0",
+        "@types/jsonwebtoken": "^9.0.8",
+        "jest": "^30.2.0",
+        "ts-jest": "^29.4.4"
     },
     "scripts": {
         "build": "tsc",

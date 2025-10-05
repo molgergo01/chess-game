@@ -3,12 +3,19 @@ import type { Config } from 'jest';
 const config: Config = {
     preset: 'ts-jest',
     verbose: true,
-    collectCoverage: true,
+    collectCoverage: false,
     collectCoverageFrom: [
-        '**/lib/**/*.{js,ts,jsx,tsx}',
-        '**/hooks/**/*.{js,ts,jsx,tsx}',
+        'src/**/*.{js,ts}',
+        '!**/node_modules/**',
+        '!**/vendor/**',
+        '!**/knexfile.js',
+        '!**/migrations/**',
         '!**/config/**',
         '!**/models/**',
+        '!**/jest.config.ts',
+        '!**/server.ts',
+        '!**/dist/**',
+        '!**/coverage/**',
         '!**/*.d.ts'
     ],
     coverageDirectory: '<rootDir>/coverage',
@@ -20,21 +27,7 @@ const config: Config = {
             statements: 80
         }
     },
-    coverageProvider: 'v8',
-    moduleNameMapper: {
-        '@/(.*)': '<rootDir>/src/$1'
-    },
-    testEnvironment: 'jsdom',
-    transform: {
-        '^.+\\.tsx?$': [
-            'ts-jest',
-            {
-                tsconfig: {
-                    jsx: 'react'
-                }
-            }
-        ]
-    }
+    coverageProvider: 'v8'
 };
 
 export default config;

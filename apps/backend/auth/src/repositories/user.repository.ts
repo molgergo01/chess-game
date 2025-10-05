@@ -1,6 +1,6 @@
-import { DEFAULT_ELO } from 'chess-game-backend-common/src/config/constants';
+import { DEFAULT_ELO } from 'chess-game-backend-common/config/constants';
 import { injectable } from 'inversify';
-import db from 'chess-game-backend-common/src/config/db';
+import db from 'chess-game-backend-common/config/db';
 import { User } from '../models/user';
 
 @injectable()

@@ -1,5 +1,5 @@
 import express from 'express';
-import passport from 'chess-game-backend-common/src/config/passport';
+import passport from 'chess-game-backend-common/config/passport';
 import container from '../config/container';
 import AuthController from '../controllers/auth.controller';
 

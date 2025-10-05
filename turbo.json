@@ -13,15 +13,15 @@
             "outputs": []
         },
         "test:jest": {
-            "dependsOn": ["^test"],
+            "dependsOn": ["^test:jest"],
             "cache": false
         },
         "test:cypress-component": {
-            "dependsOn": ["^test"],
+            "dependsOn": ["^test:cypress-component"],
             "cache": false
         },
         "test:cypress-e2e": {
-            "dependsOn": ["^test"],
+            "dependsOn": ["^test:cypress-e2e"],
             "cache": false
         },
         "dev": {
@@ -29,7 +29,7 @@
             "cache": false
         },
         "lint:type-check": {
-            "dependsOn": ["^lint"]
+            "dependsOn": ["^lint:type-check", "^build"]
         }
     }
 }

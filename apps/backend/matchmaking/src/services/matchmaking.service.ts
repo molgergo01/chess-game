@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import QueueRepository from '../repositories/queue.repository';
 import { SocketIdRepository } from '../repositories/socket.id.repository';
 import CoreRestClient from '../clients/core.rest.client';
-import ConflictError from 'chess-game-backend-common/errors/conlfict.error';
+import ConflictError from 'chess-game-backend-common/errors/conflict.error';
 import NotFoundError from 'chess-game-backend-common/errors/not.found.error';
 import { Player } from '../models/game';
 import MatchmakingNotificationService from './matchmaking.notification.service';

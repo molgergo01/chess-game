@@ -13,10 +13,10 @@ const env = {
     WS_URLS: {
         CORE:
             `ws://${process.env.NEXT_PUBLIC_CORE_ADDRESS}` ||
-            'http://localhost:8080',
+            'ws://localhost:8080',
         MATCHMAKING:
             `ws://${process.env.NEXT_PUBLIC_MATCHMAKING_ADDRESS}` ||
-            'http://localhost:8080'
+            'ws://localhost:8081'
     }
 };
 
