@@ -62,11 +62,7 @@ describe('GameId Repository', () => {
     describe('remove', () => {
         it('should delete all keys matching the gameId', async () => {
             const gameId = 'game456';
-            const mockKeys = [
-                'game-id:user1',
-                'game-id:user2',
-                'game-id:user3'
-            ];
+            const mockKeys = ['game-id:user1', 'game-id:user2', 'game-id:user3'];
 
             (Redis.keys as jest.Mock).mockResolvedValue(mockKeys);
             (Redis.get as jest.Mock)
@@ -100,9 +96,7 @@ describe('GameId Repository', () => {
             const mockKeys = ['game-id:user1', 'game-id:user2'];
 
             (Redis.keys as jest.Mock).mockResolvedValue(mockKeys);
-            (Redis.get as jest.Mock)
-                .mockResolvedValueOnce('other-game1')
-                .mockResolvedValueOnce('other-game2');
+            (Redis.get as jest.Mock).mockResolvedValueOnce('other-game1').mockResolvedValueOnce('other-game2');
 
             await gameIdRepository.remove(gameId);
 

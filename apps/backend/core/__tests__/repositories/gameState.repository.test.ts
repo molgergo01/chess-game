@@ -27,8 +27,7 @@ describe('GameState Repository', () => {
     describe('save', () => {
         it('should call redis.hSet with correct key pattern and serialized data', async () => {
             const gameId = 'game123';
-            const fen =
-                'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+            const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
             const players: Array<Player> = [
                 { id: 'user1', color: Color.WHITE, timer: new Timer(600000) },
                 { id: 'user2', color: Color.BLACK, timer: new Timer(600000) }
@@ -44,13 +43,7 @@ describe('GameState Repository', () => {
                 startedAt: startedAt
             };
 
-            gameStateRepository.save(
-                gameId,
-                fen,
-                players,
-                lastMoveEpoch,
-                startedAt
-            );
+            gameStateRepository.save(gameId, fen, players, lastMoveEpoch, startedAt);
 
             expect(Redis.hSet).toHaveBeenCalledWith(expectedKey, expectedData);
         });
@@ -73,8 +66,7 @@ describe('GameState Repository', () => {
                         timer: { remainingMs: 600000 }
                     }
                 ]),
-                position:
-                    'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
                 lastMoveEpoch: '1234567890',
                 startedAt: '1234567800'
             };
@@ -97,8 +89,7 @@ describe('GameState Repository', () => {
                         timer: { remainingMs: 600000 }
                     }
                 ],
-                position:
-                    'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
                 lastMoveEpoch: 1234567890,
                 startedAt: 1234567800
             });
@@ -118,8 +109,7 @@ describe('GameState Repository', () => {
             const gameId = 'game123';
             const mockData = {
                 players: 'invalid-json',
-                position:
-                    'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
                 lastMoveEpoch: '1234567890',
                 startedAt: '1234567800'
             };
@@ -135,11 +125,7 @@ describe('GameState Repository', () => {
 
     describe('getKeys', () => {
         it('should call redis.keys with correct pattern and return keys', async () => {
-            const mockKeys = [
-                'game-state:game1',
-                'game-state:game2',
-                'game-state:game3'
-            ];
+            const mockKeys = ['game-state:game1', 'game-state:game2', 'game-state:game3'];
 
             (Redis.keys as jest.Mock).mockResolvedValue(mockKeys);
 

@@ -1,12 +1,6 @@
 'use client';
 
-import React, {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useState
-} from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { getUser } from '@/lib/clients/auth.rest.client';
 
 interface AuthContextType {
@@ -39,11 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetchUserData();
     }, []);
 
-    return (
-        <AuthContext.Provider value={{ userId, refetch: fetchUserData }}>
-            {children}
-        </AuthContext.Provider>
-    );
+    return <AuthContext.Provider value={{ userId, refetch: fetchUserData }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

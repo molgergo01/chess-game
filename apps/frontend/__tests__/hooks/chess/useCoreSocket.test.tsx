@@ -9,10 +9,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { Socket } from 'socket.io-client';
 
 describe('useCoreSocket', () => {
-    const mockInitializeCoreSocket =
-        initializeCoreSocket as jest.MockedFunction<
-            typeof initializeCoreSocket
-        >;
+    const mockInitializeCoreSocket = initializeCoreSocket as jest.MockedFunction<typeof initializeCoreSocket>;
     const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
     let mockSocket: Partial<Socket>;
@@ -92,9 +89,7 @@ describe('useCoreSocket', () => {
         });
 
         it('should handle disconnect error gracefully', async () => {
-            const consoleWarnSpy = jest
-                .spyOn(console, 'warn')
-                .mockImplementation(() => {});
+            const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
             mockSocket.disconnect = jest.fn(() => {
                 throw new Error('Disconnect error');
@@ -119,10 +114,7 @@ describe('useCoreSocket', () => {
 
             unmount();
 
-            expect(consoleWarnSpy).toHaveBeenCalledWith(
-                'Socket disconnect error:',
-                expect.any(Error)
-            );
+            expect(consoleWarnSpy).toHaveBeenCalledWith('Socket disconnect error:', expect.any(Error));
 
             consoleWarnSpy.mockRestore();
         });
@@ -164,9 +156,7 @@ describe('useCoreSocket', () => {
 
     describe('useCoreSocket hook', () => {
         it('should throw error when used outside CoreSocketProvider', () => {
-            const consoleErrorSpy = jest
-                .spyOn(console, 'error')
-                .mockImplementation(() => {});
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
             expect(() => {
                 renderHook(() => useCoreSocket());

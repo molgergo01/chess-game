@@ -6,25 +6,30 @@ import { useAuth } from '@/hooks/auth/useAuth';
 
 interface MatchmakingButtonProps {
     onJoinQueue?: () => void;
+    onError?: (error: Error) => void;
 }
 
-function MatchmakingButton({ onJoinQueue }: MatchmakingButtonProps) {
+function MatchmakingButton({ onJoinQueue, onError }: MatchmakingButtonProps) {
     const { userId } = useAuth();
     const handleMatchmaking = async () => {
         if (!userId) {
-            throw Error('User id is not set');
+            const error = new Error('User id is not set');
+            onError?.(error);
+            return;
         }
-        await joinQueue(userId);
-        onJoinQueue?.();
+        try {
+            await joinQueue(userId);
+            onJoinQueue?.();
+        } catch (error) {
+            if (error instanceof Error) {
+                onError?.(error);
+            }
+        }
     };
 
     return (
-        <Button
-            className="w-fit"
-            onClick={handleMatchmaking}
-            data-cy="matchmaking-button"
-        >
-            <span>Queue</span>
+        <Button className="w-full md:w-3/4 md:mx-auto" onClick={handleMatchmaking} data-cy="matchmaking-button-join">
+            Play Online
         </Button>
     );
 }

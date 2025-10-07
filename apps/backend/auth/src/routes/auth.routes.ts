@@ -6,10 +6,7 @@ import AuthController from '../controllers/auth.controller';
 const authController = container.get(AuthController);
 const router = express.Router();
 
-router.get(
-    '/google',
-    passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get(
     '/google/callback',
     passport.authenticate('google', {

@@ -13,17 +13,7 @@
             "chess-game-backend-common/*": ["common/src/*"]
         }
     },
-    "references": [
-        { "path": "common" },
-        { "path": "core" },
-        { "path": "auth" },
-        { "path": "matchmaking" }
-    ],
+    "references": [{ "path": "common" }, { "path": "core" }, { "path": "auth" }, { "path": "matchmaking" }],
     //"include": ["**/*.ts", "**/*.tsx", "core/src/types/**/*.d.ts"],
-    "exclude": [
-        "__tests__",
-        "./jest.config.ts",
-        "./knexfile.js",
-        "node_modules"
-    ]
+    "exclude": ["__tests__", "./jest.config.ts", "./knexfile.js", "node_modules"]
 }

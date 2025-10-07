@@ -29,9 +29,7 @@ import gameListener from '../../src/listeners/game.listener';
 import { MoveCallback, PositionCallback, Winner } from '../../src/models/game';
 
 jest.mock('chess-game-backend-common/config/passport', () => ({
-    initialize: jest.fn(
-        () => (req: Request, res: Response, next: NextFunction) => next()
-    )
+    initialize: jest.fn(() => (req: Request, res: Response, next: NextFunction) => next())
 }));
 
 jest.mock('../../src/services/game.service');
@@ -41,8 +39,7 @@ jest.mock('../../src/services/timer.watcher');
 jest.mock('../../src/config/container', () => ({
     get: jest.fn((service) => {
         if (service.name === 'GameService') return mockGameService;
-        if (service.name === 'GameNotificationService')
-            return mockGameNotificationService;
+        if (service.name === 'GameNotificationService') return mockGameNotificationService;
         if (service.name === 'GameController') return mockGameController;
         if (service.name === 'TimerWatcher') return mockTimerWatcher;
         return null;
@@ -66,13 +63,7 @@ describe('Game Listener', () => {
                 auth: { userId }
             });
             io.on('connection', (socket: ServerSocket) => {
-                const {
-                    getGameId,
-                    getTimes,
-                    joinGame,
-                    movePiece,
-                    getPosition
-                } = gameListener(io, socket);
+                const { getGameId, getTimes, joinGame, movePiece, getPosition } = gameListener(io, socket);
 
                 socket.on('getGameId', getGameId);
                 socket.on('getTimes', getTimes);
@@ -98,8 +89,7 @@ describe('Game Listener', () => {
         it('should return gameId from service', async () => {
             mockGameService.getGameId.mockResolvedValue(gameId);
 
-            const result: { gameId: string | null } =
-                await clientSocket.emitWithAck('getGameId');
+            const result: { gameId: string | null } = await clientSocket.emitWithAck('getGameId');
 
             expect(result).toEqual({ gameId });
             expect(mockGameService.getGameId).toHaveBeenCalledWith(userId);
@@ -108,8 +98,7 @@ describe('Game Listener', () => {
         it('should return null if no game exists', async () => {
             mockGameService.getGameId.mockResolvedValue(null);
 
-            const result: { gameId: string | null } =
-                await clientSocket.emitWithAck('getGameId');
+            const result: { gameId: string | null } = await clientSocket.emitWithAck('getGameId');
 
             expect(result).toEqual({ gameId: null });
             expect(mockGameService.getGameId).toHaveBeenCalledWith(userId);
@@ -124,14 +113,10 @@ describe('Game Listener', () => {
             };
             mockGameService.getTimes.mockResolvedValue(playerTimes);
 
-            const result: { playerTimes: typeof playerTimes } =
-                await clientSocket.emitWithAck('getTimes', { gameId });
+            const result: { playerTimes: typeof playerTimes } = await clientSocket.emitWithAck('getTimes', { gameId });
 
             expect(result).toEqual({ playerTimes });
-            expect(mockGameService.getTimes).toHaveBeenCalledWith(
-                gameId,
-                expect.any(Number)
-            );
+            expect(mockGameService.getTimes).toHaveBeenCalledWith(gameId, expect.any(Number));
         });
     });
 
@@ -177,9 +162,13 @@ describe('Game Listener', () => {
                 undefined,
                 expect.any(Number)
             );
-            expect(
-                mockGameNotificationService.sendPositionUpdateNotification
-            ).toHaveBeenCalledWith(gameId, newFen, false, null, playerTimes);
+            expect(mockGameNotificationService.sendPositionUpdateNotification).toHaveBeenCalledWith(
+                gameId,
+                newFen,
+                false,
+                null,
+                playerTimes
+            );
         });
 
         it('should return failure response when move is invalid', async () => {
@@ -187,24 +176,19 @@ describe('Game Listener', () => {
             mockGameService.getFen.mockResolvedValue(currentFen);
             mockGameService.move.mockRejectedValue(new Error('Invalid move'));
 
-            const result: MoveCallback = await clientSocket.emitWithAck(
-                'movePiece',
-                {
-                    gameId,
-                    from: 'e2',
-                    to: 'e5',
-                    promotionPiece: undefined
-                }
-            );
+            const result: MoveCallback = await clientSocket.emitWithAck('movePiece', {
+                gameId,
+                from: 'e2',
+                to: 'e5',
+                promotionPiece: undefined
+            });
 
             expect(result).toEqual({
                 success: false,
                 position: currentFen
             });
             expect(mockGameService.move).toHaveBeenCalled();
-            expect(
-                mockGameNotificationService.sendPositionUpdateNotification
-            ).not.toHaveBeenCalled();
+            expect(mockGameNotificationService.sendPositionUpdateNotification).not.toHaveBeenCalled();
         });
 
         it('should reset game when game is over', async () => {
@@ -232,9 +216,7 @@ describe('Game Listener', () => {
 
             expect(mockGameService.isGameOver).toHaveBeenCalledWith(gameId);
             expect(mockGameService.reset).toHaveBeenCalledWith(gameId);
-            expect(
-                mockGameNotificationService.sendPositionUpdateNotification
-            ).toHaveBeenCalledWith(
+            expect(mockGameNotificationService.sendPositionUpdateNotification).toHaveBeenCalledWith(
                 gameId,
                 finalFen,
                 true,
@@ -251,10 +233,7 @@ describe('Game Listener', () => {
             mockGameService.isGameOver.mockResolvedValue(false);
             mockGameService.getWinner.mockResolvedValue(null);
 
-            const result: PositionCallback = await clientSocket.emitWithAck(
-                'getPosition',
-                { gameId }
-            );
+            const result: PositionCallback = await clientSocket.emitWithAck('getPosition', { gameId });
 
             expect(result).toEqual({
                 position: currentFen,
@@ -272,10 +251,7 @@ describe('Game Listener', () => {
             mockGameService.getWinner.mockResolvedValue(Winner.WHITE);
             mockGameService.reset.mockResolvedValue(undefined);
 
-            const result: PositionCallback = await clientSocket.emitWithAck(
-                'getPosition',
-                { gameId }
-            );
+            const result: PositionCallback = await clientSocket.emitWithAck('getPosition', { gameId });
 
             expect(result).toEqual({
                 position: finalFen,

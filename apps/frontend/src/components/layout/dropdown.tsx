@@ -10,9 +10,7 @@ import LogoutButton from './logout-button-dropdown';
 export default function DropDownMenu() {
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger data-cy={'dropdown-open'}>
-                Open
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger data-cy={'dropdown-open'}>Open</DropdownMenuTrigger>
             <DropdownMenuContent>
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />

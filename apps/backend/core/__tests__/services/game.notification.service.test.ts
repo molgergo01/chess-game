@@ -1,12 +1,7 @@
 import GameNotificationService from '../../src/services/game.notification.service';
 import { Server } from 'socket.io';
 import { Container } from 'inversify';
-import {
-    PlayerTimes,
-    PositionUpdateNotification,
-    TimeExpiredMessage,
-    Winner
-} from '../../src/models/game';
+import { PlayerTimes, PositionUpdateNotification, TimeExpiredMessage, Winner } from '../../src/models/game';
 
 jest.mock('socket.io');
 
@@ -41,16 +36,10 @@ describe('Game Notification Service', () => {
                 winner: winner
             };
 
-            gameNotificationService.sendTimerExpiredNotification(
-                gameId,
-                winner
-            );
+            gameNotificationService.sendTimerExpiredNotification(gameId, winner);
 
             expect(mockIo.to).toHaveBeenCalledWith(gameId);
-            expect(mockIo.emit).toHaveBeenCalledWith(
-                timeExpiredEvent,
-                expectedMessage
-            );
+            expect(mockIo.emit).toHaveBeenCalledWith(timeExpiredEvent, expectedMessage);
         });
     });
 
@@ -73,19 +62,10 @@ describe('Game Notification Service', () => {
                 playerTimes: playerTimes
             };
 
-            gameNotificationService.sendPositionUpdateNotification(
-                gameId,
-                fen,
-                isGameOver,
-                winner,
-                playerTimes
-            );
+            gameNotificationService.sendPositionUpdateNotification(gameId, fen, isGameOver, winner, playerTimes);
 
             expect(mockIo.to).toHaveBeenCalledWith(gameId);
-            expect(mockIo.emit).toHaveBeenCalledWith(
-                updatePositionEvent,
-                expectedMessage
-            );
+            expect(mockIo.emit).toHaveBeenCalledWith(updatePositionEvent, expectedMessage);
         });
     });
 });

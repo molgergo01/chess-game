@@ -26,9 +26,7 @@ describe('Main Page', () => {
             cy.getDataCy('mode-toggle-dropdown').click();
             cy.getDataCy('system-theme').click();
             cy.window().then((win) => {
-                const isDarkMode = win.matchMedia(
-                    '(prefers-color-scheme: dark)'
-                ).matches;
+                const isDarkMode = win.matchMedia('(prefers-color-scheme: dark)').matches;
 
                 if (isDarkMode) {
                     cy.get('html').should('have.class', 'dark');

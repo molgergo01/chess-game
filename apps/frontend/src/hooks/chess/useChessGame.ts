@@ -1,22 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import Fen from 'chess-fen';
-import {
-    getTurnColor,
-    isPromotion,
-    updatePosition
-} from '@/lib/utils/fen.utils';
-import {
-    getPosition,
-    getTimes,
-    movePiece
-} from '@/lib/clients/core.socket.client';
+import { getTurnColor, isPromotion, updatePosition } from '@/lib/utils/fen.utils';
+import { getPosition, getTimes, movePiece } from '@/lib/clients/core.socket.client';
 import { Winner } from '@/lib/models/response/game';
 import { PieceDropHandlerArgs } from 'react-chessboard';
-import {
-    GameUpdateMessage,
-    PlayerTimes,
-    TimeExpiredMessage
-} from '@/lib/models/request/game';
+import { GameUpdateMessage, PlayerTimes, TimeExpiredMessage } from '@/lib/models/request/game';
 import { getCurrentUserColor } from '@/lib/utils/game.utils';
 import { Color } from '@/lib/models/request/matchmaking';
 import useGameId from '@/hooks/chess/useGameId';
@@ -25,16 +13,12 @@ import { useAuth } from '@/hooks/auth/useAuth';
 
 function useChessGame() {
     const [gameId, setGameId] = useGameId();
-    const [boardPosition, setBoardPosition] = useState<Fen>(
-        new Fen(Fen.emptyPosition)
-    );
+    const [boardPosition, setBoardPosition] = useState<Fen>(new Fen(Fen.emptyPosition));
     const [gameOver, setGameOver] = useState(false);
     const [winner, setWinner] = useState<Winner | null>(null);
     const [color, setColor] = useState<Color | undefined>(undefined);
     const [turnColor, setTurnColor] = useState<Color | undefined>(undefined);
-    const [timesRemaining, setTimesRemaining] = useState<
-        PlayerTimes | undefined
-    >(undefined);
+    const [timesRemaining, setTimesRemaining] = useState<PlayerTimes | undefined>(undefined);
     const { socket } = useCoreSocket();
     const { userId } = useAuth();
 
@@ -103,39 +87,20 @@ function useChessGame() {
     }, [socket, gameId]);
 
     const onDrop = useCallback(
-        ({
-            sourceSquare,
-            targetSquare,
-            piece
-        }: PieceDropHandlerArgs): boolean => {
+        ({ sourceSquare, targetSquare, piece }: PieceDropHandlerArgs): boolean => {
             if (!gameId || !userId || !socket) return false;
             if (targetSquare === null) return false;
-            const updatedPosition = updatePosition(
-                boardPosition,
-                sourceSquare,
-                targetSquare,
-                piece
-            );
+            const updatedPosition = updatePosition(boardPosition, sourceSquare, targetSquare, piece);
             setBoardPosition(updatedPosition);
 
             let promotionPiece: string | undefined;
             const color = piece.pieceType.charAt(0);
             const pieceType = piece.pieceType.charAt(1);
             const targetSquareNumber = targetSquare.charAt(1);
-            if (isPromotion(pieceType, color, targetSquareNumber))
-                promotionPiece = 'q';
+            if (isPromotion(pieceType, color, targetSquareNumber)) promotionPiece = 'q';
 
-            movePiece(
-                socket,
-                gameId,
-                sourceSquare,
-                targetSquare,
-                promotionPiece
-            ).then((response) => {
-                if (
-                    !response.success ||
-                    response.position !== updatedPosition.toString()
-                ) {
+            movePiece(socket, gameId, sourceSquare, targetSquare, promotionPiece).then((response) => {
+                if (!response.success || response.position !== updatedPosition.toString()) {
                     setBoardPosition(new Fen(response.position));
                 }
             });

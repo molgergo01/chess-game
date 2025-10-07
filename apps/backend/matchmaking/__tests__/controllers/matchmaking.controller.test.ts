@@ -3,8 +3,9 @@ import MatchmakingService from '../../src/services/matchmaking.service';
 import MatchmakingScheduler from '../../src/scheduler/matchmaking.scheduler';
 import { NextFunction, Request, Response } from 'express';
 import {
-    IsInQueueParams,
-    LeaveQueueParams
+    CreatePrivateQueueRequest,
+    JoinPrivateQueueParams,
+    LeavePrivateQueueParams
 } from '../../src/models/matchmaking';
 
 jest.mock('../../src/services/matchmaking.service');
@@ -24,18 +25,15 @@ describe('Matchmaking Controller', () => {
             null as never
         ) as jest.Mocked<MatchmakingService>;
         mockMatchmakingService.joinQueue = jest.fn();
+        mockMatchmakingService.createPrivateQueue = jest.fn();
+        mockMatchmakingService.joinPrivateQueue = jest.fn();
         mockMatchmakingService.leaveQueue = jest.fn();
-        mockMatchmakingService.checkInQueue = jest.fn();
+        mockMatchmakingService.getQueue = jest.fn();
 
-        mockMatchmakingScheduler = new MatchmakingScheduler(
-            null as never
-        ) as jest.Mocked<MatchmakingScheduler>;
+        mockMatchmakingScheduler = new MatchmakingScheduler(null as never) as jest.Mocked<MatchmakingScheduler>;
         mockMatchmakingScheduler.start = jest.fn();
 
-        matchmakingController = new MatchmakingController(
-            mockMatchmakingService,
-            mockMatchmakingScheduler
-        );
+        matchmakingController = new MatchmakingController(mockMatchmakingService, mockMatchmakingScheduler);
     });
 
     afterEach(() => {
@@ -60,15 +58,9 @@ describe('Matchmaking Controller', () => {
 
             mockMatchmakingService.joinQueue.mockResolvedValue();
 
-            await matchmakingController.joinQueue(
-                req as Request,
-                res as Response,
-                next
-            );
+            await matchmakingController.joinQueue(req as Request, res as Response, next);
 
-            expect(mockMatchmakingService.joinQueue).toHaveBeenCalledWith(
-                req.body.userId
-            );
+            expect(mockMatchmakingService.joinQueue).toHaveBeenCalledWith(req.body.userId);
             expect(mockMatchmakingScheduler.start).toHaveBeenCalled();
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.send).toHaveBeenCalled();
@@ -81,15 +73,9 @@ describe('Matchmaking Controller', () => {
                 throw expectedError;
             });
 
-            await matchmakingController.joinQueue(
-                req as Request,
-                res as Response,
-                next
-            );
+            await matchmakingController.joinQueue(req as Request, res as Response, next);
 
-            expect(mockMatchmakingService.joinQueue).toHaveBeenCalledWith(
-                req.body.userId
-            );
+            expect(mockMatchmakingService.joinQueue).toHaveBeenCalledWith(req.body.userId);
             expect(next).toHaveBeenCalledWith(expectedError);
             expect(mockMatchmakingScheduler.start).not.toHaveBeenCalled();
         });
@@ -97,8 +83,8 @@ describe('Matchmaking Controller', () => {
 
     describe('Leave Queue', () => {
         const req = {
-            params: { userId: '1234' }
-        } as Partial<Request> as Request<LeaveQueueParams>;
+            body: { userId: '1234' }
+        } as Partial<Request>;
 
         it('should leave queue and return status 200', async () => {
             const res = {
@@ -108,11 +94,9 @@ describe('Matchmaking Controller', () => {
 
             mockMatchmakingService.leaveQueue.mockResolvedValue();
 
-            await matchmakingController.leaveQueue(req, res as Response, next);
+            await matchmakingController.leaveQueue(req as Request, res as Response, next);
 
-            expect(mockMatchmakingService.leaveQueue).toHaveBeenCalledWith(
-                req.params.userId
-            );
+            expect(mockMatchmakingService.leaveQueue).toHaveBeenCalledWith(req.body.userId, null);
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.send).toHaveBeenCalled();
         });
@@ -124,65 +108,200 @@ describe('Matchmaking Controller', () => {
                 throw expectedError;
             });
 
-            await matchmakingController.leaveQueue(
-                req as Request<LeaveQueueParams>,
-                res as Response,
-                next
-            );
+            await matchmakingController.leaveQueue(req as Request, res as Response, next);
 
-            expect(mockMatchmakingService.leaveQueue).toHaveBeenCalledWith(
-                req.params.userId
-            );
+            expect(mockMatchmakingService.leaveQueue).toHaveBeenCalledWith(req.body.userId, null);
             expect(next).toHaveBeenCalledWith(expectedError);
         });
     });
 
-    describe('Get Is In Queue', () => {
+    describe('Get Queue Status', () => {
+        const userId = '1234';
         const req = {
-            params: {
-                userId: '1234'
+            query: {
+                userId: userId
             }
-        } as Partial<Request> as Request<IsInQueueParams>;
+        } as unknown as Request;
 
-        it('should check if user is in queue and return status 200', async () => {
+        it('should check if user is in default queue and return status 200 with queueId null', async () => {
             const res = {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn().mockReturnThis()
             } as Partial<Response>;
 
-            mockMatchmakingService.checkInQueue.mockResolvedValue();
+            mockMatchmakingService.getQueue.mockResolvedValue('');
 
-            await matchmakingController.getIsInQueue(
-                req,
-                res as Response,
-                next
-            );
+            await matchmakingController.getQueueStatus(req, res as Response, next);
 
-            expect(mockMatchmakingService.checkInQueue).toHaveBeenCalledWith(
-                req.params.userId
-            );
+            expect(mockMatchmakingService.getQueue).toHaveBeenCalledWith(userId);
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
-                message: `User with id ${req.params.userId} is queued`
+                message: `User with id ${userId} is queued`,
+                queueId: null
+            });
+        });
+
+        it('should check if user is in private queue and return status 200 with queueId', async () => {
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn().mockReturnThis()
+            } as Partial<Response>;
+
+            const privateQueueId = 'private-queue-123';
+            mockMatchmakingService.getQueue.mockResolvedValue(privateQueueId);
+
+            await matchmakingController.getQueueStatus(req, res as Response, next);
+
+            expect(mockMatchmakingService.getQueue).toHaveBeenCalledWith(userId);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: `User with id ${userId} is queued`,
+                queueId: privateQueueId
             });
         });
 
         it('should call next function with error when error is thrown', async () => {
             const res = {} as Partial<Response>;
             const expectedError = new Error('error');
-            mockMatchmakingService.checkInQueue.mockImplementation(() => {
+            mockMatchmakingService.getQueue.mockImplementation(() => {
                 throw expectedError;
             });
 
-            await matchmakingController.getIsInQueue(
-                req,
-                res as Response,
-                next
-            );
+            await matchmakingController.getQueueStatus(req, res as Response, next);
 
-            expect(mockMatchmakingService.checkInQueue).toHaveBeenCalledWith(
-                req.params.userId
-            );
+            expect(mockMatchmakingService.getQueue).toHaveBeenCalledWith(userId);
+            expect(next).toHaveBeenCalledWith(expectedError);
+        });
+
+        it('should throw return 400 when userId is not set', async () => {
+            const emptyReq = {
+                query: {}
+            } as Partial<Request>;
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn().mockReturnThis()
+            } as Partial<Response>;
+
+            await matchmakingController.getQueueStatus(emptyReq as Request, res as Response, next);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalled();
+        });
+    });
+
+    describe('Create Private Queue', () => {
+        const req = {
+            body: {
+                userId: '1234'
+            }
+        } as Partial<Request> as Request<unknown, unknown, CreatePrivateQueueRequest>;
+
+        it('should create private queue and return status 201 with queueId', async () => {
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn().mockReturnThis()
+            } as Partial<Response>;
+
+            const queueId = 'test-queue-id';
+            mockMatchmakingService.createPrivateQueue.mockResolvedValue(queueId);
+
+            await matchmakingController.createPrivateQueue(req, res as Response, next);
+
+            expect(mockMatchmakingService.createPrivateQueue).toHaveBeenCalledWith(req.body.userId);
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(res.json).toHaveBeenCalledWith({
+                queueId: queueId
+            });
+        });
+
+        it('should call next function with error when error is thrown', async () => {
+            const res = {} as Partial<Response>;
+            const expectedError = new Error('error');
+            mockMatchmakingService.createPrivateQueue.mockImplementation(() => {
+                throw expectedError;
+            });
+
+            await matchmakingController.createPrivateQueue(req, res as Response, next);
+
+            expect(mockMatchmakingService.createPrivateQueue).toHaveBeenCalledWith(req.body.userId);
+            expect(next).toHaveBeenCalledWith(expectedError);
+        });
+    });
+
+    describe('Join Private Queue', () => {
+        const req = {
+            body: {
+                userId: '1234'
+            },
+            params: {
+                queueId: 'queue-456'
+            }
+        } as Partial<Request> as Request<JoinPrivateQueueParams>;
+
+        it('should join private queue and return status 200', async () => {
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                send: jest.fn().mockReturnThis()
+            } as Partial<Response>;
+
+            mockMatchmakingService.joinPrivateQueue.mockResolvedValue();
+
+            await matchmakingController.joinPrivateQueue(req, res as Response, next);
+
+            expect(mockMatchmakingService.joinPrivateQueue).toHaveBeenCalledWith(req.body.userId, req.params.queueId);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalled();
+        });
+
+        it('should call next function with error when error is thrown', async () => {
+            const res = {} as Partial<Response>;
+            const expectedError = new Error('error');
+            mockMatchmakingService.joinPrivateQueue.mockImplementation(() => {
+                throw expectedError;
+            });
+
+            await matchmakingController.joinPrivateQueue(req, res as Response, next);
+
+            expect(mockMatchmakingService.joinPrivateQueue).toHaveBeenCalledWith(req.body.userId, req.params.queueId);
+            expect(next).toHaveBeenCalledWith(expectedError);
+        });
+    });
+
+    describe('Leave Private Queue', () => {
+        const req = {
+            body: {
+                userId: '1234'
+            },
+            params: {
+                queueId: 'queue-789'
+            }
+        } as Partial<Request> as Request<LeavePrivateQueueParams>;
+
+        it('should leave private queue and return status 200', async () => {
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                send: jest.fn().mockReturnThis()
+            } as Partial<Response>;
+
+            mockMatchmakingService.leaveQueue.mockResolvedValue();
+
+            await matchmakingController.leavePrivateQueue(req, res as Response, next);
+
+            expect(mockMatchmakingService.leaveQueue).toHaveBeenCalledWith(req.body.userId, req.params.queueId);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.send).toHaveBeenCalled();
+        });
+
+        it('should call next function with error when error is thrown', async () => {
+            const res = {} as Partial<Response>;
+            const expectedError = new Error('error');
+            mockMatchmakingService.leaveQueue.mockImplementation(() => {
+                throw expectedError;
+            });
+
+            await matchmakingController.leavePrivateQueue(req, res as Response, next);
+
+            expect(mockMatchmakingService.leaveQueue).toHaveBeenCalledWith(req.body.userId, req.params.queueId);
             expect(next).toHaveBeenCalledWith(expectedError);
         });
     });

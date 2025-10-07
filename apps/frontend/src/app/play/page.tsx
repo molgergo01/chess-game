@@ -1,12 +1,12 @@
-'use client';
-
 import Matchmaking from '@/components/matchmaking/matchmaking';
 import { MatchmakingSocketProvider } from '@/hooks/matchmaking/useMatchmakingSocket';
+import { connection } from 'next/server';
 
-export default function MatchMakePage() {
+export default async function MatchMakePage() {
+    await connection();
     return (
         <MatchmakingSocketProvider>
-            <Matchmaking className="flex place-content-center p-10" />
+            <Matchmaking />
         </MatchmakingSocketProvider>
     );
 }

@@ -5,8 +5,16 @@ import { AppRouterContext } from 'next/dist/shared/lib/app-router-context.shared
 import { AuthProvider } from '@/hooks/auth/useAuth';
 import { MatchmakingSocketProvider } from '@/hooks/matchmaking/useMatchmakingSocket';
 import { CoreSocketProvider } from '@/hooks/chess/useCoreSocket';
+import React from 'react';
+import { PathnameContext, SearchParamsContext } from 'next/dist/shared/lib/hooks-client-context.shared-runtime';
 
 Cypress.Commands.add('mount', mount);
+
+// const defaultSearchParams = new URLSearchParams();
+// const defaultPathname = '/';
+
+// export const PathnameContext = React.createContext<string>(defaultPathname);
+// export const SearchParamsContext = React.createContext<URLSearchParams>(defaultSearchParams);
 
 const mockRouter = {
     push: () => {},
@@ -15,15 +23,10 @@ const mockRouter = {
     back: () => {},
     forward: () => {},
     refresh: () => {}
-    // Add other router methods as needed
 };
 
 export function withAppRouter(component: React.ReactNode) {
-    return (
-        <AppRouterContext.Provider value={mockRouter}>
-            {component}
-        </AppRouterContext.Provider>
-    );
+    return <AppRouterContext.Provider value={mockRouter}>{component}</AppRouterContext.Provider>;
 }
 
 export function withAuth(component: React.ReactNode) {
@@ -42,8 +45,16 @@ export function withCoreSocket(component: React.ReactNode) {
     return <CoreSocketProvider>{component}</CoreSocketProvider>;
 }
 
-export function withAllProviders(component: React.ReactNode) {
-    return withAppRouter(
-        withAuth(withCoreSocket(withMatchmakingSocket(component)))
-    );
+export function withAllProviders(component: React.ReactNode, searchParams?: URLSearchParams, pathname?: string) {
+    let wrapped = component;
+
+    if (searchParams) {
+        wrapped = <SearchParamsContext.Provider value={searchParams}>{wrapped}</SearchParamsContext.Provider>;
+    }
+
+    if (pathname) {
+        wrapped = <PathnameContext.Provider value={pathname}>{wrapped}</PathnameContext.Provider>;
+    }
+
+    return withAppRouter(withAuth(withCoreSocket(withMatchmakingSocket(wrapped))));
 }

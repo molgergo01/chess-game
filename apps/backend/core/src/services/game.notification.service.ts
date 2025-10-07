@@ -1,11 +1,6 @@
 import { Container, inject, injectable } from 'inversify';
 import { Server } from 'socket.io';
-import {
-    PlayerTimes,
-    PositionUpdateNotification,
-    TimeExpiredMessage,
-    Winner
-} from '../models/game';
+import { PlayerTimes, PositionUpdateNotification, TimeExpiredMessage, Winner } from '../models/game';
 
 @injectable()
 class GameNotificationService {

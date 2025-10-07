@@ -1,35 +1,69 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import MatchmakingButton from '@/components/matchmaking/machmaking-button';
-import { isInQueue, leaveQueue } from '@/lib/clients/matchmaking.rest.client';
+import { getQueueStatus, joinPrivateQueue, leavePrivateQueue, leaveQueue } from '@/lib/clients/matchmaking.rest.client';
 import { MatchmakeMessage } from '@/lib/models/request/matchmaking';
 import LeaveMatchmakingButton from '@/components/matchmaking/leave-matchmaking-button';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useMatchmakingSocket } from '@/hooks/matchmaking/useMatchmakingSocket';
+import CreateLinkButton from '@/components/matchmaking/create-link-button';
+import CancelInviteButton from '@/components/matchmaking/cancel-invite-button';
+import MatchmakingErrorAlert from '@/components/matchmaking/matchmaking-error-alert';
+import { Card, CardContent } from '@/components/ui/card';
+import CopyableLink from '@/components/ui/copyable-link';
 
-function Matchmaking({ className, ...props }: React.ComponentProps<'div'>) {
+function Matchmaking() {
     const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const searchParamQueueId = searchParams.get('id');
     const { userId } = useAuth();
     const [isQueued, setIsQueued] = useState<boolean | null>(null);
+    const [queueId, setQueueId] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [hasAttemptedJoin, setHasAttemptedJoin] = useState(false);
+    const [isNewQueue, setIsNewQueue] = useState(false);
     const { socket } = useMatchmakingSocket();
 
-    const checkQueueStatus = useCallback(async () => {
-        if (!userId) return;
-        try {
-            setIsQueued(await isInQueue(userId));
-        } catch (error) {
-            console.error('Failed to check queue status:', error);
-            setIsQueued(false);
-        }
-    }, [userId]);
+    const checkQueueStatus = useCallback(
+        async (markAsNew = false) => {
+            if (!userId) return;
+            try {
+                const queueStatus = await getQueueStatus(userId);
+                setIsQueued(queueStatus.isQueued);
+                setQueueId(queueStatus.queueId);
+                setErrorMessage(null);
+                if (markAsNew && queueStatus.queueId) {
+                    setIsNewQueue(true);
+                }
+            } catch (error) {
+                console.error('Failed to check queue status:', error);
+                setIsQueued(false);
+                setQueueId(null);
+                if (error instanceof Error) {
+                    setErrorMessage(error.message);
+                }
+            }
+        },
+        [userId]
+    );
+
+    const handleError = useCallback((error: Error) => {
+        setErrorMessage(error.message);
+        setTimeout(() => setErrorMessage(null), 5000);
+    }, []);
 
     useEffect(() => {
         const handleBeforeUnload = async () => {
             if (!isQueued || !userId) return;
 
-            await leaveQueue(userId);
+            if (!queueId) {
+                await leaveQueue(userId);
+            } else {
+                await leavePrivateQueue(userId, queueId);
+            }
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);
@@ -37,16 +71,13 @@ function Matchmaking({ className, ...props }: React.ComponentProps<'div'>) {
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
-    }, [isQueued, userId]);
+    }, [isQueued, queueId, userId]);
 
     useEffect(() => {
         if (!socket) return;
 
         const handleMatchmake = (matchmakeMessage: MatchmakeMessage) => {
-            localStorage.setItem(
-                'playerData',
-                JSON.stringify(matchmakeMessage.players)
-            );
+            localStorage.setItem('playerData', JSON.stringify(matchmakeMessage.players));
             // TODO make player data not store userid
             setIsQueued(false);
             router.push('/game');
@@ -63,18 +94,110 @@ function Matchmaking({ className, ...props }: React.ComponentProps<'div'>) {
         checkQueueStatus();
     }, [checkQueueStatus]);
 
+    useEffect(() => {
+        if (isNewQueue) {
+            const timer = setTimeout(() => setIsNewQueue(false), 100);
+            return () => clearTimeout(timer);
+        }
+    }, [isNewQueue]);
+
+    useEffect(() => {
+        if (isQueued || !userId || !searchParamQueueId || hasAttemptedJoin) return;
+        setHasAttemptedJoin(true);
+        joinPrivateQueue(userId, searchParamQueueId)
+            .then(() => {
+                checkQueueStatus();
+            })
+            .catch((error) => {
+                if (error instanceof Error) {
+                    handleError(error);
+                }
+            });
+        router.replace(pathname);
+    }, [
+        checkQueueStatus,
+        handleError,
+        hasAttemptedJoin,
+        isQueued,
+        pathname,
+        router,
+        searchParamQueueId,
+        searchParams,
+        userId
+    ]);
+
+    function getLink() {
+        return `${window.location.origin}${pathname}?id=${queueId}`;
+    }
+
     return (
-        <div className={className} {...props}>
-            {isQueued === false && (
-                <MatchmakingButton onJoinQueue={checkQueueStatus} />
+        <div className="flex h-full flex-col items-center justify-center bg-muted p-6 md:p-10">
+            {errorMessage && (
+                <MatchmakingErrorAlert
+                    message={errorMessage}
+                    className="w-full max-w-md p-6 md:p-8"
+                    data-cy="matchmaking-error-alert"
+                />
             )}
-            {isQueued === true && (
-                <div className="flex flex-col items-center">
-                    <span className="p-10">Searching for an opponent...</span>
-                    <LeaveMatchmakingButton onLeaveQueue={checkQueueStatus} />
-                </div>
-            )}
-            {isQueued === null && <div>Loading...</div>}
+            <div className="w-full max-w-md">
+                {isQueued !== null && (
+                    <Card className="overflow-hidden" data-cy="matchmaking-card">
+                        <CardContent className="p-0">
+                            <div className="p-6 md:p-8">
+                                <div className="flex flex-col gap-10 md:gap-20">
+                                    <div className="flex flex-col items-center text-center">
+                                        <h1 className="text-2xl font-bold" data-cy="matchmaking-header">
+                                            Play Chess
+                                        </h1>
+                                    </div>
+
+                                    {!isQueued && (
+                                        <div className="flex flex-col gap-4">
+                                            <MatchmakingButton onJoinQueue={checkQueueStatus} onError={handleError} />
+                                            <CreateLinkButton
+                                                onCreateLink={() => checkQueueStatus(true)}
+                                                onError={handleError}
+                                            />
+                                        </div>
+                                    )}
+                                    {isQueued && queueId === null && (
+                                        <div className="flex flex-col gap-6 items-center">
+                                            <p className="text-muted-foreground" data-cy="matchmaking-searching-text">
+                                                Searching for an opponent...
+                                            </p>
+                                            <LeaveMatchmakingButton
+                                                onLeaveQueue={checkQueueStatus}
+                                                onError={handleError}
+                                            />
+                                        </div>
+                                    )}
+                                    {isQueued && queueId !== null && (
+                                        <div className="flex flex-col gap-6">
+                                            <CopyableLink link={getLink()} autoCopy={isNewQueue} />
+                                            <p
+                                                className="text-center text-muted-foreground"
+                                                data-cy="matchmaking-waiting-text"
+                                            >
+                                                Waiting for friend to join...
+                                            </p>
+                                            <CancelInviteButton
+                                                onLeaveQueue={checkQueueStatus}
+                                                onError={handleError}
+                                                queueId={queueId}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+                {isQueued === null && (
+                    <div className="text-center" data-cy="matchmaking-loading">
+                        Loading...
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

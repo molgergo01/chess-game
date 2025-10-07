@@ -50,10 +50,7 @@ describe('Core Rest Client', () => {
 
             const result = await coreRestClient.createGame(players);
 
-            expect(axios.post).toHaveBeenCalledWith(
-                expectedUrl,
-                expectedRequestBody
-            );
+            expect(axios.post).toHaveBeenCalledWith(expectedUrl, expectedRequestBody);
             expect(result).toEqual(mockResponse);
         });
 
@@ -67,14 +64,9 @@ describe('Core Rest Client', () => {
 
             (axios.post as jest.Mock).mockRejectedValue(expectedError);
 
-            await expect(coreRestClient.createGame(players)).rejects.toThrow(
-                expectedError
-            );
+            await expect(coreRestClient.createGame(players)).rejects.toThrow(expectedError);
 
-            expect(axios.post).toHaveBeenCalledWith(
-                expectedUrl,
-                expectedRequestBody
-            );
+            expect(axios.post).toHaveBeenCalledWith(expectedUrl, expectedRequestBody);
         });
     });
 });

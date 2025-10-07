@@ -20,9 +20,7 @@ const env = {
     DB_PASSWORD: process.env.DB_PASSWORD,
     REDIS_URL: process.env.REDIS_URL,
     REDIS_DB: process.env.REDIS_DB ? parseInt(process.env.REDIS_DB) : 0,
-    REDIS_TEST_DB: process.env.REDIS_TEST_DB
-        ? parseInt(process.env.REDIS_TEST_DB)
-        : 1
+    REDIS_TEST_DB: process.env.REDIS_TEST_DB ? parseInt(process.env.REDIS_TEST_DB) : 1
 };
 
 export default env;

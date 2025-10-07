@@ -65,24 +65,12 @@ describe('<Banner />', () => {
     });
 
     it('should highlight background when it is player turn', () => {
-        cy.mount(
-            <Banner
-                {...defaultProps}
-                playerColor={Color.WHITE}
-                turnColor={Color.WHITE}
-            />
-        );
+        cy.mount(<Banner {...defaultProps} playerColor={Color.WHITE} turnColor={Color.WHITE} />);
         cy.getDataCy('banner').should('have.class', 'bg-foreground');
     });
 
     it('should not highlight when it is not player turn', () => {
-        cy.mount(
-            <Banner
-                {...defaultProps}
-                playerColor={Color.WHITE}
-                turnColor={Color.BLACK}
-            />
-        );
+        cy.mount(<Banner {...defaultProps} playerColor={Color.WHITE} turnColor={Color.BLACK} />);
         cy.getDataCy('banner').should('not.have.class', 'bg-foreground');
     });
 
@@ -111,10 +99,7 @@ describe('<Banner />', () => {
         it('should display player name on mobile', () => {
             cy.mount(<Banner {...defaultProps} />);
             cy.getDataCy('banner-player-name').should('be.visible');
-            cy.getDataCy('banner-player-name').should(
-                'have.text',
-                'TestPlayer'
-            );
+            cy.getDataCy('banner-player-name').should('have.text', 'TestPlayer');
         });
 
         it('should display elo on mobile', () => {

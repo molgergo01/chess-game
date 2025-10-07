@@ -16,8 +16,6 @@ describe('<LoginForm />', () => {
 
     it('should not render image on mobile', () => {
         cy.viewport('iphone-6');
-        cy.getDataCy('login-board-image')
-            .should('exist')
-            .should('not.be.visible');
+        cy.getDataCy('login-board-image').should('exist').should('not.be.visible');
     });
 });

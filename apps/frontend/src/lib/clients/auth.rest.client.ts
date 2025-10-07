@@ -4,7 +4,6 @@ import axios from 'axios';
 export async function getUser() {
     return axios.get(`${env.REST_URLS.AUTH}/api/user/me`, {
         withCredentials: true,
-        validateStatus: (status) =>
-            status === 200 || status === 401 || status === 403
+        validateStatus: (status) => status === 200 || status === 401 || status === 403
     });
 }
