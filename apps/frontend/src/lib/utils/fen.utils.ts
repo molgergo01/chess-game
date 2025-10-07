@@ -7,10 +7,7 @@ export function getTurnColor(boardPosition: Fen): Color | undefined {
     return boardPosition.toMove as Color;
 }
 
-export function mapPieceToBoardContent(
-    piece: PieceDataType,
-    targetSquare: string
-): BoardContent {
+export function mapPieceToBoardContent(piece: PieceDataType, targetSquare: string): BoardContent {
     const color: string = piece.pieceType.charAt(0);
     let pieceType: string = piece.pieceType.charAt(1);
     const targetSquareNumber = targetSquare.charAt(1);
@@ -19,21 +16,15 @@ export function mapPieceToBoardContent(
         pieceType = 'q';
     }
 
-    const contentString =
-        color === 'w' ? pieceType.toUpperCase() : pieceType.toLowerCase();
+    const contentString = color === 'w' ? pieceType.toUpperCase() : pieceType.toLowerCase();
 
     return contentString as BoardContent;
 }
 
-export function isPromotion(
-    pieceType: string,
-    color: string,
-    targetSquareNumber: string | undefined
-): boolean {
+export function isPromotion(pieceType: string, color: string, targetSquareNumber: string | undefined): boolean {
     return (
         (pieceType === 'P' || pieceType === 'p') &&
-        ((targetSquareNumber === '8' && color === 'w') ||
-            (targetSquareNumber === '1' && color === 'b'))
+        ((targetSquareNumber === '8' && color === 'w') || (targetSquareNumber === '1' && color === 'b'))
     );
 }
 

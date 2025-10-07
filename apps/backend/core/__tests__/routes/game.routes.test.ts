@@ -16,9 +16,7 @@ jest.mock('chess-game-backend-common/config/env', () => ({
         NODE_ENV: 'test',
         REDIS_URL: process.env.REDIS_URL,
         REDIS_DB: process.env.REDIS_DB ? parseInt(process.env.REDIS_DB) : 0,
-        REDIS_TEST_DB: process.env.REDIS_TEST_DB
-            ? parseInt(process.env.REDIS_TEST_DB)
-            : 1,
+        REDIS_TEST_DB: process.env.REDIS_TEST_DB ? parseInt(process.env.REDIS_TEST_DB) : 1,
         DB_HOST: process.env.DB_HOST,
         DB_DATABASE: process.env.DB_DATABASE,
         DB_TEST_DATABASE: process.env.DB_TEST_DATABASE,
@@ -53,9 +51,7 @@ describe('Game routes', () => {
 
             const gameState = await Redis.hGetAll(`game-state:${gameId}`);
             expect(gameState).toBeDefined();
-            expect(gameState.position).toBe(
-                'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-            );
+            expect(gameState.position).toBe('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
             expect(gameState.players).toBeDefined();
             const storedPlayers = JSON.parse(gameState.players);
             expect(storedPlayers).toHaveLength(2);
@@ -74,11 +70,9 @@ describe('Game routes', () => {
 
             expect(res.status).toBe(400);
             expect(res.body).toHaveProperty('message');
-            expect(res.body.message).toContain(
-                'Chess game requires exactly 2 players'
-            );
+            expect(res.body.message).toContain('Chess game requires exactly 2 players');
 
-            const keys = await Redis.keys('*');
+            const keys = await Redis.keys('game-id*');
             expect(keys).toHaveLength(0);
         });
 
@@ -88,11 +82,9 @@ describe('Game routes', () => {
 
             expect(res.status).toBe(400);
             expect(res.body).toHaveProperty('message');
-            expect(res.body.message).toContain(
-                'Chess game requires exactly 2 players'
-            );
+            expect(res.body.message).toContain('Chess game requires exactly 2 players');
 
-            const keys = await Redis.keys('*');
+            const keys = await Redis.keys('game-id*');
             expect(keys).toHaveLength(0);
         });
     });

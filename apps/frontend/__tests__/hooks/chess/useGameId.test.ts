@@ -18,9 +18,7 @@ describe('useGameId', () => {
     const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
     const mockGetGameId = getGameId as jest.MockedFunction<typeof getGameId>;
     const mockJoinGame = joinGame as jest.MockedFunction<typeof joinGame>;
-    const mockUseCoreSocket = useCoreSocket as jest.MockedFunction<
-        typeof useCoreSocket
-    >;
+    const mockUseCoreSocket = useCoreSocket as jest.MockedFunction<typeof useCoreSocket>;
 
     let mockRouter: Pick<RouterInstance, 'push'>;
     let mockSocket: Partial<Socket>;

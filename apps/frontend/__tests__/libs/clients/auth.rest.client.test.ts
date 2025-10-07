@@ -30,13 +30,10 @@ describe('auth.rest.client', () => {
 
             const result = await getUser();
 
-            expect(axios.get).toHaveBeenCalledWith(
-                'http://localhost:8082/api/user/me',
-                {
-                    withCredentials: true,
-                    validateStatus: expect.any(Function)
-                }
-            );
+            expect(axios.get).toHaveBeenCalledWith('http://localhost:8082/api/user/me', {
+                withCredentials: true,
+                validateStatus: expect.any(Function)
+            });
             expect(result).toBe(mockResponse);
         });
     });

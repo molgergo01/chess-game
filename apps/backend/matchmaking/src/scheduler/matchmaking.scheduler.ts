@@ -14,7 +14,7 @@ class MatchmakingScheduler {
             name: 'matchmaking-cron-job',
             cronTime: '*/5 * * * * *',
             onTick: async function () {
-                await matchmakingService.matchMake();
+                await matchmakingService.matchMake(null);
             },
             start: false
         });

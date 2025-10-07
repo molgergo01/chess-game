@@ -9,9 +9,7 @@ describe('User controller', () => {
     let mockAuthService: jest.Mocked<AuthService>;
 
     beforeEach(() => {
-        mockAuthService = new AuthService(
-            null as never
-        ) as jest.Mocked<AuthService>;
+        mockAuthService = new AuthService(null as never) as jest.Mocked<AuthService>;
         mockAuthService.getUserFromToken = jest.fn();
 
         userController = new UserController(mockAuthService);

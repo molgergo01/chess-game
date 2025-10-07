@@ -1,10 +1,4 @@
-import {
-    Color,
-    GameCreated,
-    GameState,
-    StoredGameState,
-    Winner
-} from '../../src/models/game';
+import { Color, GameCreated, GameState, StoredGameState, Winner } from '../../src/models/game';
 import GameService from '../../src/services/game.service';
 import GameStateRepository from '../../src/repositories/gameState.repository';
 import GameIdRepository from '../../src/repositories/gameId.repository';
@@ -54,24 +48,17 @@ describe('Game Service', () => {
         jest.useFakeTimers();
         jest.setSystemTime(NOW);
 
-        mockGameStateRepository = new GameStateRepository(
-            null as never
-        ) as jest.Mocked<GameStateRepository>;
+        mockGameStateRepository = new GameStateRepository(null as never) as jest.Mocked<GameStateRepository>;
         mockGameStateRepository.save = jest.fn();
         mockGameStateRepository.remove = jest.fn();
         mockGameStateRepository.get = jest.fn();
 
-        mockGameIdRepository = new GameIdRepository(
-            null as never
-        ) as jest.Mocked<GameIdRepository>;
+        mockGameIdRepository = new GameIdRepository(null as never) as jest.Mocked<GameIdRepository>;
         mockGameIdRepository.save = jest.fn();
         mockGameIdRepository.get = jest.fn();
         mockGameIdRepository.remove = jest.fn();
 
-        gameService = new GameService(
-            mockGameStateRepository,
-            mockGameIdRepository
-        );
+        gameService = new GameService(mockGameStateRepository, mockGameIdRepository);
     });
 
     afterEach(() => {
@@ -119,22 +106,14 @@ describe('Game Service', () => {
                 0,
                 NOW
             );
-            expect(mockGameIdRepository.save).toHaveBeenCalledWith(
-                player1.id,
-                gameId
-            );
-            expect(mockGameIdRepository.save).toHaveBeenCalledWith(
-                player2.id,
-                gameId
-            );
+            expect(mockGameIdRepository.save).toHaveBeenCalledWith(player1.id, gameId);
+            expect(mockGameIdRepository.save).toHaveBeenCalledWith(player2.id, gameId);
         });
 
         it('should throw error if less than 2 players are provided', async () => {
             const playerIds = ['1234'];
 
-            await expect(gameService.create(playerIds)).rejects.toThrow(
-                BadRequestError
-            );
+            await expect(gameService.create(playerIds)).rejects.toThrow(BadRequestError);
         });
     });
 
@@ -218,9 +197,7 @@ describe('Game Service', () => {
 
         it('should throw error if game not found', async () => {
             mockGameStateRepository.get.mockResolvedValue(null);
-            await expect(gameService.getTimes('1234')).rejects.toThrow(
-                NotFoundError
-            );
+            await expect(gameService.getTimes('1234')).rejects.toThrow(NotFoundError);
         });
     });
 
@@ -267,14 +244,7 @@ describe('Game Service', () => {
                 timer: new Timer(player2.timer.remainingMs)
             };
 
-            const result = await gameService.move(
-                player1.id,
-                gameId,
-                'e2',
-                'e3',
-                'wQ',
-                NOW
-            );
+            const result = await gameService.move(player1.id, gameId, 'e2', 'e3', 'wQ', NOW);
 
             expect(result).toBe(expected);
 
@@ -316,9 +286,7 @@ describe('Game Service', () => {
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
-            await expect(
-                gameService.move('missingId', '0000', 'e2', 'e3', 'wQ', NOW)
-            ).rejects.toThrow(ForbiddenError);
+            await expect(gameService.move('missingId', '0000', 'e2', 'e3', 'wQ', NOW)).rejects.toThrow(ForbiddenError);
         });
 
         it('should throw error if not selected players turn', async () => {
@@ -346,17 +314,13 @@ describe('Game Service', () => {
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
             mockGame.turn.mockReturnValue(Color.BLACK);
 
-            await expect(
-                gameService.move(player1.id, '0000', 'e2', 'e3', 'wQ', NOW)
-            ).rejects.toThrow(ForbiddenError);
+            await expect(gameService.move(player1.id, '0000', 'e2', 'e3', 'wQ', NOW)).rejects.toThrow(ForbiddenError);
         });
 
         it('should throw error if game not found', async () => {
             mockGameStateRepository.get.mockResolvedValue(null);
 
-            await expect(
-                gameService.move('1234', 'missingId', 'e2', 'e3', 'wQ', NOW)
-            ).rejects.toThrow(NotFoundError);
+            await expect(gameService.move('1234', 'missingId', 'e2', 'e3', 'wQ', NOW)).rejects.toThrow(NotFoundError);
         });
     });
 
@@ -397,9 +361,7 @@ describe('Game Service', () => {
         it('should throw error if game not found', async () => {
             mockGameStateRepository.get.mockResolvedValue(null);
 
-            await expect(gameService.getFen('missingId')).rejects.toThrow(
-                NotFoundError
-            );
+            await expect(gameService.getFen('missingId')).rejects.toThrow(NotFoundError);
         });
     });
 
@@ -506,9 +468,7 @@ describe('Game Service', () => {
         it('should throw error if game not found', async () => {
             mockGameStateRepository.get.mockResolvedValue(null);
 
-            await expect(gameService.isGameOver('missingId')).rejects.toThrow(
-                NotFoundError
-            );
+            await expect(gameService.isGameOver('missingId')).rejects.toThrow(NotFoundError);
         });
     });
 
@@ -641,9 +601,7 @@ describe('Game Service', () => {
         it('should throw error if game not found', async () => {
             mockGameStateRepository.get.mockResolvedValue(null);
 
-            await expect(gameService.getWinner('missingId')).rejects.toThrow(
-                NotFoundError
-            );
+            await expect(gameService.getWinner('missingId')).rejects.toThrow(NotFoundError);
         });
     });
 

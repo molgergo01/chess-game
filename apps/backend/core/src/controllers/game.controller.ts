@@ -13,11 +13,7 @@ class GameController {
         private readonly timerWatcher: TimerWatcher
     ) {}
 
-    async createGame(
-        req: Request<unknown, unknown, CreateGameRequest>,
-        res: Response,
-        next: NextFunction
-    ) {
+    async createGame(req: Request<unknown, unknown, CreateGameRequest>, res: Response, next: NextFunction) {
         try {
             const gameCreated = await this.gameService.create(req.body.players);
             this.timerWatcher.start();

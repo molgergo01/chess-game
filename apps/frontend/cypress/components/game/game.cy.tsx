@@ -42,36 +42,28 @@ describe('<Game />', () => {
         });
 
         it('should render main game container', () => {
-            cy.stub(useChessGameHook, 'default').returns(
-                getMockChessGameState()
-            );
+            cy.stub(useChessGameHook, 'default').returns(getMockChessGameState());
 
             cy.mount(withAllProviders(<Game />));
             cy.getDataCy('game-container').should('be.visible');
         });
 
         it('should render chessboard', () => {
-            cy.stub(useChessGameHook, 'default').returns(
-                getMockChessGameState()
-            );
+            cy.stub(useChessGameHook, 'default').returns(getMockChessGameState());
 
             cy.mount(withAllProviders(<Game />));
             cy.getDataCy('game-chessboard-container').should('be.visible');
         });
 
         it('should render chat box', () => {
-            cy.stub(useChessGameHook, 'default').returns(
-                getMockChessGameState()
-            );
+            cy.stub(useChessGameHook, 'default').returns(getMockChessGameState());
 
             cy.mount(withAllProviders(<Game />));
             cy.getDataCy('game-chatbox').should('be.visible');
         });
 
         it('should render desktop banners', () => {
-            cy.stub(useChessGameHook, 'default').returns(
-                getMockChessGameState()
-            );
+            cy.stub(useChessGameHook, 'default').returns(getMockChessGameState());
 
             cy.mount(withAllProviders(<Game />));
             cy.getDataCy('game-desktop-banner-top').should('be.visible');
@@ -79,18 +71,14 @@ describe('<Game />', () => {
         });
 
         it('should hide mobile banner grid on desktop', () => {
-            cy.stub(useChessGameHook, 'default').returns(
-                getMockChessGameState()
-            );
+            cy.stub(useChessGameHook, 'default').returns(getMockChessGameState());
 
             cy.mount(withAllProviders(<Game />));
             cy.getDataCy('game-mobile-banners').should('not.be.visible');
         });
 
         it('should hide navbar on desktop', () => {
-            cy.stub(useChessGameHook, 'default').returns(
-                getMockChessGameState()
-            );
+            cy.stub(useChessGameHook, 'default').returns(getMockChessGameState());
 
             cy.mount(withAllProviders(<Game />));
             cy.getDataCy('game-navbar').should('not.be.visible');
@@ -103,18 +91,14 @@ describe('<Game />', () => {
         });
 
         it('should render mobile banner grid', () => {
-            cy.stub(useChessGameHook, 'default').returns(
-                getMockChessGameState()
-            );
+            cy.stub(useChessGameHook, 'default').returns(getMockChessGameState());
 
             cy.mount(withAllProviders(<Game />));
             cy.getDataCy('game-mobile-banners').should('be.visible');
         });
 
         it('should hide desktop banners on mobile', () => {
-            cy.stub(useChessGameHook, 'default').returns(
-                getMockChessGameState()
-            );
+            cy.stub(useChessGameHook, 'default').returns(getMockChessGameState());
 
             cy.mount(withAllProviders(<Game />));
             cy.getDataCy('game-desktop-banner-top').should('not.be.visible');
@@ -122,9 +106,7 @@ describe('<Game />', () => {
         });
 
         it('should show navbar on mobile', () => {
-            cy.stub(useChessGameHook, 'default').returns(
-                getMockChessGameState()
-            );
+            cy.stub(useChessGameHook, 'default').returns(getMockChessGameState());
 
             cy.mount(withAllProviders(<Game />));
             cy.getDataCy('game-navbar').should('be.visible');

@@ -1,12 +1,6 @@
 'use client';
 
-import React, {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useState
-} from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Socket } from 'socket.io-client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { initializeMatchmakingSocket } from '@/lib/sockets/matchmaking.socket';
@@ -15,16 +9,13 @@ interface MatchmakingSocketContextType {
     socket: Socket | null;
 }
 
-const MatchmakingSocketContext =
-    createContext<MatchmakingSocketContextType | null>(null);
+const MatchmakingSocketContext = createContext<MatchmakingSocketContextType | null>(null);
 
 interface MatchmakingSocketProviderProps {
     children: ReactNode;
 }
 
-export function MatchmakingSocketProvider({
-    children
-}: MatchmakingSocketProviderProps) {
+export function MatchmakingSocketProvider({ children }: MatchmakingSocketProviderProps) {
     const [socket, setSocket] = useState<Socket | null>(null);
     const { userId } = useAuth();
 
@@ -45,19 +36,13 @@ export function MatchmakingSocketProvider({
         };
     }, [userId]);
 
-    return (
-        <MatchmakingSocketContext.Provider value={{ socket }}>
-            {children}
-        </MatchmakingSocketContext.Provider>
-    );
+    return <MatchmakingSocketContext.Provider value={{ socket }}>{children}</MatchmakingSocketContext.Provider>;
 }
 
 export function useMatchmakingSocket() {
     const context = useContext(MatchmakingSocketContext);
     if (!context) {
-        throw new Error(
-            'useSocket must be used within MatchmakingSocketProvider'
-        );
+        throw new Error('useSocket must be used within MatchmakingSocketProvider');
     }
     return context;
 }

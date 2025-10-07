@@ -16,9 +16,7 @@ describe('Auth Controller', () => {
     let mockAuthService: jest.Mocked<AuthService>;
 
     beforeEach(() => {
-        mockAuthService = new AuthService(
-            null as never
-        ) as jest.Mocked<AuthService>;
+        mockAuthService = new AuthService(null as never) as jest.Mocked<AuthService>;
         mockAuthService.login = jest.fn();
         mockAuthService.getUserFromToken = jest.fn();
 
@@ -42,11 +40,7 @@ describe('Auth Controller', () => {
             };
             mockAuthService.login.mockResolvedValue('tokenValue');
 
-            await authController.loginUser(
-                req as Request,
-                res as Response,
-                next as NextFunction
-            );
+            await authController.loginUser(req as Request, res as Response, next as NextFunction);
             expect(res.cookie).toHaveBeenCalledWith('token', 'tokenValue', {
                 domain: 'localhost',
                 path: '/',
@@ -68,11 +62,7 @@ describe('Auth Controller', () => {
 
             mockAuthService.login.mockRejectedValue(expectedError);
 
-            await authController.loginUser(
-                req as Request,
-                res as Response,
-                next as NextFunction
-            );
+            await authController.loginUser(req as Request, res as Response, next as NextFunction);
 
             expect(next).toHaveBeenCalledWith(expectedError);
         });
@@ -87,11 +77,7 @@ describe('Auth Controller', () => {
                 json: jest.fn()
             };
 
-            authController.logoutUser(
-                req as Request,
-                res as Response,
-                next as NextFunction
-            );
+            authController.logoutUser(req as Request, res as Response, next as NextFunction);
 
             expect(res.clearCookie).toHaveBeenCalledWith('token', {
                 domain: 'localhost',
@@ -117,11 +103,7 @@ describe('Auth Controller', () => {
                 json: jest.fn()
             };
 
-            authController.verifyToken(
-                req as Request,
-                res as Response,
-                next as NextFunction
-            );
+            authController.verifyToken(req as Request, res as Response, next as NextFunction);
 
             expect(res.status).toHaveBeenCalledWith(200);
         });
@@ -142,11 +124,7 @@ describe('Auth Controller', () => {
                 throw expectedError;
             });
 
-            authController.verifyToken(
-                req as Request,
-                res as Response,
-                next as NextFunction
-            );
+            authController.verifyToken(req as Request, res as Response, next as NextFunction);
             expect(next).toHaveBeenCalledWith(expectedError);
         });
     });

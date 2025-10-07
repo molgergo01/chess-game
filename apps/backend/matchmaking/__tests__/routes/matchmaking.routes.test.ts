@@ -27,9 +27,7 @@ jest.mock('chess-game-backend-common/config/env', () => ({
         NODE_ENV: 'test',
         REDIS_URL: process.env.REDIS_URL,
         REDIS_DB: process.env.REDIS_DB ? parseInt(process.env.REDIS_DB) : 0,
-        REDIS_TEST_DB: process.env.REDIS_TEST_DB
-            ? parseInt(process.env.REDIS_TEST_DB)
-            : 1,
+        REDIS_TEST_DB: process.env.REDIS_TEST_DB ? parseInt(process.env.REDIS_TEST_DB) : 1,
         DB_HOST: process.env.DB_HOST,
         DB_DATABASE: process.env.DB_DATABASE,
         DB_TEST_DATABASE: process.env.DB_TEST_DATABASE,
@@ -40,10 +38,17 @@ jest.mock('chess-game-backend-common/config/env', () => ({
 
 describe('Matchmaking routes', () => {
     afterEach(async () => {
-        const queueLength = await Redis.lLen('matchmaking-queue');
-        if (queueLength > 0) {
-            await Redis.del('matchmaking-queue');
-        }
+        let cursor = '0';
+        do {
+            const result = await Redis.scan(cursor, {
+                MATCH: 'matchmaking-queue*',
+                COUNT: 100
+            });
+            cursor = result.cursor;
+            if (result.keys.length > 0) {
+                await Redis.del(result.keys);
+            }
+        } while (cursor !== '0');
     });
 
     afterAll(async () => {
@@ -53,9 +58,7 @@ describe('Matchmaking routes', () => {
     describe('POST /api/matchmaking/queue', () => {
         it('should join queue and add user to Redis', async () => {
             const userId = 'player1';
-            const res = await request(app)
-                .post('/api/matchmaking/queue')
-                .send({ userId });
+            const res = await request(app).post('/api/matchmaking/queue').send({ userId });
 
             expect(res.status).toBe(200);
 
@@ -69,9 +72,7 @@ describe('Matchmaking routes', () => {
 
             await request(app).post('/api/matchmaking/queue').send({ userId });
 
-            const res = await request(app)
-                .post('/api/matchmaking/queue')
-                .send({ userId });
+            const res = await request(app).post('/api/matchmaking/queue').send({ userId });
 
             expect(res.status).toBe(409);
             expect(res.body).toHaveProperty('message');
@@ -115,9 +116,7 @@ describe('Matchmaking routes', () => {
 
             await new Promise((resolve) => setTimeout(resolve, 100));
 
-            const mockCoreRestClient = container.get(
-                CoreRestClient
-            ) as jest.Mocked<CoreRestClient>;
+            const mockCoreRestClient = container.get(CoreRestClient) as jest.Mocked<CoreRestClient>;
             const mockGameResponse = {
                 gameId: 'test-game-id',
                 players: [
@@ -133,9 +132,7 @@ describe('Matchmaking routes', () => {
                     }
                 ]
             };
-            mockCoreRestClient.createGame = jest
-                .fn()
-                .mockResolvedValue(mockGameResponse);
+            mockCoreRestClient.createGame = jest.fn().mockResolvedValue(mockGameResponse);
 
             const client1Promise = new Promise((resolve) => {
                 client1.on('matchmake', resolve);
@@ -160,13 +157,11 @@ describe('Matchmaking routes', () => {
             expect(queueLength).toBe(2);
 
             const matchmakingService = container.get(MatchmakingService);
-            await matchmakingService.matchMake();
+            await matchmakingService.matchMake(null);
 
             const [message1, message2] = await Promise.race([
                 Promise.all([client1Promise, client2Promise]),
-                new Promise<never>((_, reject) =>
-                    setTimeout(() => reject(new Error('Timeout')), 3000)
-                )
+                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
             ]);
 
             expect(message1).toEqual(mockGameResponse);
@@ -185,7 +180,7 @@ describe('Matchmaking routes', () => {
         }, 10000);
     });
 
-    describe('DELETE /api/matchmaking/queue/:userId', () => {
+    describe('DELETE /api/matchmaking/queue', () => {
         it('should leave queue and remove user from Redis', async () => {
             const userId = 'player1';
 
@@ -194,9 +189,7 @@ describe('Matchmaking routes', () => {
             let position = await Redis.lPos('matchmaking-queue', userId);
             expect(position).not.toBeNull();
 
-            const res = await request(app).delete(
-                `/api/matchmaking/queue/${userId}`
-            );
+            const res = await request(app).delete('/api/matchmaking/queue').send({ userId });
 
             expect(res.status).toBe(200);
 
@@ -210,9 +203,7 @@ describe('Matchmaking routes', () => {
         it('should return 404 if user is not in queue', async () => {
             const userId = 'nonexistent-player';
 
-            const res = await request(app).delete(
-                `/api/matchmaking/queue/${userId}`
-            );
+            const res = await request(app).delete('/api/matchmaking/queue').send({ userId });
 
             expect(res.status).toBe(404);
             expect(res.body).toHaveProperty('message');
@@ -230,7 +221,7 @@ describe('Matchmaking routes', () => {
                 userId: user2
             });
 
-            await request(app).delete(`/api/matchmaking/queue/${user1}`);
+            await request(app).delete('/api/matchmaking/queue').send({ userId: user1 });
 
             const position1 = await Redis.lPos('matchmaking-queue', user1);
             const position2 = await Redis.lPos('matchmaking-queue', user2);
@@ -242,27 +233,25 @@ describe('Matchmaking routes', () => {
         });
     });
 
-    describe('GET /api/matchmaking/queue/:userId', () => {
-        it('should return 200 if user is in queue', async () => {
+    describe('GET /api/matchmaking/queue/status', () => {
+        it('should return 200 with queueId null if user is in default queue', async () => {
             const userId = 'player1';
 
             await request(app).post('/api/matchmaking/queue').send({ userId });
 
-            const res = await request(app).get(
-                `/api/matchmaking/queue/${userId}`
-            );
+            const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('message');
             expect(res.body.message).toContain('is queued');
+            expect(res.body).toHaveProperty('queueId');
+            expect(res.body.queueId).toBeNull();
         });
 
         it('should return 404 if user is not in queue', async () => {
             const userId = 'nonexistent-player';
 
-            const res = await request(app).get(
-                `/api/matchmaking/queue/${userId}`
-            );
+            const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
 
             expect(res.status).toBe(404);
             expect(res.body).toHaveProperty('message');
@@ -273,15 +262,282 @@ describe('Matchmaking routes', () => {
             const userId = 'player1';
 
             await request(app).post('/api/matchmaking/queue').send({ userId });
-            await request(app).delete(`/api/matchmaking/queue/${userId}`);
+            await request(app).delete('/api/matchmaking/queue').send({ userId });
 
-            const res = await request(app).get(
-                `/api/matchmaking/queue/${userId}`
-            );
+            const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
 
             expect(res.status).toBe(404);
             expect(res.body).toHaveProperty('message');
             expect(res.body.message).toContain('not queued');
+        });
+    });
+
+    describe('POST /api/matchmaking/queue/private', () => {
+        it('should create private queue, return queueId, and add user to Redis', async () => {
+            const userId = 'player1';
+
+            const res = await request(app).post('/api/matchmaking/queue/private').send({ userId });
+
+            expect(res.status).toBe(201);
+            expect(res.body).toHaveProperty('queueId');
+            expect(res.body.queueId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+
+            const queueKey = `matchmaking-queue:${res.body.queueId}`;
+            const position = await Redis.lPos(queueKey, userId);
+            expect(position).not.toBeNull();
+            expect(position).toBeGreaterThanOrEqual(0);
+        });
+
+        it('should return 409 if user is already in queue', async () => {
+            const userId = 'player1';
+
+            await request(app).post('/api/matchmaking/queue').send({ userId });
+
+            const res = await request(app).post('/api/matchmaking/queue/private').send({ userId });
+
+            expect(res.status).toBe(409);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('already in queue');
+        });
+    });
+
+    describe('POST /api/matchmaking/queue/private/:queueId', () => {
+        it('should join private queue and add user to Redis', async () => {
+            const user1 = 'player1';
+
+            const createRes = await request(app).post('/api/matchmaking/queue/private').send({ userId: user1 });
+
+            const queueId = createRes.body.queueId;
+            const queueKey = `matchmaking-queue:${queueId}`;
+
+            const position1 = await Redis.lPos(queueKey, user1);
+            expect(position1).not.toBeNull();
+            expect(position1).toBe(0);
+
+            const queueLength = await Redis.lLen(queueKey);
+            expect(queueLength).toBe(1);
+        });
+
+        it('should return 409 if user is already in queue', async () => {
+            const user1 = 'player1';
+
+            await request(app).post('/api/matchmaking/queue').send({ userId: user1 });
+
+            const res = await request(app).post('/api/matchmaking/queue/private/some-queue-id').send({ userId: user1 });
+
+            expect(res.status).toBe(409);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('already in queue');
+        });
+
+        it('should return 404 if private queue does not exist', async () => {
+            const userId = 'player1';
+            const nonExistentQueueId = 'non-existent-queue';
+
+            const res = await request(app)
+                .post(`/api/matchmaking/queue/private/${nonExistentQueueId}`)
+                .send({ userId });
+
+            expect(res.status).toBe(404);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('not found');
+        });
+
+        it('should return 404 if private queue was full and already matched', async () => {
+            const user1 = 'player1';
+            const user2 = 'player2';
+            const user3 = 'player3';
+
+            const httpServer = createServer();
+            const io = new Server(httpServer);
+
+            if (container.isBound('SocketIO')) {
+                await container.unbind('SocketIO');
+            }
+            container.bind('SocketIO').toConstantValue(io);
+
+            io.on('connection', onConnection);
+
+            const serverPort = await new Promise<number>((resolve) => {
+                httpServer.listen(() => {
+                    resolve((httpServer.address() as AddressInfo).port);
+                });
+            });
+
+            const client1 = ioc(`http://localhost:${serverPort}`, {
+                auth: { userId: user1 }
+            });
+            const client2 = ioc(`http://localhost:${serverPort}`, {
+                auth: { userId: user2 }
+            });
+
+            await Promise.all([
+                new Promise<void>((resolve) => client1.on('connect', resolve)),
+                new Promise<void>((resolve) => client2.on('connect', resolve))
+            ]);
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            const mockCoreRestClient = container.get(CoreRestClient) as jest.Mocked<CoreRestClient>;
+            const mockGameResponse = {
+                gameId: 'test-game-full',
+                players: [
+                    {
+                        id: user1,
+                        color: Color.WHITE,
+                        timer: { remainingMs: 600000 }
+                    },
+                    {
+                        id: user2,
+                        color: Color.BLACK,
+                        timer: { remainingMs: 600000 }
+                    }
+                ]
+            };
+            mockCoreRestClient.createGame = jest.fn().mockResolvedValue(mockGameResponse);
+
+            const createRes = await request(app).post('/api/matchmaking/queue/private').send({ userId: user1 });
+
+            const queueId = createRes.body.queueId;
+
+            await request(app).post(`/api/matchmaking/queue/private/${queueId}`).send({ userId: user2 });
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            const res = await request(app).post(`/api/matchmaking/queue/private/${queueId}`).send({ userId: user3 });
+
+            expect(res.status).toBe(404);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('not found');
+
+            client1.disconnect();
+            client2.disconnect();
+            await new Promise<void>((resolve) => {
+                io.close(() => {
+                    httpServer.close(() => resolve());
+                });
+            });
+        }, 10000);
+
+        it('should trigger matchmaking when 2nd player joins and send notifications', async () => {
+            const user1 = 'player1';
+            const user2 = 'player2';
+
+            const httpServer = createServer();
+            const io = new Server(httpServer);
+
+            if (container.isBound('SocketIO')) {
+                await container.unbind('SocketIO');
+            }
+            container.bind('SocketIO').toConstantValue(io);
+
+            io.on('connection', onConnection);
+
+            const serverPort = await new Promise<number>((resolve) => {
+                httpServer.listen(() => {
+                    resolve((httpServer.address() as AddressInfo).port);
+                });
+            });
+
+            const client1 = ioc(`http://localhost:${serverPort}`, {
+                auth: { userId: user1 }
+            });
+            const client2 = ioc(`http://localhost:${serverPort}`, {
+                auth: { userId: user2 }
+            });
+
+            await Promise.all([
+                new Promise<void>((resolve) => client1.on('connect', resolve)),
+                new Promise<void>((resolve) => client2.on('connect', resolve))
+            ]);
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            const mockCoreRestClient = container.get(CoreRestClient) as jest.Mocked<CoreRestClient>;
+            const mockGameResponse = {
+                gameId: 'test-game-private',
+                players: [
+                    {
+                        id: user1,
+                        color: Color.WHITE,
+                        timer: { remainingMs: 600000 }
+                    },
+                    {
+                        id: user2,
+                        color: Color.BLACK,
+                        timer: { remainingMs: 600000 }
+                    }
+                ]
+            };
+            mockCoreRestClient.createGame = jest.fn().mockResolvedValue(mockGameResponse);
+
+            const client1Promise = new Promise((resolve) => {
+                client1.on('matchmake', resolve);
+            });
+            const client2Promise = new Promise((resolve) => {
+                client2.on('matchmake', resolve);
+            });
+
+            const createRes = await request(app).post('/api/matchmaking/queue/private').send({ userId: user1 });
+
+            const queueId = createRes.body.queueId;
+
+            await request(app).post(`/api/matchmaking/queue/private/${queueId}`).send({ userId: user2 });
+
+            const [message1, message2] = await Promise.race([
+                Promise.all([client1Promise, client2Promise]),
+                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+            ]);
+
+            expect(message1).toEqual(mockGameResponse);
+            expect(message2).toEqual(mockGameResponse);
+
+            const queueKey = `matchmaking-queue:${queueId}`;
+            const finalQueueLength = await Redis.lLen(queueKey);
+            expect(finalQueueLength).toBe(0);
+
+            client1.disconnect();
+            client2.disconnect();
+            await new Promise<void>((resolve) => {
+                io.close(() => {
+                    httpServer.close(() => resolve());
+                });
+            });
+        }, 10000);
+    });
+
+    describe('DELETE /api/matchmaking/queue/private/:queueId', () => {
+        it('should leave private queue and remove user from Redis', async () => {
+            const userId = 'player1';
+
+            const createRes = await request(app).post('/api/matchmaking/queue/private').send({ userId });
+
+            const queueId = createRes.body.queueId;
+            const queueKey = `matchmaking-queue:${queueId}`;
+
+            let position = await Redis.lPos(queueKey, userId);
+            expect(position).not.toBeNull();
+
+            const res = await request(app).delete(`/api/matchmaking/queue/private/${queueId}`).send({ userId });
+
+            expect(res.status).toBe(200);
+
+            position = await Redis.lPos(queueKey, userId);
+            expect(position).toBeNull();
+
+            const queueLength = await Redis.lLen(queueKey);
+            expect(queueLength).toBe(0);
+        });
+
+        it('should return 404 if user is not in queue', async () => {
+            const userId = 'nonexistent-player';
+            const queueId = 'some-queue-id';
+
+            const res = await request(app).delete(`/api/matchmaking/queue/private/${queueId}`).send({ userId });
+
+            expect(res.status).toBe(404);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('not in queue');
         });
     });
 });

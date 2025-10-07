@@ -14,13 +14,7 @@ const compat = new FlatCompat({
 
 export default [
     {
-        ignores: [
-            '**/node_modules',
-            '**/dist',
-            '**/build',
-            '**/.next',
-            '**/.yarn'
-        ]
+        ignores: ['**/node_modules', '**/dist', '**/build', '**/.next', '**/.yarn']
     },
     ...compat
         .extends(
@@ -46,18 +40,13 @@ export default [
 
             'react/display-name': 'off',
             'react/no-unescaped-entities': 'off',
-            '@next/next/no-html-link-for-pages': [
-                'error',
-                'apps/frontend/src/app'
-            ]
+            '@next/next/no-html-link-for-pages': ['error', 'apps/frontend/src/app']
         }
     },
-    ...compat
-        .extends('eslint:recommended', 'plugin:@typescript-eslint/recommended')
-        .map((config) => ({
-            ...config,
-            files: ['apps/backend/**/*.{js,ts}']
-        })),
+    ...compat.extends('eslint:recommended', 'plugin:@typescript-eslint/recommended').map((config) => ({
+        ...config,
+        files: ['apps/backend/**/*.{js,ts}']
+    })),
     {
         files: ['apps/backend/**/*.{js,ts}'],
 

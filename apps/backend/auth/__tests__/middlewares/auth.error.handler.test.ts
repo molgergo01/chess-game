@@ -40,9 +40,7 @@ describe('Auth Error Handler', () => {
 
         expect(res.status).toHaveBeenCalledWith(401);
         expect(res.json).toHaveBeenCalledWith({ message: error.message });
-        expect(res.redirect).toHaveBeenCalledWith(
-            'localhost:3000/login?failedLogin'
-        );
+        expect(res.redirect).toHaveBeenCalledWith('localhost:3000/login?failedLogin');
 
         expect(next).toHaveBeenCalledTimes(0);
     });

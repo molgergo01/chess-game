@@ -27,22 +27,13 @@ function ChatBox({ className, ...props }: React.ComponentProps<'div'>) {
 
     const handleSend = () => {
         if (input.trim()) {
-            setMessages([
-                ...messages,
-                { id: Date.now(), text: input, sender: 'me' }
-            ]);
+            setMessages([...messages, { id: Date.now(), text: input, sender: 'me' }]);
             setInput('');
         }
     };
 
     return (
-        <div
-            className={cn(
-                'flex flex-col rounded-lg border bg-background shadow-md p-2 h-full',
-                className
-            )}
-            {...props}
-        >
+        <div className={cn('flex flex-col rounded-lg border bg-background shadow-md p-2 h-full', className)} {...props}>
             <div className="flex-1 overflow-y-auto space-y-2 p-2 min-h-0">
                 {messages.map((msg) => (
                     <div

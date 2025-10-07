@@ -1,10 +1,4 @@
-import {
-    getGameId,
-    getTimes,
-    joinGame,
-    movePiece,
-    getPosition
-} from '@/lib/clients/core.socket.client';
+import { getGameId, getTimes, joinGame, movePiece, getPosition } from '@/lib/clients/core.socket.client';
 import { Socket } from 'socket.io-client';
 
 describe('core.socket.client', () => {
@@ -24,9 +18,7 @@ describe('core.socket.client', () => {
     describe('getGameId', () => {
         it('should call socket.emitWithAck with correct event name', async () => {
             const mockResponse = { gameId: 'game123' };
-            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(
-                mockResponse
-            );
+            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(mockResponse);
 
             const result = await getGameId(mockSocket as Socket);
 
@@ -44,9 +36,7 @@ describe('core.socket.client', () => {
                     blackTimeRemaining: 600000
                 }
             };
-            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(
-                mockResponse
-            );
+            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(mockResponse);
 
             const result = await getTimes(mockSocket as Socket, gameId);
 
@@ -77,17 +67,9 @@ describe('core.socket.client', () => {
             const promotionPiece = undefined;
             const mockResponse = { success: true, position: 'fen_string' };
 
-            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(
-                mockResponse
-            );
+            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(mockResponse);
 
-            const result = await movePiece(
-                mockSocket as Socket,
-                gameId,
-                sourceSquare,
-                targetSquare,
-                promotionPiece
-            );
+            const result = await movePiece(mockSocket as Socket, gameId, sourceSquare, targetSquare, promotionPiece);
 
             expect(mockSocket.emitWithAck).toHaveBeenCalledWith('movePiece', {
                 gameId: gameId,
@@ -105,17 +87,9 @@ describe('core.socket.client', () => {
             const promotionPiece = 'q';
             const mockResponse = { success: true, position: 'fen_string' };
 
-            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(
-                mockResponse
-            );
+            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(mockResponse);
 
-            const result = await movePiece(
-                mockSocket as Socket,
-                gameId,
-                sourceSquare,
-                targetSquare,
-                promotionPiece
-            );
+            const result = await movePiece(mockSocket as Socket, gameId, sourceSquare, targetSquare, promotionPiece);
 
             expect(mockSocket.emitWithAck).toHaveBeenCalledWith('movePiece', {
                 gameId: gameId,
@@ -136,9 +110,7 @@ describe('core.socket.client', () => {
                 winner: null
             };
 
-            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(
-                mockResponse
-            );
+            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(mockResponse);
 
             const result = await getPosition(mockSocket as Socket, gameId);
 

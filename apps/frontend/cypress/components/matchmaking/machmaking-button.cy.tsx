@@ -4,33 +4,68 @@ import env from '@/lib/config/env';
 
 describe('<MatchmakingButton />', () => {
     beforeEach(() => {
-        // Mock getUser API for AuthProvider
         cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
             statusCode: 200,
             body: { id: 'test-user-123', name: 'Test User' }
         });
 
-        // Mock joinQueue API
-        cy.intercept(
-            'POST',
-            `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue`,
-            {
-                statusCode: 200
-            }
-        );
-
-        cy.mount(withAuthAndRouter(<MatchmakingButton />));
+        cy.intercept('POST', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue`, {
+            statusCode: 200
+        }).as('joinQueue');
     });
 
     it('should render button with correct data-cy attribute', () => {
-        cy.getDataCy('matchmaking-button').should('exist');
+        cy.mount(withAuthAndRouter(<MatchmakingButton />));
+
+        cy.getDataCy('matchmaking-button-join').should('exist');
     });
 
     it('should be visible', () => {
-        cy.getDataCy('matchmaking-button').should('be.visible');
+        cy.mount(withAuthAndRouter(<MatchmakingButton />));
+
+        cy.getDataCy('matchmaking-button-join').should('be.visible');
     });
 
-    it('should display "Queue" text', () => {
-        cy.getDataCy('matchmaking-button').should('contain.text', 'Queue');
+    it('should display "Play Online" text', () => {
+        cy.mount(withAuthAndRouter(<MatchmakingButton />));
+
+        cy.getDataCy('matchmaking-button-join').should('contain.text', 'Play Online');
+    });
+
+    it('should call joinQueue API when clicked', () => {
+        cy.mount(withAuthAndRouter(<MatchmakingButton />));
+
+        cy.getDataCy('matchmaking-button-join').click();
+
+        cy.wait('@joinQueue');
+    });
+
+    it('should call onJoinQueue callback on successful join', () => {
+        const onJoinQueue = cy.stub().as('onJoinQueue');
+
+        cy.mount(withAuthAndRouter(<MatchmakingButton onJoinQueue={onJoinQueue} />));
+
+        cy.getDataCy('matchmaking-button-join').click();
+
+        cy.wait('@joinQueue').then(() => {
+            cy.get('@onJoinQueue').should('have.been.calledOnce');
+        });
+    });
+
+    it('should call onError callback when API fails', () => {
+        cy.intercept('POST', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue`, {
+            statusCode: 500,
+            body: { message: 'Internal server error' }
+        }).as('joinQueueError');
+
+        const onError = cy.stub().as('onError');
+
+        cy.mount(withAuthAndRouter(<MatchmakingButton onError={onError} />));
+
+        cy.getDataCy('matchmaking-button-join').click();
+
+        cy.wait('@joinQueueError').then(() => {
+            cy.get('@onError').should('have.been.calledOnce');
+        });
     });
 });

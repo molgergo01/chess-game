@@ -16,17 +16,10 @@ describe('Game Controller', () => {
     let gameController: GameController;
 
     beforeEach(() => {
-        mockGameService = new GameService(
-            null as never,
-            null as never
-        ) as jest.Mocked<GameService>;
+        mockGameService = new GameService(null as never, null as never) as jest.Mocked<GameService>;
         mockGameService.create = jest.fn();
 
-        mockTimerWatcher = new TimerWatcher(
-            null as never,
-            null as never,
-            null as never
-        ) as jest.Mocked<TimerWatcher>;
+        mockTimerWatcher = new TimerWatcher(null as never, null as never, null as never) as jest.Mocked<TimerWatcher>;
 
         gameController = new GameController(mockGameService, mockTimerWatcher);
     });
@@ -72,15 +65,9 @@ describe('Game Controller', () => {
 
             mockGameService.create.mockResolvedValue(gameCreated);
 
-            await gameController.createGame(
-                req as Request,
-                res as Response,
-                next
-            );
+            await gameController.createGame(req as Request, res as Response, next);
 
-            expect(mockGameService.create).toHaveBeenCalledWith(
-                req.body.players
-            );
+            expect(mockGameService.create).toHaveBeenCalledWith(req.body.players);
             expect(mockTimerWatcher.start).toHaveBeenCalled();
             expect(res.status).toHaveBeenCalledWith(201);
             expect(res.json).toHaveBeenCalledWith(expectedResponse);
@@ -95,9 +82,7 @@ describe('Game Controller', () => {
 
             gameController.createGame(req as Request, res as Response, next);
 
-            expect(mockGameService.create).toHaveBeenCalledWith(
-                req.body.players
-            );
+            expect(mockGameService.create).toHaveBeenCalledWith(req.body.players);
             expect(next).toHaveBeenCalledWith(expectedError);
             expect(mockTimerWatcher.start).not.toHaveBeenCalled();
         });

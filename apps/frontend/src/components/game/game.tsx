@@ -23,15 +23,7 @@ import NavBar from '@/components/layout/navbar';
 
 function Game({ className, ...props }: React.ComponentProps<'div'>) {
     const router = useRouter();
-    const {
-        color,
-        boardPosition,
-        turnColor,
-        timesRemaining,
-        gameOver,
-        winner,
-        onDrop
-    } = useChessGame();
+    const { color, boardPosition, turnColor, timesRemaining, gameOver, winner, onDrop } = useChessGame();
 
     const whiteTimerRef = useRef<TimerRef>(null);
     const blackTimerRef = useRef<TimerRef>(null);
@@ -55,12 +47,8 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
         blackTimerRef.current?.stop();
 
         if (timesRemaining) {
-            blackTimerRef.current?.setTimeLeft(
-                timesRemaining?.blackTimeRemaining
-            );
-            whiteTimerRef.current?.setTimeLeft(
-                timesRemaining?.whiteTimeRemaining
-            );
+            blackTimerRef.current?.setTimeLeft(timesRemaining?.blackTimeRemaining);
+            whiteTimerRef.current?.setTimeLeft(timesRemaining?.whiteTimeRemaining);
         }
 
         if (turnColor === Color.WHITE) {
@@ -89,49 +77,26 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
     };
 
     return (
-        <div
-            className={`flex flex-col flex-1 min-h-0 ${className}`}
-            data-cy="game-container"
-            {...props}
-        >
-            <Timer
-                ref={whiteTimerRef}
-                timeInMinutes={10}
-                onTick={handleWhiteTimerTick}
-            />
-            <Timer
-                ref={blackTimerRef}
-                timeInMinutes={10}
-                onTick={handleBlackTimerTick}
-            />
+        <div className={`flex flex-col flex-1 min-h-0 ${className}`} data-cy="game-container" {...props}>
+            <Timer ref={whiteTimerRef} timeInMinutes={10} onTick={handleWhiteTimerTick} />
+            <Timer ref={blackTimerRef} timeInMinutes={10} onTick={handleBlackTimerTick} />
 
-            <div
-                className="flex-grow-0 grid grid-cols-2 sm:hidden"
-                data-cy="game-mobile-banners"
-            >
+            <div className="flex-grow-0 grid grid-cols-2 sm:hidden" data-cy="game-mobile-banners">
                 <Banner
                     className="rounded-r-3xl"
                     playerName={'joe biden'}
-                    playerColor={
-                        color === Color.WHITE ? Color.WHITE : Color.BLACK
-                    }
+                    playerColor={color === Color.WHITE ? Color.WHITE : Color.BLACK}
                     isOpponent={false}
                     turnColor={turnColor}
-                    timeLeft={
-                        color === Color.WHITE ? whiteTimeLeft : blackTimeLeft
-                    }
+                    timeLeft={color === Color.WHITE ? whiteTimeLeft : blackTimeLeft}
                 />
                 <Banner
                     className="rounded-l-3xl"
                     playerName={'donald trump'}
-                    playerColor={
-                        color === Color.WHITE ? Color.BLACK : Color.WHITE
-                    }
+                    playerColor={color === Color.WHITE ? Color.BLACK : Color.WHITE}
                     isOpponent={true}
                     turnColor={turnColor}
-                    timeLeft={
-                        color === Color.WHITE ? blackTimeLeft : whiteTimeLeft
-                    }
+                    timeLeft={color === Color.WHITE ? blackTimeLeft : whiteTimeLeft}
                 />
             </div>
 
@@ -140,18 +105,10 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                     <div className="flex flex-col sm:gap-1 flex-shrink-0">
                         <Banner
                             className="hidden sm:flex flex-col sm:w-[min(500px,min(45vw,calc(100vh-12rem)))] lg:w-[min(650px,min(50vw,calc(100vh-10rem)))] sm:rounded-lg sm:border-2 sm:border-border sm:overflow-hidden"
-                            playerColor={
-                                color === Color.WHITE
-                                    ? Color.BLACK
-                                    : Color.WHITE
-                            }
+                            playerColor={color === Color.WHITE ? Color.BLACK : Color.WHITE}
                             isOpponent={true}
                             turnColor={turnColor}
-                            timeLeft={
-                                color === Color.WHITE
-                                    ? blackTimeLeft
-                                    : whiteTimeLeft
-                            }
+                            timeLeft={color === Color.WHITE ? blackTimeLeft : whiteTimeLeft}
                             data-cy="game-desktop-banner-top"
                         />
 
@@ -164,18 +121,10 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
 
                         <Banner
                             className="hidden sm:flex flex-col sm:w-[min(500px,min(45vw,calc(100vh-12rem)))] lg:w-[min(650px,min(50vw,calc(100vh-10rem)))] sm:rounded-lg sm:border-2 sm:border-border sm:overflow-hidden"
-                            playerColor={
-                                color === Color.WHITE
-                                    ? Color.WHITE
-                                    : Color.BLACK
-                            }
+                            playerColor={color === Color.WHITE ? Color.WHITE : Color.BLACK}
                             isOpponent={false}
                             turnColor={turnColor}
-                            timeLeft={
-                                color === Color.WHITE
-                                    ? whiteTimeLeft
-                                    : blackTimeLeft
-                            }
+                            timeLeft={color === Color.WHITE ? whiteTimeLeft : blackTimeLeft}
                             data-cy="game-desktop-banner-bottom"
                         />
                     </div>
@@ -189,10 +138,7 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                 </div>
             </div>
 
-            <div
-                className="sm:hidden mt-auto flex-shrink-0"
-                data-cy="game-navbar"
-            >
+            <div className="sm:hidden mt-auto flex-shrink-0" data-cy="game-navbar">
                 <NavBar />
             </div>
 

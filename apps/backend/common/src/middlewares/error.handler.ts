@@ -6,6 +6,7 @@ import ConflictError from '../errors/conflict.error';
 import InternalServerError from '../errors/internal.server.error';
 import UnauthorizedError from '../errors/unauthorized.error';
 import ForbiddenError from '../errors/forbidden.error';
+import UnprocessableEntityError from '../errors/unprocessable.entity.error';
 
 export function errorHandler(
     err: Error,
@@ -36,6 +37,10 @@ export function errorHandler(
     if (err instanceof ConflictError) {
         res.status(409).json({ message: err.message });
         return;
+    }
+
+    if (err instanceof UnprocessableEntityError) {
+        res.status(422).json({ message: err.message });
     }
 
     if (err instanceof InternalServerError) {

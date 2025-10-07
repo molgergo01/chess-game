@@ -20,9 +20,7 @@ describe('Matchmaking Notification Service', () => {
         mockContainer = new Container() as jest.Mocked<Container>;
         mockContainer.get = jest.fn().mockReturnValue(mockIo);
 
-        matchmakingNotificationService = new MatchmakingNotificationService(
-            mockContainer
-        );
+        matchmakingNotificationService = new MatchmakingNotificationService(mockContainer);
     });
 
     afterEach(() => {
@@ -53,17 +51,10 @@ describe('Matchmaking Notification Service', () => {
                 gameId: gameId
             };
 
-            matchmakingNotificationService.sendMatchmakeNotification(
-                socketId,
-                players,
-                gameId
-            );
+            matchmakingNotificationService.sendMatchmakeNotification(socketId, players, gameId);
 
             expect(mockIo.to).toHaveBeenCalledWith(socketId);
-            expect(mockIo.emit).toHaveBeenCalledWith(
-                matchmakeEvent,
-                expectedMessage
-            );
+            expect(mockIo.emit).toHaveBeenCalledWith(matchmakeEvent, expectedMessage);
         });
     });
 });

@@ -1,15 +1,35 @@
 import { Player } from './game';
 
-export interface JoinQueueRequest {
+export type JoinPrivateQueueParams = {
+    queueId: string;
+};
+
+export type JoinQueueRequest = {
     userId: string;
     elo: number;
-}
+};
 
-export type LeaveQueueParams = {
+export type JoinPrivateQueueRequest = {
     userId: string;
 };
 
-export type IsInQueueParams = {
+export type CreatePrivateQueueRequest = {
+    userId: string;
+};
+
+export type CreatePrivateQueueResponse = {
+    queueId: string;
+};
+
+export type LeavePrivateQueueParams = {
+    queueId: string | null;
+};
+
+export type LeaveQueueRequest = {
+    userId: string;
+};
+
+export type LeavePrivateQueueRequest = {
     userId: string;
 };
 

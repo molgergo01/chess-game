@@ -1,12 +1,6 @@
 'use client';
 
-import React, {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useState
-} from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Socket } from 'socket.io-client';
 import { initializeCoreSocket } from '@/lib/sockets/core.socket';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -44,11 +38,7 @@ export function CoreSocketProvider({ children }: CoreSocketProviderProps) {
         };
     }, [userId]);
 
-    return (
-        <CoreSocketContext.Provider value={{ socket }}>
-            {children}
-        </CoreSocketContext.Provider>
-    );
+    return <CoreSocketContext.Provider value={{ socket }}>{children}</CoreSocketContext.Provider>;
 }
 
 export function useCoreSocket() {

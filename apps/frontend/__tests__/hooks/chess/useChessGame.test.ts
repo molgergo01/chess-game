@@ -9,11 +9,7 @@ import useChessGame from '@/hooks/chess/useChessGame';
 import useGameId from '@/hooks/chess/useGameId';
 import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
 import { useAuth } from '@/hooks/auth/useAuth';
-import {
-    getPosition,
-    getTimes,
-    movePiece
-} from '@/lib/clients/core.socket.client';
+import { getPosition, getTimes, movePiece } from '@/lib/clients/core.socket.client';
 import { getCurrentUserColor } from '@/lib/utils/game.utils';
 import { Socket } from 'socket.io-client';
 import Fen from 'chess-fen';
@@ -23,18 +19,12 @@ import type { PieceDropHandlerArgs } from 'react-chessboard';
 
 describe('useChessGame', () => {
     const mockUseGameId = useGameId as jest.MockedFunction<typeof useGameId>;
-    const mockUseCoreSocket = useCoreSocket as jest.MockedFunction<
-        typeof useCoreSocket
-    >;
+    const mockUseCoreSocket = useCoreSocket as jest.MockedFunction<typeof useCoreSocket>;
     const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-    const mockGetPosition = getPosition as jest.MockedFunction<
-        typeof getPosition
-    >;
+    const mockGetPosition = getPosition as jest.MockedFunction<typeof getPosition>;
     const mockGetTimes = getTimes as jest.MockedFunction<typeof getTimes>;
     const mockMovePiece = movePiece as jest.MockedFunction<typeof movePiece>;
-    const mockGetCurrentUserColor = getCurrentUserColor as jest.MockedFunction<
-        typeof getCurrentUserColor
-    >;
+    const mockGetCurrentUserColor = getCurrentUserColor as jest.MockedFunction<typeof getCurrentUserColor>;
 
     let mockSocket: Partial<Socket>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,8 +78,7 @@ describe('useChessGame', () => {
         mockUseGameId.mockReturnValue(['game123', setGameId]);
 
         mockGetPosition.mockResolvedValue({
-            position:
-                'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
             gameOver: false,
             winner: null
         });
@@ -104,9 +93,7 @@ describe('useChessGame', () => {
         const { result } = renderHook(() => useChessGame());
 
         await waitFor(() => {
-            expect(result.current.boardPosition.toString()).not.toBe(
-                Fen.emptyPosition
-            );
+            expect(result.current.boardPosition.toString()).not.toBe(Fen.emptyPosition);
         });
 
         expect(mockGetPosition).toHaveBeenCalledWith(mockSocket, 'game123');
@@ -120,8 +107,7 @@ describe('useChessGame', () => {
         mockUseGameId.mockReturnValue(['game123', setGameId]);
 
         mockGetPosition.mockResolvedValue({
-            position:
-                'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
             gameOver: true,
             winner: Winner.WHITE
         });
@@ -148,8 +134,7 @@ describe('useChessGame', () => {
         mockUseGameId.mockReturnValue(['game123', setGameId]);
 
         mockGetPosition.mockResolvedValue({
-            position:
-                'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
             gameOver: false,
             winner: null
         });
@@ -164,16 +149,12 @@ describe('useChessGame', () => {
         const { result } = renderHook(() => useChessGame());
 
         await waitFor(() => {
-            expect(mockSocket.on).toHaveBeenCalledWith(
-                'update-position',
-                expect.any(Function)
-            );
+            expect(mockSocket.on).toHaveBeenCalledWith('update-position', expect.any(Function));
         });
 
         act(() => {
             socketEventHandlers['update-position']({
-                position:
-                    'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
+                position: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
                 playerTimes: {
                     whiteTimeRemaining: 590000,
                     blackTimeRemaining: 600000
@@ -200,8 +181,7 @@ describe('useChessGame', () => {
         mockUseGameId.mockReturnValue(['game123', setGameId]);
 
         mockGetPosition.mockResolvedValue({
-            position:
-                'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
             gameOver: false,
             winner: null
         });
@@ -221,8 +201,7 @@ describe('useChessGame', () => {
 
         act(() => {
             socketEventHandlers['update-position']({
-                position:
-                    'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
+                position: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
                 playerTimes: {
                     whiteTimeRemaining: 590000,
                     blackTimeRemaining: 600000
@@ -244,8 +223,7 @@ describe('useChessGame', () => {
         mockUseGameId.mockReturnValue(['game123', setGameId]);
 
         mockGetPosition.mockResolvedValue({
-            position:
-                'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
             gameOver: false,
             winner: null
         });
@@ -260,10 +238,7 @@ describe('useChessGame', () => {
         const { result } = renderHook(() => useChessGame());
 
         await waitFor(() => {
-            expect(mockSocket.on).toHaveBeenCalledWith(
-                'time-expired',
-                expect.any(Function)
-            );
+            expect(mockSocket.on).toHaveBeenCalledWith('time-expired', expect.any(Function));
         });
 
         act(() => {
@@ -288,8 +263,7 @@ describe('useChessGame', () => {
         mockUseGameId.mockReturnValue(['game123', setGameId]);
 
         mockGetPosition.mockResolvedValue({
-            position:
-                'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
             gameOver: false,
             winner: null
         });
@@ -315,8 +289,7 @@ describe('useChessGame', () => {
         mockUseGameId.mockReturnValue(['game123', setGameId]);
 
         mockGetPosition.mockResolvedValue({
-            position:
-                'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
             gameOver: false,
             winner: null
         });
@@ -330,8 +303,7 @@ describe('useChessGame', () => {
 
         mockMovePiece.mockResolvedValue({
             success: true,
-            position:
-                'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1'
+            position: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1'
         });
 
         const { result } = renderHook(() => useChessGame());
@@ -344,19 +316,11 @@ describe('useChessGame', () => {
 
         let dropResult: boolean = false;
         await act(async () => {
-            dropResult = result.current.onDrop(
-                createMockPieceDropArgs('e2', 'e4', 'wP')
-            );
+            dropResult = result.current.onDrop(createMockPieceDropArgs('e2', 'e4', 'wP'));
         });
 
         expect(dropResult).toBe(true);
-        expect(mockMovePiece).toHaveBeenCalledWith(
-            mockSocket,
-            'game123',
-            'e2',
-            'e4',
-            undefined
-        );
+        expect(mockMovePiece).toHaveBeenCalledWith(mockSocket, 'game123', 'e2', 'e4', undefined);
     });
 
     it('should return false on piece drop when gameId is not available', async () => {
@@ -376,9 +340,7 @@ describe('useChessGame', () => {
             expect(result.current.onDrop).toBeDefined();
         });
 
-        const dropResult = result.current.onDrop(
-            createMockPieceDropArgs('e2', 'e4', 'wP')
-        );
+        const dropResult = result.current.onDrop(createMockPieceDropArgs('e2', 'e4', 'wP'));
 
         expect(dropResult).toBe(false);
         expect(mockMovePiece).not.toHaveBeenCalled();
@@ -389,8 +351,7 @@ describe('useChessGame', () => {
         mockUseGameId.mockReturnValue(['game123', setGameId]);
 
         mockGetPosition.mockResolvedValue({
-            position:
-                'rnbqkb1r/ppppppPp/8/8/8/8/PPPPPPP1/RNBQKBNR w KQkq - 0 1',
+            position: 'rnbqkb1r/ppppppPp/8/8/8/8/PPPPPPP1/RNBQKBNR w KQkq - 0 1',
             gameOver: false,
             winner: null
         });
@@ -410,22 +371,14 @@ describe('useChessGame', () => {
         const { result } = renderHook(() => useChessGame());
 
         await waitFor(() => {
-            expect(result.current.boardPosition.toString()).not.toBe(
-                Fen.emptyPosition
-            );
+            expect(result.current.boardPosition.toString()).not.toBe(Fen.emptyPosition);
         });
 
         await act(async () => {
             result.current.onDrop(createMockPieceDropArgs('g7', 'g8', 'wP'));
         });
 
-        expect(mockMovePiece).toHaveBeenCalledWith(
-            mockSocket,
-            'game123',
-            'g7',
-            'g8',
-            'q'
-        );
+        expect(mockMovePiece).toHaveBeenCalledWith(mockSocket, 'game123', 'g7', 'g8', 'q');
     });
 
     it('should cleanup socket listeners on unmount', async () => {
@@ -433,8 +386,7 @@ describe('useChessGame', () => {
         mockUseGameId.mockReturnValue(['game123', setGameId]);
 
         mockGetPosition.mockResolvedValue({
-            position:
-                'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
             gameOver: false,
             winner: null
         });
@@ -454,13 +406,7 @@ describe('useChessGame', () => {
 
         unmount();
 
-        expect(mockSocket.off).toHaveBeenCalledWith(
-            'update-position',
-            expect.any(Function)
-        );
-        expect(mockSocket.off).toHaveBeenCalledWith(
-            'time-expired',
-            expect.any(Function)
-        );
+        expect(mockSocket.off).toHaveBeenCalledWith('update-position', expect.any(Function));
+        expect(mockSocket.off).toHaveBeenCalledWith('time-expired', expect.any(Function));
     });
 });

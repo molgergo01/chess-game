@@ -20,9 +20,7 @@ describe('Authentication routes', () => {
             const res = await request(app).get('/api/auth/google');
 
             expect(res.status).toBe(302);
-            expect(res.headers['location']).toContain(
-                'https://accounts.google.com'
-            );
+            expect(res.headers['location']).toContain('https://accounts.google.com');
         });
     });
 
@@ -47,32 +45,22 @@ describe('Authentication routes', () => {
                 const res = await request(app).post('/api/auth/verify');
 
                 expect(res.status).toBe(401);
-                expect(JSON.stringify(res.body)).toBe(
-                    JSON.stringify({ message: 'Token not found' })
-                );
+                expect(JSON.stringify(res.body)).toBe(JSON.stringify({ message: 'Token not found' }));
             });
             it('if invalid token is in cookies', async () => {
-                const res = await request(app)
-                    .post('/api/auth/verify')
-                    .set('Cookie', 'token=invalidToken');
+                const res = await request(app).post('/api/auth/verify').set('Cookie', 'token=invalidToken');
 
                 expect(res.status).toBe(401);
-                expect(JSON.stringify(res.body)).toBe(
-                    JSON.stringify({ message: 'Invalid Token' })
-                );
+                expect(JSON.stringify(res.body)).toBe(JSON.stringify({ message: 'Invalid Token' }));
             });
         });
         describe('should return 200', () => {
             it('if valid token is in cookies', async () => {
                 const token = jwt.sign('user', 'mocked_jwt_secret');
-                const res = await request(app)
-                    .post('/api/auth/verify')
-                    .set('Cookie', `token=${token}`);
+                const res = await request(app).post('/api/auth/verify').set('Cookie', `token=${token}`);
 
                 expect(res.status).toBe(200);
-                expect(JSON.stringify(res.body)).toBe(
-                    JSON.stringify({ message: 'Authenticated' })
-                );
+                expect(JSON.stringify(res.body)).toBe(JSON.stringify({ message: 'Authenticated' }));
             });
         });
     });

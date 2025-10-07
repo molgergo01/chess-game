@@ -1,12 +1,6 @@
 'use client';
 
-import {
-    forwardRef,
-    useEffect,
-    useImperativeHandle,
-    useRef,
-    useState
-} from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 interface TimerProps {
     timeInMinutes: number;
@@ -35,94 +29,82 @@ interface TimeDisplayProps {
     'data-cy'?: string;
 }
 
-export function TimeDisplay({
-    timeLeft,
-    className,
-    'data-cy': dataCy
-}: TimeDisplayProps) {
+export function TimeDisplay({ timeLeft, className, 'data-cy': dataCy }: TimeDisplayProps) {
     return (
-        <div
-            className={`flex items-center justify-center ${className || ''}`}
-            data-cy={dataCy}
-        >
+        <div className={`flex items-center justify-center ${className || ''}`} data-cy={dataCy}>
             <div className={`text-2xl`}>{formatTime(timeLeft)}</div>
         </div>
     );
 }
 
-const Timer = forwardRef<TimerRef, TimerProps>(
-    ({ timeInMinutes, onTick }, ref) => {
-        const [timeLeft, setTimeLeft] = useState(timeInMinutes * 60 * 1000);
-        const [lastUpdateTime, setLastUpdateTime] = useState<number>(0);
-        const [isRunning, setIsRunning] = useState(false);
-        const intervalRef = useRef<NodeJS.Timeout | null>(null);
-        const onTickRef = useRef(onTick);
+const Timer = forwardRef<TimerRef, TimerProps>(({ timeInMinutes, onTick }, ref) => {
+    const [timeLeft, setTimeLeft] = useState(timeInMinutes * 60 * 1000);
+    const [lastUpdateTime, setLastUpdateTime] = useState<number>(0);
+    const [isRunning, setIsRunning] = useState(false);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const onTickRef = useRef(onTick);
 
-        useEffect(() => {
-            onTickRef.current = onTick;
-        }, [onTick]);
+    useEffect(() => {
+        onTickRef.current = onTick;
+    }, [onTick]);
 
-        useEffect(() => {
-            onTickRef.current?.(timeLeft);
-        }, [timeLeft]);
+    useEffect(() => {
+        onTickRef.current?.(timeLeft);
+    }, [timeLeft]);
 
-        useImperativeHandle(ref, () => ({
-            start: () => {
-                setIsRunning((prev) => {
-                    if (!prev) {
-                        setLastUpdateTime(Date.now());
-                        return true;
+    useImperativeHandle(ref, () => ({
+        start: () => {
+            setIsRunning((prev) => {
+                if (!prev) {
+                    setLastUpdateTime(Date.now());
+                    return true;
+                }
+                return prev;
+            });
+        },
+        stop: () => {
+            setIsRunning(false);
+        },
+        isRunning,
+        timeLeft,
+        setTimeLeft: (time: number) => {
+            setTimeLeft(time);
+            setLastUpdateTime(Date.now());
+        }
+    }));
+
+    useEffect(() => {
+        if (isRunning) {
+            intervalRef.current = setInterval(() => {
+                setTimeLeft((prevTime) => {
+                    const currentTime = Date.now();
+                    if (prevTime <= 0) {
+                        setIsRunning(false);
+                        return 0;
                     }
-                    return prev;
+
+                    const elapsedTime = lastUpdateTime === 0 ? 200 : currentTime - lastUpdateTime;
+                    setLastUpdateTime(Date.now());
+
+                    return prevTime - elapsedTime;
                 });
-            },
-            stop: () => {
-                setIsRunning(false);
-            },
-            isRunning,
-            timeLeft,
-            setTimeLeft: (time: number) => {
-                setTimeLeft(time);
-                setLastUpdateTime(Date.now());
+            }, 200);
+        } else {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
             }
-        }));
+        }
 
-        useEffect(() => {
-            if (isRunning) {
-                intervalRef.current = setInterval(() => {
-                    setTimeLeft((prevTime) => {
-                        const currentTime = Date.now();
-                        if (prevTime <= 0) {
-                            setIsRunning(false);
-                            return 0;
-                        }
-
-                        const elapsedTime =
-                            lastUpdateTime === 0
-                                ? 200
-                                : currentTime - lastUpdateTime;
-                        setLastUpdateTime(Date.now());
-
-                        return prevTime - elapsedTime;
-                    });
-                }, 200);
-            } else {
-                if (intervalRef.current) {
-                    clearInterval(intervalRef.current);
-                    intervalRef.current = null;
-                }
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
             }
+        };
+    }, [isRunning, lastUpdateTime, timeLeft]);
 
-            return () => {
-                if (intervalRef.current) {
-                    clearInterval(intervalRef.current);
-                }
-            };
-        }, [isRunning, lastUpdateTime, timeLeft]);
-
-        return null;
-    }
-);
+    return null;
+});
 
 Timer.displayName = 'Timer';
 

@@ -14,11 +14,7 @@ class MatchmakingNotificationService {
         return this.container.get<Server>('SocketIO');
     }
 
-    sendMatchmakeNotification(
-        socketId: string,
-        players: Player[],
-        gameId: string
-    ) {
+    sendMatchmakeNotification(socketId: string, players: Player[], gameId: string) {
         const matchmakeMessage: MatchmakeMessage = {
             players: players,
             gameId: gameId

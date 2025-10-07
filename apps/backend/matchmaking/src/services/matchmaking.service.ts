@@ -6,6 +6,7 @@ import ConflictError from 'chess-game-backend-common/errors/conflict.error';
 import NotFoundError from 'chess-game-backend-common/errors/not.found.error';
 import { Player } from '../models/game';
 import MatchmakingNotificationService from './matchmaking.notification.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @injectable()
 class MatchmakingService {
@@ -25,37 +26,66 @@ class MatchmakingService {
     }
 
     async joinQueue(userId: string) {
-        if (await this.queueRepository.isInQueue(userId)) {
-            throw new ConflictError(
-                `User with id ${userId} is already in queue`
-            );
+        if ((await this.queueRepository.getQueueId(userId)) !== null) {
+            throw new ConflictError(`User with id ${userId} is already in queue`);
         }
-        this.queueRepository.pushToQueueEnd(userId);
+        this.queueRepository.pushToQueueEnd(userId, null);
     }
 
-    async leaveQueue(userId: string) {
-        if (!(await this.queueRepository.isInQueue(userId))) {
+    async createPrivateQueue(userId: string): Promise<string> {
+        if ((await this.queueRepository.getQueueId(userId)) !== null) {
+            throw new ConflictError(`User with id ${userId} is already in queue`);
+        }
+
+        const queueId = uuidv4();
+
+        this.queueRepository.pushToQueueEnd(userId, queueId);
+        return queueId;
+    }
+
+    async joinPrivateQueue(userId: string, queueId: string) {
+        if ((await this.queueRepository.getQueueId(userId)) !== null) {
+            throw new ConflictError(`User with id ${userId} is already in queue`);
+        }
+        const queueCount = await this.queueRepository.getQueueCount(queueId);
+        if (queueCount === 0) {
+            throw new NotFoundError(`Private queue with id ${queueId} not found`);
+        }
+        if (queueCount >= 2) {
+            throw new ConflictError(`Private queue with id ${queueId} is full`);
+        }
+        this.queueRepository.pushToQueueEnd(userId, queueId);
+        if (queueCount == 1) {
+            await this.matchMake(queueId);
+        }
+    }
+
+    async leaveQueue(userId: string, queueId: string | null) {
+        if ((await this.queueRepository.getQueueId(userId)) === null) {
             throw new NotFoundError(`User with id ${userId} is not in queue`);
         }
-        this.queueRepository.removeFromQueue(userId);
+        this.queueRepository.removeFromQueue(userId, queueId);
     }
 
-    async checkInQueue(userId: string) {
-        const isInQueue = await this.queueRepository.isInQueue(userId);
-        if (!isInQueue) {
+    async getQueue(userId: string) {
+        const queueId = await this.queueRepository.getQueueId(userId);
+        if (queueId === null) {
             throw new NotFoundError(`User with id ${userId} is not queued`);
         }
+        return queueId;
     }
 
-    async matchMake() {
-        const queueCount = await this.queueRepository.getQueueCount();
+    async matchMake(queueId: string | null) {
+        const queueCount = await this.queueRepository.getQueueCount(queueId);
         if (queueCount < 2) return;
-        const players = await this.queueRepository.popQueue();
+        const players = await this.queueRepository.popQueue(queueId);
         if (players === null) {
             throw Error('Not enough player count');
         }
         if (players.length < 2) {
-            players.forEach(this.queueRepository.pushToQueueFront);
+            players.forEach((player) => {
+                this.queueRepository.pushToQueueFront(player, queueId);
+            });
             throw Error('Not enough player count');
         }
 
@@ -68,12 +98,7 @@ class MatchmakingService {
         const playerIds = players.map((player) => player.id);
         const socketIds = (
             await Promise.all(
-                playerIds.map(
-                    async (playerId) =>
-                        await this.socketIdRepository.getSocketIdForUser(
-                            playerId
-                        )
-                )
+                playerIds.map(async (playerId) => await this.socketIdRepository.getSocketIdForUser(playerId))
             )
         ).filter((socketId) => socketId !== null && socketId !== undefined);
 
@@ -81,11 +106,7 @@ class MatchmakingService {
             throw Error('Socket ids are missing for some players');
         }
         socketIds.forEach((socketId) => {
-            this.matchmakingNotificationService.sendMatchmakeNotification(
-                socketId,
-                players,
-                gameId
-            );
+            this.matchmakingNotificationService.sendMatchmakeNotification(socketId, players, gameId);
         });
     }
 }

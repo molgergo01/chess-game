@@ -10,13 +10,7 @@ class GameStateRepository {
         private readonly redis: typeof Redis
     ) {}
 
-    save(
-        gameId: string,
-        fen: string,
-        players: Array<Player>,
-        lastMoveEpoch: number,
-        startedAt: number
-    ) {
+    save(gameId: string, fen: string, players: Array<Player>, lastMoveEpoch: number, startedAt: number) {
         this.redis.hSet(`game-state:${gameId}`, {
             players: JSON.stringify(players),
             position: fen,
@@ -32,9 +26,7 @@ class GameStateRepository {
         }
         try {
             return {
-                players: new Array<StoredPlayer>(JSON.parse(data.players)).flat(
-                    1
-                ),
+                players: new Array<StoredPlayer>(JSON.parse(data.players)).flat(1),
                 position: data.position,
                 lastMoveEpoch: JSON.parse(data.lastMoveEpoch),
                 startedAt: JSON.parse(data.startedAt)

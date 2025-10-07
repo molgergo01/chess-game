@@ -14,8 +14,7 @@ describe('Auth Service', () => {
     let authService: AuthService;
 
     beforeEach(() => {
-        mockUserRepository =
-            new UserRepository() as jest.Mocked<UserRepository>;
+        mockUserRepository = new UserRepository() as jest.Mocked<UserRepository>;
         mockUserRepository.createUserIfNotExists = jest.fn();
 
         authService = new AuthService(mockUserRepository);
@@ -41,9 +40,7 @@ describe('Auth Service', () => {
 
             const result = await authService.login(user);
 
-            expect(
-                mockUserRepository.createUserIfNotExists
-            ).toHaveBeenCalledWith({
+            expect(mockUserRepository.createUserIfNotExists).toHaveBeenCalledWith({
                 id: user.id,
                 name: user.name,
                 email: user.email
@@ -58,13 +55,9 @@ describe('Auth Service', () => {
                 );
             });
             it('when db call fails', async () => {
-                mockUserRepository.createUserIfNotExists.mockRejectedValue(
-                    new Error()
-                );
+                mockUserRepository.createUserIfNotExists.mockRejectedValue(new Error());
 
-                await expect(authService.login(user)).rejects.toThrow(
-                    FailedLoginError
-                );
+                await expect(authService.login(user)).rejects.toThrow(FailedLoginError);
             });
         });
     });

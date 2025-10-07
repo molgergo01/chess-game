@@ -7,14 +7,10 @@ describe('getCurrentUserColor', () => {
     beforeEach(() => {
         localStorageMock = {};
 
-        global.Storage.prototype.getItem = jest.fn(
-            (key: string) => localStorageMock[key] || null
-        );
-        global.Storage.prototype.setItem = jest.fn(
-            (key: string, value: string) => {
-                localStorageMock[key] = value;
-            }
-        );
+        global.Storage.prototype.getItem = jest.fn((key: string) => localStorageMock[key] || null);
+        global.Storage.prototype.setItem = jest.fn((key: string, value: string) => {
+            localStorageMock[key] = value;
+        });
     });
 
     afterEach(() => {
@@ -71,9 +67,7 @@ describe('getCurrentUserColor', () => {
         it('should throw an error', () => {
             const userId = 'user123';
 
-            expect(() => getCurrentUserColor(userId)).toThrow(
-                'playerData not set'
-            );
+            expect(() => getCurrentUserColor(userId)).toThrow('playerData not set');
         });
     });
 
@@ -89,9 +83,7 @@ describe('getCurrentUserColor', () => {
             ];
             localStorageMock['playerData'] = JSON.stringify(playerData);
 
-            expect(() => getCurrentUserColor(userId)).toThrow(
-                'playerData is corrupted'
-            );
+            expect(() => getCurrentUserColor(userId)).toThrow('playerData is corrupted');
         });
 
         it('should throw an error when length is 3', () => {
@@ -115,9 +107,7 @@ describe('getCurrentUserColor', () => {
             ];
             localStorageMock['playerData'] = JSON.stringify(playerData);
 
-            expect(() => getCurrentUserColor(userId)).toThrow(
-                'playerData is corrupted'
-            );
+            expect(() => getCurrentUserColor(userId)).toThrow('playerData is corrupted');
         });
 
         it('should throw an error when length is 0', () => {
@@ -125,9 +115,7 @@ describe('getCurrentUserColor', () => {
             const playerData: Array<Player> = [];
             localStorageMock['playerData'] = JSON.stringify(playerData);
 
-            expect(() => getCurrentUserColor(userId)).toThrow(
-                'playerData is corrupted'
-            );
+            expect(() => getCurrentUserColor(userId)).toThrow('playerData is corrupted');
         });
     });
 
@@ -148,9 +136,7 @@ describe('getCurrentUserColor', () => {
             ];
             localStorageMock['playerData'] = JSON.stringify(playerData);
 
-            expect(() => getCurrentUserColor(userId)).toThrow(
-                'Invalid color in playerData'
-            );
+            expect(() => getCurrentUserColor(userId)).toThrow('Invalid color in playerData');
         });
     });
 });

@@ -24,22 +24,14 @@ describe('<ChatBox />', () => {
     });
 
     it('should render textarea with placeholder', () => {
-        cy.get('textarea')
-            .should('be.visible')
-            .should('have.attr', 'placeholder', 'Type your message...');
+        cy.get('textarea').should('be.visible').should('have.attr', 'placeholder', 'Type your message...');
     });
 
     it('should display "me" messages on the right', () => {
-        cy.contains('Hi there!')
-            .parent()
-            .parent()
-            .should('have.class', 'justify-end');
+        cy.contains('Hi there!').parent().parent().should('have.class', 'justify-end');
     });
 
     it('should display "other" messages on the left', () => {
-        cy.contains('Hello!')
-            .parent()
-            .parent()
-            .should('have.class', 'justify-start');
+        cy.contains('Hello!').parent().parent().should('have.class', 'justify-start');
     });
 });

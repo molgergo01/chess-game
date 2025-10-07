@@ -27,15 +27,10 @@ describe('Timer Watcher', () => {
         jest.spyOn(global, 'setInterval');
         jest.spyOn(global, 'clearInterval');
 
-        mockGameStateRepository = new GameStateRepository(
-            null as never
-        ) as jest.Mocked<GameStateRepository>;
+        mockGameStateRepository = new GameStateRepository(null as never) as jest.Mocked<GameStateRepository>;
         mockGameStateRepository.getKeys = jest.fn();
 
-        mockGameService = new GameService(
-            null as never,
-            null as never
-        ) as jest.Mocked<GameService>;
+        mockGameService = new GameService(null as never, null as never) as jest.Mocked<GameService>;
         mockGameService.getGameState = jest.fn();
         mockGameService.getGameState = jest.fn();
 
@@ -44,11 +39,7 @@ describe('Timer Watcher', () => {
         ) as jest.Mocked<GameNotificationService>;
         mockGameNotificationService.sendTimerExpiredNotification = jest.fn();
 
-        timerWatcher = new TimerWatcher(
-            mockGameStateRepository,
-            mockGameService,
-            mockGameNotificationService
-        );
+        timerWatcher = new TimerWatcher(mockGameStateRepository, mockGameService, mockGameNotificationService);
     });
 
     afterEach(() => {
@@ -95,9 +86,7 @@ describe('Timer Watcher', () => {
         it('should send notification with winner if timers expired since last move', async () => {
             const gameId = '1234';
             const gameStateKey = 'game-state:' + gameId;
-            mockGameStateRepository.getKeys.mockResolvedValueOnce([
-                gameStateKey
-            ]);
+            mockGameStateRepository.getKeys.mockResolvedValueOnce([gameStateKey]);
             mockGameStateRepository.getKeys.mockResolvedValueOnce([]);
 
             const player1: Player = {
@@ -128,18 +117,14 @@ describe('Timer Watcher', () => {
             await jest.runAllTimersAsync();
 
             expect(mockGameService.reset).toHaveBeenCalledWith(gameId);
-            expect(
-                mockGameNotificationService.sendTimerExpiredNotification
-            ).toHaveBeenCalledWith(gameId, Winner.BLACK);
+            expect(mockGameNotificationService.sendTimerExpiredNotification).toHaveBeenCalledWith(gameId, Winner.BLACK);
             expect(clearInterval).toHaveBeenCalled();
         });
 
         it('should send draw notification sufficient time passes since start without move', async () => {
             const gameId = '1234';
             const gameStateKey = 'game-state:' + gameId;
-            mockGameStateRepository.getKeys.mockResolvedValueOnce([
-                gameStateKey
-            ]);
+            mockGameStateRepository.getKeys.mockResolvedValueOnce([gameStateKey]);
             mockGameStateRepository.getKeys.mockResolvedValueOnce([]);
 
             const player1: Player = {
@@ -159,8 +144,7 @@ describe('Timer Watcher', () => {
                 game: mockGame,
                 players: [player1, player2],
                 lastMoveEpoch: 0,
-                startedAt:
-                    NOW - (DEFAULT_START_TIMEOUT_IN_MINUTES * 60 * 1000 + 1)
+                startedAt: NOW - (DEFAULT_START_TIMEOUT_IN_MINUTES * 60 * 1000 + 1)
             };
 
             mockGameService.getGameState.mockResolvedValue(gameState);
@@ -169,18 +153,14 @@ describe('Timer Watcher', () => {
             await jest.runAllTimersAsync();
 
             expect(mockGameService.reset).toHaveBeenCalledWith(gameId);
-            expect(
-                mockGameNotificationService.sendTimerExpiredNotification
-            ).toHaveBeenCalledWith(gameId, Winner.DRAW);
+            expect(mockGameNotificationService.sendTimerExpiredNotification).toHaveBeenCalledWith(gameId, Winner.DRAW);
             expect(clearInterval).toHaveBeenCalled();
         });
 
         it('should not send notification if timers have not expired', async () => {
             const gameId = '1234';
             const gameStateKey = 'game-state:' + gameId;
-            mockGameStateRepository.getKeys.mockResolvedValueOnce([
-                gameStateKey
-            ]);
+            mockGameStateRepository.getKeys.mockResolvedValueOnce([gameStateKey]);
             mockGameStateRepository.getKeys.mockResolvedValueOnce([]);
 
             const player1: Player = {
@@ -211,9 +191,7 @@ describe('Timer Watcher', () => {
             await jest.runAllTimersAsync();
 
             expect(mockGameService.reset).not.toHaveBeenCalled();
-            expect(
-                mockGameNotificationService.sendTimerExpiredNotification
-            ).not.toHaveBeenCalled();
+            expect(mockGameNotificationService.sendTimerExpiredNotification).not.toHaveBeenCalled();
         });
     });
 });

@@ -1,7 +1,4 @@
-import {
-    DEFAULT_START_TIMEOUT_IN_MINUTES,
-    TIMER_WATCHER_HEARTBEAT_IN_SECONDS
-} from '../config/constants';
+import { DEFAULT_START_TIMEOUT_IN_MINUTES, TIMER_WATCHER_HEARTBEAT_IN_SECONDS } from '../config/constants';
 import { inject, injectable } from 'inversify';
 import GameStateRepository from '../repositories/gameState.repository';
 import GameService from './game.service';
@@ -50,10 +47,7 @@ class TimerWatcher {
         const currentTime = Date.now();
 
         if (gameState.lastMoveEpoch === 0) {
-            if (
-                currentTime - gameState.startedAt >
-                DEFAULT_START_TIMEOUT_IN_MINUTES * 60 * 1000
-            ) {
+            if (currentTime - gameState.startedAt > DEFAULT_START_TIMEOUT_IN_MINUTES * 60 * 1000) {
                 await this.handleTimeExpired(gameId, Winner.DRAW);
             }
             return;
@@ -61,28 +55,19 @@ class TimerWatcher {
 
         const timeSinceLastMove = currentTime - gameState.lastMoveEpoch;
 
-        const currentPlayer = gameState.players.find(
-            (player) => player.color === gameState.game.turn()
-        );
+        const currentPlayer = gameState.players.find((player) => player.color === gameState.game.turn());
 
-        const remainingTime =
-            currentPlayer!.timer.remainingMs - timeSinceLastMove;
+        const remainingTime = currentPlayer!.timer.remainingMs - timeSinceLastMove;
 
         if (remainingTime <= 0) {
-            const winner =
-                currentPlayer!.color === Color.WHITE
-                    ? Winner.BLACK
-                    : Winner.WHITE;
+            const winner = currentPlayer!.color === Color.WHITE ? Winner.BLACK : Winner.WHITE;
             await this.handleTimeExpired(gameId, winner);
         }
     }
 
     private async handleTimeExpired(gameId: string, winner: Winner) {
         await this.gameService.reset(gameId);
-        this.gameNotificationService.sendTimerExpiredNotification(
-            gameId,
-            winner
-        );
+        this.gameNotificationService.sendTimerExpiredNotification(gameId, winner);
     }
 
     private async stop() {

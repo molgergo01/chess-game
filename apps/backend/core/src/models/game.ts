@@ -50,11 +50,7 @@ export interface PositionRequest {
 }
 
 export interface PositionCallback {
-    (response: {
-        position: string;
-        gameOver: boolean;
-        winner: Winner | null;
-    }): void;
+    (response: { position: string; gameOver: boolean; winner: Winner | null }): void;
 }
 
 export type CreateGameRequest = {

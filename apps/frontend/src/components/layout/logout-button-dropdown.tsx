@@ -15,11 +15,7 @@ export default function LogoutButton() {
 
     async function handleLogout() {
         try {
-            await axios.post(
-                `${env.REST_URLS.AUTH}/api/auth/logout`,
-                {},
-                { withCredentials: true }
-            );
+            await axios.post(`${env.REST_URLS.AUTH}/api/auth/logout`, {}, { withCredentials: true });
 
             router.push('/login');
         } catch (e) {
