@@ -1,5 +1,6 @@
 // cypress/support/index.ts
 import { mount } from 'cypress/react';
+import { CreateUserParams, CreateGameParams, CreateMoveParams } from './db-tasks';
 
 export {};
 
@@ -27,6 +28,26 @@ declare global {
              * @example cy.applyInvalidToken()
              */
             mount: typeof mount;
+            /**
+             * Custom command to create a test user in the database.
+             * @example cy.createUser({ userId: 'test-user-1', name: 'Test User', email: 'test@example.com', elo: 1500 })
+             */
+            createUser(params: CreateUserParams): Chainable;
+            /**
+             * Custom command to create a test game in the database.
+             * @example cy.createGame({ gameId: 'test-game-1', whiteUserId: 'user1', blackUserId: 'user2', winner: 'w', startedAt: new Date() })
+             */
+            createGame(params: CreateGameParams): Chainable;
+            /**
+             * Custom command to create a test move in the database.
+             * @example cy.createMove({ gameId: 'test-game-1', moveNumber: 1, playerColor: 'w', moveNotation: 'e4', positionFen: '...', whitePlayerTime: 600000, blackPlayerTime: 600000 })
+             */
+            createMove(params: CreateMoveParams): Chainable;
+            /**
+             * Custom command to cleanup all test data from the database.
+             * @example cy.cleanupTestData()
+             */
+            cleanupTestData(): Chainable;
         }
     }
 }

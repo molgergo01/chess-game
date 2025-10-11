@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(passport.initialize());
 
 // Routes
-app.use('/api/game', gameRoutes);
+app.use('/api/games', gameRoutes);
 
 // Error Handler
 app.use(errorHandler);

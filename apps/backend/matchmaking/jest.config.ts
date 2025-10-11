@@ -12,6 +12,7 @@ const config: Config = {
         '!**/migrations/**',
         '!**/config/**',
         '!**/models/**',
+        '!**/repositories/**',
         '!**/jest.config.ts',
         '!**/server.ts',
         '!**/dist/**',

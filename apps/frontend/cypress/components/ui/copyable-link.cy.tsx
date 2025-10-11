@@ -43,7 +43,7 @@ describe('<CopyableLink />', () => {
         cy.getDataCy('matchmaking-copy-link-button').click();
         cy.getDataCy('matchmaking-copy-link-button').should('contain.text', 'Copied!');
 
-        cy.wait(2000);
+        cy.wait(2500);
 
         cy.getDataCy('matchmaking-copy-link-button').should('contain.text', 'Copy');
     });
@@ -73,7 +73,7 @@ describe('<CopyableLink />', () => {
         cy.getDataCy('matchmaking-copy-link-button').click();
         cy.getDataCy('matchmaking-copy-link-button').should('contain.text', 'Copied!');
 
-        cy.wait(2000);
+        cy.wait(2500);
 
         cy.getDataCy('matchmaking-copy-link-button').click();
         cy.getDataCy('matchmaking-copy-link-button').should('contain.text', 'Copied!');

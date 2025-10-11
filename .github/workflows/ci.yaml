@@ -59,6 +59,7 @@ jobs:
                   echo "REDIS_URL=redis://localhost:6379" >> ./apps/backend/.env
                   echo "REDIS_DB=0" >> ./apps/backend/.env
                   echo "REDIS_TEST_DB=1" >> ./apps/backend/.env
+                  echo "NODE_ENV=test" >> ./apps/backend/.env
                   cp ./apps/backend/.env ./apps/backend/core/.env
                   cp ./apps/backend/.env ./apps/backend/matchmaking/.env
                   cp ./apps/backend/.env ./apps/backend/auth/.env

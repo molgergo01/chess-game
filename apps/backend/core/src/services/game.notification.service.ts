@@ -1,6 +1,8 @@
 import { Container, inject, injectable } from 'inversify';
 import { Server } from 'socket.io';
-import { PlayerTimes, PositionUpdateNotification, TimeExpiredMessage, Winner } from '../models/game';
+import { Winner } from '../models/game';
+import { PositionUpdateNotification, TimeExpiredNotification } from '../models/notifications';
+import { PlayerTimes } from '../models/player';
 
 @injectable()
 class GameNotificationService {
@@ -14,7 +16,7 @@ class GameNotificationService {
     }
 
     sendTimerExpiredNotification(gameId: string, winner: Winner) {
-        const message: TimeExpiredMessage = {
+        const message: TimeExpiredNotification = {
             winner: winner
         };
         this.io.to(gameId).emit('time-expired', message);

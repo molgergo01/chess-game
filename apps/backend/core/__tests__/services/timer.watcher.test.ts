@@ -30,7 +30,12 @@ describe('Timer Watcher', () => {
         mockGameStateRepository = new GameStateRepository(null as never) as jest.Mocked<GameStateRepository>;
         mockGameStateRepository.getKeys = jest.fn();
 
-        mockGameService = new GameService(null as never, null as never) as jest.Mocked<GameService>;
+        mockGameService = new GameService(
+            null as never,
+            null as never,
+            null as never,
+            null as never
+        ) as jest.Mocked<GameService>;
         mockGameService.getGameState = jest.fn();
         mockGameService.getGameState = jest.fn();
 

@@ -14,3 +14,8 @@ export type StoredPlayer = {
         remainingMs: number;
     };
 };
+
+export type PlayerTimes = {
+    blackTimeRemaining: number;
+    whiteTimeRemaining: number;
+};

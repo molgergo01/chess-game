@@ -1,8 +1,11 @@
 import { inject, injectable } from 'inversify';
 import GameService from '../services/game.service';
 import { NextFunction, Request, Response } from 'express';
-import { CreateGameRequest, CreateGameResponse } from '../models/game';
 import TimerWatcher from '../services/timer.watcher';
+import { CreateGameResponse, GameDto, GetGameHistoryResponse, GetGameResponse, MoveDto } from '../models/responses';
+import { CreateGameRequest, GetGameParams } from '../models/requests';
+import { Move } from '../models/move';
+import { Winner } from '../models/game';
 
 @injectable()
 class GameController {
@@ -22,6 +25,101 @@ class GameController {
                 gameId: gameCreated.gameId
             };
             res.status(201).json(responseBody);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getGameHistory(req: Request, res: Response, next: NextFunction) {
+        try {
+            const userId = req.query.userId;
+
+            if (!userId || typeof userId !== 'string') {
+                res.status(400).json({ message: 'userId query parameter is required' });
+                return;
+            }
+
+            let limit: number | null;
+            let offset: number | null;
+
+            const limitParam = req.query.limit;
+            const offsetParam = req.query.offset;
+            if (!limitParam || typeof limitParam !== 'string') {
+                limit = null;
+            } else {
+                limit = parseInt(limitParam);
+            }
+            if (!offsetParam || typeof offsetParam !== 'string') {
+                offset = null;
+            } else {
+                offset = parseInt(offsetParam);
+            }
+
+            const historyResult = await this.gameService.getGameHistory(userId, limit, offset);
+
+            const gameDtos = historyResult.games.map(
+                (game): GameDto => ({
+                    gameId: game.id,
+                    whitePlayer: {
+                        userId: game.whitePlayer.id,
+                        name: game.whitePlayer.name,
+                        elo: game.whitePlayer.elo
+                    },
+                    blackPlayer: {
+                        userId: game.blackPlayer.id,
+                        name: game.blackPlayer.name,
+                        elo: game.blackPlayer.elo
+                    },
+                    startedAt: game.startedAt,
+                    // These fallbacks should not happen as null check is performed in the query
+                    endedAt: game.endedAt ?? new Date(),
+                    winner: game.winner ?? Winner.DRAW
+                })
+            );
+            const response: GetGameHistoryResponse = {
+                games: gameDtos,
+                totalCount: historyResult.totalCount
+            };
+            console.log('response: ', response);
+            res.status(200).json(response);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getGame(req: Request<GetGameParams, unknown, unknown>, res: Response, next: NextFunction) {
+        try {
+            const gameWithMoves = await this.gameService.getGameWithMoves(req.params.gameId);
+
+            const moveDtos = gameWithMoves.moves.map(
+                (move: Move): MoveDto => ({
+                    moveNumber: move.moveNumber,
+                    playerColor: move.playerColor,
+                    moveNotation: move.moveNotation,
+                    positionFen: move.positionFen,
+                    whitePlayerTime: move.whitePlayerTime,
+                    blackPlayerTime: move.blackPlayerTime
+                })
+            );
+            const response: GetGameResponse = {
+                gameId: gameWithMoves.id,
+                whitePlayer: {
+                    userId: gameWithMoves.whitePlayer.id,
+                    name: gameWithMoves.whitePlayer.name,
+                    elo: gameWithMoves.whitePlayer.elo
+                },
+                blackPlayer: {
+                    userId: gameWithMoves.blackPlayer.id,
+                    name: gameWithMoves.blackPlayer.name,
+                    elo: gameWithMoves.blackPlayer.elo
+                },
+                startedAt: gameWithMoves.startedAt,
+                // These fallbacks should not happen as null check is performed in the service
+                endedAt: gameWithMoves.endedAt ?? new Date(),
+                winner: gameWithMoves.winner ?? Winner.DRAW,
+                moves: moveDtos
+            };
+            res.status(200).json(response);
         } catch (error) {
             next(error);
         }

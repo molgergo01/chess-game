@@ -1,11 +1,11 @@
-import Banner from '@/components/game/banner/banner';
-import { Color } from '@/lib/models/request/matchmaking';
+import Banner from '@/components/ui/banner';
+import { MatchmakingColor } from '@/lib/models/request/matchmaking';
 
 describe('<Banner />', () => {
     const defaultProps = {
-        playerColor: Color.WHITE,
+        playerColor: MatchmakingColor.WHITE,
         isOpponent: false,
-        turnColor: Color.WHITE,
+        turnColor: MatchmakingColor.WHITE,
         timeLeft: 600000,
         playerName: 'TestPlayer',
         elo: 1500,
@@ -46,13 +46,13 @@ describe('<Banner />', () => {
     });
 
     it('should display player color WHITE', () => {
-        cy.mount(<Banner {...defaultProps} playerColor={Color.WHITE} />);
+        cy.mount(<Banner {...defaultProps} playerColor={MatchmakingColor.WHITE} />);
         cy.getDataCy('banner-player-color').should('be.visible');
         cy.getDataCy('banner-player-color').should('have.text', 'white');
     });
 
     it('should display player color BLACK', () => {
-        cy.mount(<Banner {...defaultProps} playerColor={Color.BLACK} />);
+        cy.mount(<Banner {...defaultProps} playerColor={MatchmakingColor.BLACK} />);
         cy.getDataCy('banner-player-color').should('be.visible');
         cy.getDataCy('banner-player-color').should('have.text', 'black');
     });
@@ -65,12 +65,12 @@ describe('<Banner />', () => {
     });
 
     it('should highlight background when it is player turn', () => {
-        cy.mount(<Banner {...defaultProps} playerColor={Color.WHITE} turnColor={Color.WHITE} />);
+        cy.mount(<Banner {...defaultProps} playerColor={MatchmakingColor.WHITE} turnColor={MatchmakingColor.WHITE} />);
         cy.getDataCy('banner').should('have.class', 'bg-foreground');
     });
 
     it('should not highlight when it is not player turn', () => {
-        cy.mount(<Banner {...defaultProps} playerColor={Color.WHITE} turnColor={Color.BLACK} />);
+        cy.mount(<Banner {...defaultProps} playerColor={MatchmakingColor.WHITE} turnColor={MatchmakingColor.BLACK} />);
         cy.getDataCy('banner').should('not.have.class', 'bg-foreground');
     });
 

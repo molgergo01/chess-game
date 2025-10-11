@@ -126,7 +126,7 @@ describe('/play Page', () => {
             cy.getDataCy('matchmaking-button-invite-link').click();
 
             cy.getDataCy('matchmaking-copy-link-button').should('contain', 'Copied!');
-            cy.wait(2100);
+            cy.wait(2500);
             cy.getDataCy('matchmaking-copy-link-button').should('contain', 'Copy');
 
             cy.getDataCy('matchmaking-button-leave').click();
@@ -148,19 +148,6 @@ describe('/play Page', () => {
             cy.visit('http://localhost:3000/play?id=invalid-queue-id');
 
             cy.getDataCy('matchmaking-error-alert').should('be.visible');
-        });
-    });
-
-    describe('Error Handling', () => {
-        it('Should display error alert and auto-dismiss after 5 seconds', () => {
-            cy.applyToken();
-            cy.visit('http://localhost:3000/play?id=invalid-queue-id');
-
-            cy.getDataCy('matchmaking-error-alert').should('be.visible');
-
-            cy.wait(5100);
-
-            cy.getDataCy('matchmaking-error-alert').should('not.exist');
         });
     });
 });

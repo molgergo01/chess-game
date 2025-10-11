@@ -1,17 +1,9 @@
 import GameService from '../services/game.service';
-import {
-    GetGameIdCallback,
-    GetTimesCallback,
-    GetTimesRequest,
-    JoinGameRequest,
-    MoveCallback,
-    MoveRequest,
-    PositionCallback,
-    PositionRequest
-} from '../models/game';
 import { Server, Socket } from 'socket.io';
 import container from '../config/container';
 import GameNotificationService from '../services/game.notification.service';
+import { GetGameIdCallback, GetTimesCallback, MoveCallback, PositionCallback } from '../models/callbacks';
+import { GetTimesRequest, JoinGameRequest, MoveRequest, PositionRequest } from '../models/requests';
 
 const gameService = container.get(GameService);
 const gameNotificationService = container.get(GameNotificationService);

@@ -26,7 +26,8 @@ import { type AddressInfo } from 'node:net';
 import { io as ioc, type Socket as ClientSocket } from 'socket.io-client';
 import { Server, type Socket as ServerSocket } from 'socket.io';
 import gameListener from '../../src/listeners/game.listener';
-import { MoveCallback, PositionCallback, Winner } from '../../src/models/game';
+import { Winner } from '../../src/models/game';
+import { MoveCallback, PositionCallback } from '../../src/models/callbacks';
 
 jest.mock('chess-game-backend-common/config/passport', () => ({
     initialize: jest.fn(() => (req: Request, res: Response, next: NextFunction) => next())

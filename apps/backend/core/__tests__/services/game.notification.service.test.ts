@@ -1,7 +1,9 @@
 import GameNotificationService from '../../src/services/game.notification.service';
 import { Server } from 'socket.io';
 import { Container } from 'inversify';
-import { PlayerTimes, PositionUpdateNotification, TimeExpiredMessage, Winner } from '../../src/models/game';
+import { Winner } from '../../src/models/game';
+import { PositionUpdateNotification, TimeExpiredNotification } from '../../src/models/notifications';
+import { PlayerTimes } from '../../src/models/player';
 
 jest.mock('socket.io');
 
@@ -32,7 +34,7 @@ describe('Game Notification Service', () => {
             const gameId = '0000';
             const winner = Winner.WHITE;
 
-            const expectedMessage: TimeExpiredMessage = {
+            const expectedMessage: TimeExpiredNotification = {
                 winner: winner
             };
 

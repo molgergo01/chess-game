@@ -1,14 +1,19 @@
-import { Color, GameCreated, GameState, PlayerTimes, Winner } from '../models/game';
+import { Color, Game, GameCreated, GameHistoryResult, GameState, GameWithMoves, Winner } from '../models/game';
 import { Chess } from 'chess.js';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, validate as validateUuid } from 'uuid';
 import { inject, injectable } from 'inversify';
 import GameStateRepository from '../repositories/gameState.repository';
 import GameIdRepository from '../repositories/gameId.repository';
-import { Player } from '../models/player';
+import { Player, PlayerTimes } from '../models/player';
 import { Timer } from '../models/timer';
 import BadRequestError from 'chess-game-backend-common/errors/bad.request.error';
 import NotFoundError from 'chess-game-backend-common/errors/not.found.error';
 import ForbiddenError from 'chess-game-backend-common/errors/forbidden.error';
+import InternalServerError from 'chess-game-backend-common/errors/internal.server.error';
+import GamesRepository from '../repositories/games.repository';
+import { DEFAULT_START_TIMEOUT_IN_MINUTES } from '../config/constants';
+import MovesRepository from '../repositories/moves.repository';
+import { Move } from '../models/move';
 
 @injectable()
 class GameService {
@@ -18,7 +23,11 @@ class GameService {
         @inject(GameStateRepository)
         private readonly gameStateRepository: GameStateRepository,
         @inject(GameIdRepository)
-        private readonly gameIdRepository: GameIdRepository
+        private readonly gameIdRepository: GameIdRepository,
+        @inject(GamesRepository)
+        private readonly gamesRepository: GamesRepository,
+        @inject(MovesRepository)
+        private readonly movesRepository: MovesRepository
     ) {
         this.games = new Map();
     }
@@ -39,6 +48,24 @@ class GameService {
         });
 
         const startedAt = Date.now();
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const blackPlayerId = Array.from(playersWithColors.entries()).find(([_, color]) => color === Color.BLACK)?.[0];
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const whitePlayerId = Array.from(playersWithColors.entries()).find(([_, color]) => color === Color.WHITE)?.[0];
+        if (!blackPlayerId || !whitePlayerId) {
+            throw new InternalServerError('Game creation failed due to player assigning error');
+        }
+        const gameEntity: Game = {
+            id: id,
+            blackPlayerId: blackPlayerId,
+            whitePlayerId: whitePlayerId,
+            startedAt: new Date(startedAt),
+            endedAt: null,
+            winner: null
+        };
+        await this.gamesRepository.save(gameEntity);
+
         this.gameStateRepository.save(id, game.fen(), players, 0, startedAt);
         playerIds.forEach((player) => {
             this.gameIdRepository.save(player, id);
@@ -84,10 +111,28 @@ class GameService {
 
         if (game.turn() !== userColor) throw new ForbiddenError(`It is not ${userColor}'s turn`);
 
-        game.move({ from: from, to: to, promotion: promotionPiece });
+        const upcomingMoveNumber = game.moveNumber();
+        const move = game.move({ from: from, to: to, promotion: promotionPiece });
         this.refreshPlayerTimes(gameState, currentPlayer, requestTimestamp);
         gameState.lastMoveEpoch = requestTimestamp;
         this.gameStateRepository.save(gameId, game.fen(), gameState.players, requestTimestamp, gameState.startedAt);
+
+        const moveId = uuidv4();
+        const whitePlayerTime = gameState.players.find((player) => player.color === Color.WHITE)?.timer.remainingMs;
+        const blackPlayerTime = gameState.players.find((player) => player.color === Color.BLACK)?.timer.remainingMs;
+        if (!whitePlayerTime || !blackPlayerTime) throw new Error('Game state is corrupted');
+        const moveEntity: Move = {
+            id: moveId,
+            gameId: gameId,
+            moveNumber: upcomingMoveNumber,
+            playerColor: userColor,
+            moveNotation: move.san,
+            positionFen: game.fen(),
+            whitePlayerTime: whitePlayerTime,
+            blackPlayerTime: blackPlayerTime,
+            createdAt: new Date(requestTimestamp)
+        };
+        await this.movesRepository.save(moveEntity);
 
         return game.fen();
     }
@@ -109,20 +154,39 @@ class GameService {
         const gameState = await this.getGameState(gameId);
         const game = gameState.game;
 
+        const timeSinceLastMove = Date.now() - gameState.lastMoveEpoch;
+        const currentPlayer = gameState.players.find((player) => player.color === gameState.game.turn());
+        const currentPlayerRemainingTime = currentPlayer!.timer.remainingMs - timeSinceLastMove;
+
+        if (currentPlayerRemainingTime <= 0) {
+            return currentPlayer?.color === Color.BLACK ? Winner.WHITE : Winner.BLACK;
+        }
+
         const timeRanOutPlayer = gameState.players.find((player) => player.timer.remainingMs <= 0);
         if (timeRanOutPlayer) {
             return timeRanOutPlayer.color === Color.BLACK ? Winner.WHITE : Winner.BLACK;
         }
+
         if (game.isDraw()) {
             return Winner.DRAW;
         } else if (game.isCheckmate()) {
             return game.turn() === 'w' ? Winner.BLACK : Winner.WHITE;
         }
 
+        const now = Date.now();
+        const timedOut = now - gameState.startedAt > DEFAULT_START_TIMEOUT_IN_MINUTES * 60 * 1000;
+        if (timedOut) return Winner.DRAW;
+
         return null;
     }
 
     async reset(gameId: string): Promise<void> {
+        const game = await this.gamesRepository.findById(gameId);
+        if (!game) throw new Error('Game not found');
+        game.endedAt = new Date();
+        game.winner = await this.getWinner(gameId);
+        await this.gamesRepository.update(game);
+
         await this.gameStateRepository.remove(gameId);
         await this.gameIdRepository.remove(gameId);
         this.games.delete(gameId);
@@ -149,6 +213,38 @@ class GameService {
         };
         this.games.set(gameId, gameState);
         return gameState;
+    }
+
+    async getGameHistory(userId: string, limit: number | null, offset: number | null): Promise<GameHistoryResult> {
+        if (limit && limit < 0) {
+            throw new BadRequestError('Limit must be a non-negative number');
+        }
+        if (offset && offset < 0) {
+            throw new BadRequestError('Offset must be a non-negative number');
+        }
+
+        const games = await this.gamesRepository.findAllByUserId(userId, limit, offset);
+        const totalGamesCount = await this.gamesRepository.countAllByUserId(userId);
+
+        return {
+            games: games,
+            totalCount: totalGamesCount
+        };
+    }
+
+    async getGameWithMoves(gameId: string): Promise<GameWithMoves> {
+        if (!validateUuid(gameId)) {
+            throw new BadRequestError(`Invalid game with id ${gameId}`);
+        }
+        const game = await this.gamesRepository.findByIdWithMoves(gameId);
+        if (!game) {
+            throw new NotFoundError(`Game with id ${gameId} not found`);
+        }
+        if (game.endedAt === null || game.winner === null) {
+            throw new BadRequestError(`Game with id ${gameId} is still in progress`);
+        }
+
+        return game;
     }
 
     private refreshPlayerTimes(gameState: GameState, currentPlayer: Player, requestTimestamp: number) {

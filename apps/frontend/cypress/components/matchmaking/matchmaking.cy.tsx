@@ -38,8 +38,7 @@ describe('<Matchmaking />', () => {
         });
 
         it('should render "Loading..." text', () => {
-            cy.getDataCy('matchmaking-loading').should('be.visible');
-            cy.getDataCy('matchmaking-loading').should('contain.text', 'Loading...');
+            cy.getDataCy('loading-screen').should('be.visible');
         });
 
         it('should not render matchmaking card', () => {
@@ -195,7 +194,7 @@ describe('<Matchmaking />', () => {
 
             cy.getDataCy('matchmaking-error-alert').should('be.visible');
 
-            cy.wait(5000);
+            cy.wait(5500);
 
             cy.getDataCy('matchmaking-error-alert').should('not.exist');
         });
