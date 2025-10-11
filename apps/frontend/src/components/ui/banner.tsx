@@ -1,12 +1,12 @@
-import { TimeDisplay } from '@/components/game/banner/timer';
-import { Color } from '@/lib/models/request/matchmaking';
+import { TimeDisplay } from '@/components/ui/timer';
+import { MatchmakingColor } from '@/lib/models/request/matchmaking';
 import { cn } from '@/lib/utils/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface BannerProps extends React.ComponentProps<'div'> {
-    playerColor: Color;
+    playerColor: MatchmakingColor;
     isOpponent: boolean;
-    turnColor: Color | undefined;
+    turnColor: MatchmakingColor | undefined;
     timeLeft: number;
     playerName?: string;
     elo?: number;

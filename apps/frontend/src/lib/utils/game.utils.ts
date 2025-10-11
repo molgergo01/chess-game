@@ -1,6 +1,6 @@
-import { Color, Player } from '@/lib/models/request/matchmaking';
+import { MatchmakingColor, Player } from '@/lib/models/request/matchmaking';
 
-export function getCurrentUserColor(userId: string): Color {
+export function getCurrentUserColor(userId: string): MatchmakingColor {
     const playerDataString = localStorage.getItem('playerData');
     if (!playerDataString) throw new Error('playerData not set');
 
@@ -10,9 +10,9 @@ export function getCurrentUserColor(userId: string): Color {
     const currentPlayer = playerData.filter((player: Player) => player.id === userId)[0];
 
     return currentPlayer.color === 'w'
-        ? Color.WHITE
+        ? MatchmakingColor.WHITE
         : currentPlayer.color === 'b'
-          ? Color.BLACK
+          ? MatchmakingColor.BLACK
           : (() => {
                 throw new Error('Invalid color in playerData');
             })();

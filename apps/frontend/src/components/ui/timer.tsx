@@ -1,9 +1,10 @@
 'use client';
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { formatTime } from '@/lib/utils/time.utils';
 
 interface TimerProps {
-    timeInMinutes: number;
+    defaultTime: number;
     className?: string;
     onTick?: (timeLeft: number) => void;
 }
@@ -15,13 +16,6 @@ export interface TimerRef {
     timeLeft: number;
     setTimeLeft: (time: number) => void;
 }
-
-export const formatTime = (ms: number): string => {
-    const seconds = Math.round(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-};
 
 interface TimeDisplayProps {
     timeLeft: number;
@@ -37,8 +31,8 @@ export function TimeDisplay({ timeLeft, className, 'data-cy': dataCy }: TimeDisp
     );
 }
 
-const Timer = forwardRef<TimerRef, TimerProps>(({ timeInMinutes, onTick }, ref) => {
-    const [timeLeft, setTimeLeft] = useState(timeInMinutes * 60 * 1000);
+const Timer = forwardRef<TimerRef, TimerProps>(({ defaultTime, onTick }, ref) => {
+    const [timeLeft, setTimeLeft] = useState(defaultTime);
     const [lastUpdateTime, setLastUpdateTime] = useState<number>(0);
     const [isRunning, setIsRunning] = useState(false);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);

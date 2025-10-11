@@ -10,9 +10,10 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useMatchmakingSocket } from '@/hooks/matchmaking/useMatchmakingSocket';
 import CreateLinkButton from '@/components/matchmaking/create-link-button';
 import CancelInviteButton from '@/components/matchmaking/cancel-invite-button';
-import MatchmakingErrorAlert from '@/components/matchmaking/matchmaking-error-alert';
+import ErrorAlert from '@/components/ui/error-alert';
 import { Card, CardContent } from '@/components/ui/card';
 import CopyableLink from '@/components/ui/copyable-link';
+import LoadingScreen from '@/components/ui/loading-screen';
 
 function Matchmaking() {
     const router = useRouter();
@@ -130,73 +131,68 @@ function Matchmaking() {
         return `${window.location.origin}${pathname}?id=${queueId}`;
     }
 
+    if (isQueued === null) {
+        return <LoadingScreen />;
+    }
+
     return (
         <div className="flex h-full flex-col items-center justify-center bg-muted p-6 md:p-10">
             {errorMessage && (
-                <MatchmakingErrorAlert
+                <ErrorAlert
                     message={errorMessage}
+                    title="Matchmaking Error"
                     className="w-full max-w-md p-6 md:p-8"
                     data-cy="matchmaking-error-alert"
                 />
             )}
             <div className="w-full max-w-md">
-                {isQueued !== null && (
-                    <Card className="overflow-hidden" data-cy="matchmaking-card">
-                        <CardContent className="p-0">
-                            <div className="p-6 md:p-8">
-                                <div className="flex flex-col gap-10 md:gap-20">
-                                    <div className="flex flex-col items-center text-center">
-                                        <h1 className="text-2xl font-bold" data-cy="matchmaking-header">
-                                            Play Chess
-                                        </h1>
-                                    </div>
-
-                                    {!isQueued && (
-                                        <div className="flex flex-col gap-4">
-                                            <MatchmakingButton onJoinQueue={checkQueueStatus} onError={handleError} />
-                                            <CreateLinkButton
-                                                onCreateLink={() => checkQueueStatus(true)}
-                                                onError={handleError}
-                                            />
-                                        </div>
-                                    )}
-                                    {isQueued && queueId === null && (
-                                        <div className="flex flex-col gap-6 items-center">
-                                            <p className="text-muted-foreground" data-cy="matchmaking-searching-text">
-                                                Searching for an opponent...
-                                            </p>
-                                            <LeaveMatchmakingButton
-                                                onLeaveQueue={checkQueueStatus}
-                                                onError={handleError}
-                                            />
-                                        </div>
-                                    )}
-                                    {isQueued && queueId !== null && (
-                                        <div className="flex flex-col gap-6">
-                                            <CopyableLink link={getLink()} autoCopy={isNewQueue} />
-                                            <p
-                                                className="text-center text-muted-foreground"
-                                                data-cy="matchmaking-waiting-text"
-                                            >
-                                                Waiting for friend to join...
-                                            </p>
-                                            <CancelInviteButton
-                                                onLeaveQueue={checkQueueStatus}
-                                                onError={handleError}
-                                                queueId={queueId}
-                                            />
-                                        </div>
-                                    )}
+                <Card className="overflow-hidden" data-cy="matchmaking-card">
+                    <CardContent className="p-0">
+                        <div className="p-6 md:p-8">
+                            <div className="flex flex-col gap-10 md:gap-20">
+                                <div className="flex flex-col items-center text-center">
+                                    <h1 className="text-2xl font-bold" data-cy="matchmaking-header">
+                                        Play Chess
+                                    </h1>
                                 </div>
+
+                                {!isQueued && (
+                                    <div className="flex flex-col gap-4">
+                                        <MatchmakingButton onJoinQueue={checkQueueStatus} onError={handleError} />
+                                        <CreateLinkButton
+                                            onCreateLink={() => checkQueueStatus(true)}
+                                            onError={handleError}
+                                        />
+                                    </div>
+                                )}
+                                {isQueued && queueId === null && (
+                                    <div className="flex flex-col gap-6 items-center">
+                                        <p className="text-muted-foreground" data-cy="matchmaking-searching-text">
+                                            Searching for an opponent...
+                                        </p>
+                                        <LeaveMatchmakingButton onLeaveQueue={checkQueueStatus} onError={handleError} />
+                                    </div>
+                                )}
+                                {isQueued && queueId !== null && (
+                                    <div className="flex flex-col gap-6">
+                                        <CopyableLink link={getLink()} autoCopy={isNewQueue} />
+                                        <p
+                                            className="text-center text-muted-foreground"
+                                            data-cy="matchmaking-waiting-text"
+                                        >
+                                            Waiting for friend to join...
+                                        </p>
+                                        <CancelInviteButton
+                                            onLeaveQueue={checkQueueStatus}
+                                            onError={handleError}
+                                            queueId={queueId}
+                                        />
+                                    </div>
+                                )}
                             </div>
-                        </CardContent>
-                    </Card>
-                )}
-                {isQueued === null && (
-                    <div className="text-center" data-cy="matchmaking-loading">
-                        Loading...
-                    </div>
-                )}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

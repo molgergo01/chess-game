@@ -13,7 +13,7 @@ import { getPosition, getTimes, movePiece } from '@/lib/clients/core.socket.clie
 import { getCurrentUserColor } from '@/lib/utils/game.utils';
 import { Socket } from 'socket.io-client';
 import Fen from 'chess-fen';
-import { Color } from '@/lib/models/request/matchmaking';
+import { MatchmakingColor } from '@/lib/models/request/matchmaking';
 import { Winner } from '@/lib/models/response/game';
 import type { PieceDropHandlerArgs } from 'react-chessboard';
 
@@ -67,7 +67,7 @@ describe('useChessGame', () => {
             userId: 'user123',
             refetch: jest.fn()
         });
-        mockGetCurrentUserColor.mockReturnValue(Color.WHITE);
+        mockGetCurrentUserColor.mockReturnValue(MatchmakingColor.WHITE);
 
         jest.clearAllMocks();
         console.log = jest.fn();
@@ -278,7 +278,7 @@ describe('useChessGame', () => {
         const { result } = renderHook(() => useChessGame());
 
         await waitFor(() => {
-            expect(result.current.color).toBe(Color.WHITE);
+            expect(result.current.color).toBe(MatchmakingColor.WHITE);
         });
 
         expect(mockGetCurrentUserColor).toHaveBeenCalledWith('user123');

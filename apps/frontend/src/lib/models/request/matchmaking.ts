@@ -27,7 +27,7 @@ export type Player = {
     };
 };
 
-export enum Color {
+export enum MatchmakingColor {
     BLACK = 'black',
     WHITE = 'white'
 }

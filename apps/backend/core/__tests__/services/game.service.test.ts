@@ -4,12 +4,14 @@ import GameStateRepository from '../../src/repositories/gameState.repository';
 import GameIdRepository from '../../src/repositories/gameId.repository';
 import { Player, StoredPlayer } from '../../src/models/player';
 import { Timer } from '../../src/models/timer';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, validate as validateUuid } from 'uuid';
 import BadRequestError from 'chess-game-backend-common/errors/bad.request.error';
 import NotFoundError from 'chess-game-backend-common/errors/not.found.error';
 import ForbiddenError from 'chess-game-backend-common/errors/forbidden.error';
 import { Chess } from 'chess.js';
 import Fen from 'chess-fen';
+import GamesRepository from '../../src/repositories/games.repository';
+import MovesRepository from '../../src/repositories/moves.repository';
 
 const mockGame = {
     fen: jest.fn(),
@@ -17,7 +19,8 @@ const mockGame = {
     isGameOver: jest.fn(),
     isDraw: jest.fn(),
     isCheckmate: jest.fn(),
-    turn: jest.fn()
+    turn: jest.fn(),
+    moveNumber: jest.fn()
 };
 
 jest.mock('chess.js', () => ({
@@ -25,25 +28,32 @@ jest.mock('chess.js', () => ({
 }));
 
 jest.mock('uuid', () => ({
-    v4: jest.fn()
+    v4: jest.fn(),
+    validate: jest.fn()
 }));
 
 jest.spyOn(Math, 'random');
 
 jest.mock('../../src/repositories/gameState.repository');
 jest.mock('../../src/repositories/gameId.repository');
+jest.mock('../../src/repositories/games.repository');
+jest.mock('../../src/repositories/moves.repository');
 
 describe('Game Service', () => {
     const NOW = 10000000;
 
     let mockGameStateRepository: jest.Mocked<GameStateRepository>;
     let mockGameIdRepository: jest.Mocked<GameIdRepository>;
+    let mockGamesRepository: jest.Mocked<GamesRepository>;
+    let mockMovesRepository: jest.Mocked<MovesRepository>;
     let gameService: GameService;
 
     let mockUuid = jest.fn();
+    let mockValidateUuid = jest.fn();
 
     beforeEach(() => {
         mockUuid = jest.mocked(uuidv4);
+        mockValidateUuid = jest.mocked(validateUuid);
 
         jest.useFakeTimers();
         jest.setSystemTime(NOW);
@@ -58,7 +68,23 @@ describe('Game Service', () => {
         mockGameIdRepository.get = jest.fn();
         mockGameIdRepository.remove = jest.fn();
 
-        gameService = new GameService(mockGameStateRepository, mockGameIdRepository);
+        mockGamesRepository = new GamesRepository() as jest.Mocked<GamesRepository>;
+        mockGamesRepository.findById = jest.fn();
+        mockGamesRepository.findAllByUserId = jest.fn();
+        mockGamesRepository.findByIdWithMoves = jest.fn();
+        mockGamesRepository.countAllByUserId = jest.fn();
+        mockGamesRepository.save = jest.fn();
+        mockGamesRepository.update = jest.fn();
+
+        mockMovesRepository = new MovesRepository() as jest.Mocked<MovesRepository>;
+        mockMovesRepository.save = jest.fn();
+
+        gameService = new GameService(
+            mockGameStateRepository,
+            mockGameIdRepository,
+            mockGamesRepository,
+            mockMovesRepository
+        );
     });
 
     afterEach(() => {
@@ -230,6 +256,8 @@ describe('Game Service', () => {
 
             const expected = 'newFen';
             mockGame.fen.mockReturnValue(expected);
+            mockGame.move.mockReturnValue({ san: 'e3' });
+            mockGame.moveNumber.mockReturnValue(1);
 
             const gameId = '0000';
 
@@ -608,11 +636,59 @@ describe('Game Service', () => {
     describe('Reset Game', () => {
         it('should reset game', async () => {
             const gameId = '0000';
+            const gameEntity = {
+                id: gameId,
+                blackPlayerId: '1234',
+                whitePlayerId: '5678',
+                startedAt: new Date(NOW),
+                endedAt: null,
+                winner: null
+            };
+
+            mockGamesRepository.findById.mockResolvedValue(gameEntity);
+
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 1000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 0
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.isDraw.mockReturnValue(false);
+            mockGame.isCheckmate.mockReturnValue(false);
 
             await gameService.reset(gameId);
 
+            expect(mockGamesRepository.findById).toHaveBeenCalledWith(gameId);
+            expect(mockGamesRepository.update).toHaveBeenCalledWith({
+                ...gameEntity,
+                endedAt: new Date(NOW),
+                winner: Winner.WHITE
+            });
             expect(mockGameStateRepository.remove).toHaveBeenCalledWith(gameId);
             expect(mockGameIdRepository.remove).toHaveBeenCalledWith(gameId);
+        });
+
+        it('should throw error if game not found', async () => {
+            const gameId = '0000';
+            mockGamesRepository.findById.mockResolvedValue(null);
+
+            await expect(gameService.reset(gameId)).rejects.toThrow('Game not found');
         });
     });
 
@@ -709,6 +785,233 @@ describe('Game Service', () => {
 
             expect(result).toEqual(expectedGameState);
             expect(mockGameStateRepository.get).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Get Game History', () => {
+        it('should return game history with games and total count', async () => {
+            const userId = '1234';
+            const mockGames = [
+                {
+                    id: 'game1',
+                    whitePlayer: {
+                        id: '5678',
+                        name: 'White Player',
+                        email: 'white@example.com',
+                        elo: 1500
+                    },
+                    blackPlayer: {
+                        id: '1234',
+                        name: 'Black Player',
+                        email: 'black@example.com',
+                        elo: 1600
+                    },
+                    startedAt: new Date(NOW),
+                    endedAt: new Date(NOW + 1000),
+                    winner: Winner.WHITE
+                },
+                {
+                    id: 'game2',
+                    whitePlayer: {
+                        id: '1234',
+                        name: 'Black Player',
+                        email: 'black@example.com',
+                        elo: 1600
+                    },
+                    blackPlayer: {
+                        id: '5678',
+                        name: 'White Player',
+                        email: 'white@example.com',
+                        elo: 1500
+                    },
+                    startedAt: new Date(NOW + 2000),
+                    endedAt: new Date(NOW + 3000),
+                    winner: Winner.BLACK
+                }
+            ];
+            const totalCount = 10;
+
+            mockGamesRepository.findAllByUserId.mockResolvedValue(mockGames);
+            mockGamesRepository.countAllByUserId.mockResolvedValue(totalCount);
+
+            const result = await gameService.getGameHistory(userId, null, null);
+
+            expect(result.games).toEqual(mockGames);
+            expect(result.totalCount).toEqual(totalCount);
+            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, null, null);
+            expect(mockGamesRepository.countAllByUserId).toHaveBeenCalledWith(userId);
+        });
+
+        it('should return empty array when user has no games', async () => {
+            const userId = '1234';
+            mockGamesRepository.findAllByUserId.mockResolvedValue([]);
+            mockGamesRepository.countAllByUserId.mockResolvedValue(0);
+
+            const result = await gameService.getGameHistory(userId, null, null);
+
+            expect(result.games).toEqual([]);
+            expect(result.totalCount).toEqual(0);
+        });
+
+        it('should apply limit parameter correctly', async () => {
+            const userId = '1234';
+            const limit = 5;
+            mockGamesRepository.findAllByUserId.mockResolvedValue([]);
+            mockGamesRepository.countAllByUserId.mockResolvedValue(0);
+
+            await gameService.getGameHistory(userId, limit, null);
+
+            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, limit, null);
+        });
+
+        it('should apply offset parameter correctly', async () => {
+            const userId = '1234';
+            const offset = 10;
+            mockGamesRepository.findAllByUserId.mockResolvedValue([]);
+            mockGamesRepository.countAllByUserId.mockResolvedValue(0);
+
+            await gameService.getGameHistory(userId, null, offset);
+
+            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, null, offset);
+        });
+
+        it('should apply both limit and offset together', async () => {
+            const userId = '1234';
+            const limit = 5;
+            const offset = 10;
+            mockGamesRepository.findAllByUserId.mockResolvedValue([]);
+            mockGamesRepository.countAllByUserId.mockResolvedValue(0);
+
+            await gameService.getGameHistory(userId, limit, offset);
+
+            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, limit, offset);
+        });
+
+        it('should handle null limit and offset', async () => {
+            const userId = '1234';
+            mockGamesRepository.findAllByUserId.mockResolvedValue([]);
+            mockGamesRepository.countAllByUserId.mockResolvedValue(0);
+
+            await gameService.getGameHistory(userId, null, null);
+
+            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, null, null);
+        });
+
+        it('should throw BadRequestError when limit is negative', async () => {
+            const userId = '1234';
+            const limit = -5;
+
+            await expect(gameService.getGameHistory(userId, limit, null)).rejects.toThrow(BadRequestError);
+            await expect(gameService.getGameHistory(userId, limit, null)).rejects.toThrow(
+                'Limit must be a non-negative number'
+            );
+        });
+
+        it('should throw BadRequestError when offset is negative', async () => {
+            const userId = '1234';
+            const offset = -10;
+
+            await expect(gameService.getGameHistory(userId, null, offset)).rejects.toThrow(BadRequestError);
+            await expect(gameService.getGameHistory(userId, null, offset)).rejects.toThrow(
+                'Offset must be a non-negative number'
+            );
+        });
+    });
+
+    describe('Get Game With Moves', () => {
+        it('should return game with moves for valid completed game', async () => {
+            const gameId = '550e8400-e29b-41d4-a716-446655440000';
+            mockValidateUuid.mockReturnValue(true);
+
+            const mockGameWithMoves = {
+                id: gameId,
+                whitePlayer: {
+                    id: '5678',
+                    name: 'White Player',
+                    email: 'white@example.com',
+                    elo: 1500
+                },
+                blackPlayer: {
+                    id: '1234',
+                    name: 'Black Player',
+                    email: 'black@example.com',
+                    elo: 1600
+                },
+                startedAt: new Date(NOW),
+                endedAt: new Date(NOW + 1000),
+                winner: Winner.WHITE,
+                moves: [
+                    {
+                        id: 'move1',
+                        gameId: gameId,
+                        moveNumber: 1,
+                        playerColor: Color.WHITE,
+                        moveNotation: 'e4',
+                        positionFen: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+                        whitePlayerTime: 600000,
+                        blackPlayerTime: 600000,
+                        createdAt: new Date(NOW)
+                    }
+                ]
+            };
+
+            mockGamesRepository.findByIdWithMoves.mockResolvedValue(mockGameWithMoves);
+
+            const result = await gameService.getGameWithMoves(gameId);
+
+            expect(result).toEqual(mockGameWithMoves);
+            expect(mockGamesRepository.findByIdWithMoves).toHaveBeenCalledWith(gameId);
+        });
+
+        it('should throw BadRequestError for invalid UUID', async () => {
+            const invalidGameId = 'invalid-uuid';
+            mockValidateUuid.mockReturnValue(false);
+
+            await expect(gameService.getGameWithMoves(invalidGameId)).rejects.toThrow(BadRequestError);
+            await expect(gameService.getGameWithMoves(invalidGameId)).rejects.toThrow(
+                `Invalid game with id ${invalidGameId}`
+            );
+        });
+
+        it('should throw NotFoundError when game does not exist', async () => {
+            const gameId = '550e8400-e29b-41d4-a716-446655440000';
+            mockValidateUuid.mockReturnValue(true);
+            mockGamesRepository.findByIdWithMoves.mockResolvedValue(null);
+
+            await expect(gameService.getGameWithMoves(gameId)).rejects.toThrow(NotFoundError);
+            await expect(gameService.getGameWithMoves(gameId)).rejects.toThrow(`Game with id ${gameId} not found`);
+        });
+
+        it('should throw BadRequestError when game is still in progress', async () => {
+            const gameId = '550e8400-e29b-41d4-a716-446655440000';
+            mockValidateUuid.mockReturnValue(true);
+
+            const mockGameInProgress = {
+                id: gameId,
+                whitePlayer: {
+                    id: '5678',
+                    name: 'White Player',
+                    email: 'white@example.com',
+                    elo: 1500
+                },
+                blackPlayer: {
+                    id: '1234',
+                    name: 'Black Player',
+                    email: 'black@example.com',
+                    elo: 1600
+                },
+                startedAt: new Date(NOW),
+                endedAt: null,
+                winner: null,
+                moves: []
+            };
+
+            mockGamesRepository.findByIdWithMoves.mockResolvedValue(mockGameInProgress);
+
+            await expect(gameService.getGameWithMoves(gameId)).rejects.toThrow(BadRequestError);
+            await expect(gameService.getGameWithMoves(gameId)).rejects.toThrow(
+                `Game with id ${gameId} is still in progress`
+            );
         });
     });
 });

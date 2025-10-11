@@ -1,5 +1,5 @@
 import { getCurrentUserColor } from '@/lib/utils/game.utils';
-import { Color, Player } from '@/lib/models/request/matchmaking';
+import { MatchmakingColor, Player } from '@/lib/models/request/matchmaking';
 
 describe('getCurrentUserColor', () => {
     let localStorageMock: { [key: string]: string };
@@ -36,7 +36,7 @@ describe('getCurrentUserColor', () => {
 
             const result = getCurrentUserColor(userId);
 
-            expect(result).toBe(Color.WHITE);
+            expect(result).toBe(MatchmakingColor.WHITE);
         });
     });
 
@@ -59,7 +59,7 @@ describe('getCurrentUserColor', () => {
 
             const result = getCurrentUserColor(userId);
 
-            expect(result).toBe(Color.BLACK);
+            expect(result).toBe(MatchmakingColor.BLACK);
         });
     });
 

@@ -22,7 +22,7 @@ export type CreatePrivateQueueResponse = {
 };
 
 export type LeavePrivateQueueParams = {
-    queueId: string | null;
+    queueId: string;
 };
 
 export type LeaveQueueRequest = {

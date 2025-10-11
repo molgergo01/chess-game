@@ -1,8 +1,7 @@
 import CoreRestClient from '../../src/clients/core.rest.client';
 import axios from 'axios';
 import env from 'chess-game-backend-common/config/env';
-import { CreateGameRequest, CreateGameResponse } from '../../src/models/game';
-import { Color } from '../../src/models/game';
+import { Color, CreateGameRequest, CreateGameResponse } from '../../src/models/game';
 
 jest.mock('axios');
 jest.mock('chess-game-backend-common/config/env', () => ({
@@ -26,7 +25,7 @@ describe('Core Rest Client', () => {
     describe('createGame', () => {
         it('should call axios.post with correct URL and request body', async () => {
             const players = ['user1', 'user2'];
-            const expectedUrl = `http://localhost:${env.PORTS.CORE}/api/game`;
+            const expectedUrl = `http://localhost:${env.PORTS.CORE}/api/games`;
             const expectedRequestBody: CreateGameRequest = {
                 players: players
             };
@@ -56,7 +55,7 @@ describe('Core Rest Client', () => {
 
         it('should propagate error if axios.post fails', async () => {
             const players = ['user1', 'user2'];
-            const expectedUrl = `http://localhost:${env.PORTS.CORE}/api/game`;
+            const expectedUrl = `http://localhost:${env.PORTS.CORE}/api/games`;
             const expectedRequestBody: CreateGameRequest = {
                 players: players
             };

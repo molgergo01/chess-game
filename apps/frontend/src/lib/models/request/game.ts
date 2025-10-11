@@ -1,5 +1,3 @@
-import { Winner } from '@/lib/models/response/game';
-
 export interface JoinGameRequest {
     gameId: string;
 }
@@ -34,3 +32,15 @@ export type PlayerTimes = {
     whiteTimeRemaining: number;
     blackTimeRemaining: number;
 };
+
+export type GetGameHistoryParams = {
+    userId: string;
+    limit: number | null;
+    offset: number | null;
+};
+
+export enum Winner {
+    DRAW = 'd',
+    BLACK = 'b',
+    WHITE = 'w'
+}

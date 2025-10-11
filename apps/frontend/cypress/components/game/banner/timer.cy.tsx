@@ -1,4 +1,4 @@
-import { TimeDisplay } from '@/components/game/banner/timer';
+import { TimeDisplay } from '@/components/ui/timer';
 
 describe('<TimeDisplay />', () => {
     it('should render with formatted time', () => {

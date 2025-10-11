@@ -9,7 +9,7 @@ class CoreRestClient {
         const requestBody: CreateGameRequest = {
             players: players
         };
-        const response = await axios.post(`http://localhost:${env.PORTS.CORE}/api/game`, requestBody);
+        const response = await axios.post(`http://localhost:${env.PORTS.CORE}/api/games`, requestBody);
         return response.data as CreateGameResponse;
     }
 }

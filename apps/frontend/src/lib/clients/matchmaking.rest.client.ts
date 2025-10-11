@@ -100,14 +100,14 @@ export async function leavePrivateQueue(userId: string, queueId: string) {
 }
 
 export async function getQueueStatus(userId: string): Promise<QueueStatus> {
-    const requestBody: GetQueueStatusParams = {
+    const params: GetQueueStatusParams = {
         userId: userId
     };
     try {
         const res: AxiosResponse<GetQueueStatusResponse> = await axios.get(
             `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/status`,
             {
-                params: requestBody
+                params: params
             }
         );
         return {
