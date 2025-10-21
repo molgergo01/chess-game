@@ -1,0 +1,78 @@
+direction: right
+
+Client: {
+  shape: rectangle
+  label: "Client\n(Next.js Frontend)"
+  style: {
+    fill: "#e3f2fd"
+    stroke: "#1976d2"
+    font-size: 16
+  }
+}
+
+Backend: {
+  label: "Backend Services"
+
+  Auth: {
+    shape: rectangle
+    label: "Auth Service\n(JWT, OAuth, Passport)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 14
+    }
+  }
+
+  Core: {
+    shape: rectangle
+    label: "Core Service\n(Chess Logic, Socket.IO)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 14
+    }
+  }
+
+  Matchmaking: {
+    shape: rectangle
+    label: "Matchmaking Service\n(Queue Processing)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 14
+    }
+  }
+}
+
+Storage: {
+  label: "Data Layer"
+
+  PostgreSQL: {
+    shape: cylinder
+    label: "PostgreSQL\n(Users, Games, Moves)"
+    style: {
+      fill: "#e8f5e9"
+      stroke: "#388e3c"
+      font-size: 14
+    }
+  }
+
+  Redis: {
+    shape: cylinder
+    label: "Redis\n(Game State, Sessions, Queues)"
+    style: {
+      fill: "#ffebee"
+      stroke: "#c62828"
+      font-size: 14
+    }
+  }
+}
+
+Client -> Backend.Auth: "REST"
+Client -> Backend.Core: "Socket.IO/REST"
+Client -> Backend.Matchmaking: "Socket.IO/REST"
+
+Backend.Auth -> Storage.PostgreSQL: "User Auth"
+Backend.Core -> Storage.PostgreSQL: "Game Data"
+Backend.Core -> Storage.Redis: "Game State"
+Backend.Matchmaking -> Storage.Redis: "Queue Management"

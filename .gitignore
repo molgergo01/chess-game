@@ -68,3 +68,7 @@ next-env.d.ts
 
 # Turborepo
 .turbo
+
+# Compiled D2 diagrams
+docs/diagrams/**/**.svg
+docs/diagrams/**/**.png
