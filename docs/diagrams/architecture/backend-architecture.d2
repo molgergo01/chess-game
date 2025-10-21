@@ -1,0 +1,35 @@
+direction: right
+
+  Auth: {
+    shape: rectangle
+    label: "Auth Service\n(JWT, OAuth, Passport)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 14
+    }
+  }
+
+  Core: {
+    shape: rectangle
+    label: "Core Service\n(Chess Logic, Socket.IO)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 14
+    }
+  }
+
+  Matchmaking: {
+    shape: rectangle
+    label: "Matchmaking Service\n(Queue Processing)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 14
+    }
+  }
+
+  Core -> Auth: "User Auth"
+  Matchmaking -> Auth: "User Auth"
+  Matchmaking -> Core: "Game Creation"

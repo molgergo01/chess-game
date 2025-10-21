@@ -1,0 +1,20 @@
+Game Flow Redis Data Model: {
+  GameState: {
+    shape: rectangle
+    label: "game-state:{gameId}"
+    type: "Hash"
+    fields: |md
+      - players (JSON)
+      - position (FEN notation)
+      - lastMoveEpoch
+      - startedAt
+    |
+  }
+
+  UserGameMapping: {
+    shape: rectangle
+    label: "game-id:{userId}"
+    type: "String"
+    description: "Active game ID for user"
+  }
+}
