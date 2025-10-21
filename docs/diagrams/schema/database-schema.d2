@@ -1,0 +1,59 @@
+users: {
+  shape: sql_table
+
+  id: VARCHAR(255) {constraint: primary_key}
+  name: VARCHAR(255) {constraint: NOTNULL}
+  email: VARCHAR(255) {constraint: NOTNULL}
+  elo: INT {constraint: NOTNULL}
+}
+
+games: {
+  shape: sql_table
+
+  id: UUID {constraint: primary_key}
+  white_player_id: VARCHAR(255) {constraint: [foreign_key, NOTNULL]}
+  black_player_id: VARCHAR(255) {constraint: [foreign_key, NOTNULL]}
+  started_at: TIMESTAMP {constraint: NOTNULL}
+  ended_at: TIMESTAMP
+  winner: Winner
+
+  style: {
+    font-size: 14
+  }
+}
+
+moves: {
+  shape: sql_table
+
+  id: UUID {constraint: primary_key}
+  game_id: UUID {constraint: [foreign_key, NOTNULL]}
+  move_number: INT {constraint: NOTNULL}
+  player_color: PlayerColor {constraint: NOTNULL}
+  move_notation: TEXT {constraint: NOTNULL}
+  position_fen: TEXT {constraint: NOTNULL}
+  white_player_time: INT {constraint: NOTNULL}
+  black_player_time: INT {constraint: NOTNULL}
+  created_at: TIMESTAMP {constraint: NOTNULL}
+}
+
+Winner: {
+  shape: class
+
+  w
+  b
+  d
+}
+
+PlayerColor: {
+  shape: class
+
+  w
+  b
+}
+
+games.winner -> Winner
+moves.player_color -> PlayerColor
+
+games.white_player_id -> users.id: "white player"
+games.black_player_id -> users.id: "black player"
+moves.game_id -> games.id

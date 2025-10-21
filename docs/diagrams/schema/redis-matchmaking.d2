@@ -1,0 +1,22 @@
+Matchmaking Redis Data Model: {
+  DefaultQueue: {
+    shape: rectangle
+    label: "matchmaking-queue"
+    type: "List"
+    description: "Queue of user IDs waiting for random matches"
+  }
+
+  InviteQueue: {
+    shape: rectangle
+    label: "matchmaking-queue:{queueId}"
+    type: "List"
+    description: "Queue of user IDs waiting in specific invite-based match"
+  }
+
+  SocketMapping: {
+    shape: rectangle
+    label: "{userId}:socketId"
+    type: "String"
+    description: "Socket.IO connection ID for user"
+  }
+}
