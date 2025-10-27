@@ -1,6 +1,6 @@
 jest.mock('axios');
 
-import { getGame, getGameHistory } from '@/lib/clients/core.rest.client';
+import { getGame, getGameHistory, getPlayerLeaderboard } from '@/lib/clients/core.rest.client';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import env from '@/lib/config/env';
 
@@ -222,6 +222,108 @@ describe('core.rest.client', () => {
             (axios.get as jest.Mock).mockRejectedValue(new Error('Unknown error'));
 
             await expect(getGame(gameId)).rejects.toThrow('Failed to get game');
+        });
+    });
+
+    describe('getPlayerLeaderboard', () => {
+        it('should call axios.get with correct URL and params and return mapped PlayerLeaderboard', async () => {
+            const limit = 10;
+            const offset = 0;
+            const mockResponse = {
+                data: {
+                    users: [
+                        {
+                            userId: 'user1',
+                            rank: 1,
+                            name: 'Player 1',
+                            elo: 2000,
+                            avatarUrl: 'https://example.com/avatar1.png'
+                        },
+                        {
+                            userId: 'user2',
+                            rank: 2,
+                            name: 'Player 2',
+                            elo: 1900,
+                            avatarUrl: 'https://example.com/avatar2.png'
+                        }
+                    ],
+                    totalCount: 2
+                }
+            };
+
+            (axios.get as jest.Mock).mockResolvedValue(mockResponse);
+
+            const result = await getPlayerLeaderboard(limit, offset);
+
+            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/leaderboard', {
+                params: { limit, offset }
+            });
+            expect(result).toEqual({
+                users: [
+                    {
+                        userId: 'user1',
+                        rank: 1,
+                        name: 'Player 1',
+                        elo: 2000,
+                        avatarUrl: 'https://example.com/avatar1.png'
+                    },
+                    {
+                        userId: 'user2',
+                        rank: 2,
+                        name: 'Player 2',
+                        elo: 1900,
+                        avatarUrl: 'https://example.com/avatar2.png'
+                    }
+                ],
+                totalCount: 2
+            });
+        });
+
+        it('should throw error with message from response when AxiosError has response', async () => {
+            const axiosError = new AxiosError('Request failed');
+            axiosError.response = {
+                data: { message: 'Leaderboard not available' },
+                status: 503,
+                statusText: 'Service Unavailable',
+                headers: {},
+                config: {} as InternalAxiosRequestConfig
+            };
+
+            (axios.get as jest.Mock).mockRejectedValue(axiosError);
+
+            await expect(getPlayerLeaderboard(null, null)).rejects.toThrow('Leaderboard not available');
+        });
+
+        it('should throw default error message when AxiosError has response without message', async () => {
+            const axiosError = new AxiosError('Request failed');
+            axiosError.response = {
+                data: {},
+                status: 500,
+                statusText: 'Internal Server Error',
+                headers: {},
+                config: {} as InternalAxiosRequestConfig
+            };
+
+            (axios.get as jest.Mock).mockRejectedValue(axiosError);
+
+            await expect(getPlayerLeaderboard(null, null)).rejects.toThrow('Failed to get leaderboard');
+        });
+
+        it('should throw network error when AxiosError has request but no response', async () => {
+            const axiosError = new AxiosError('Network Error');
+            axiosError.request = {};
+
+            (axios.get as jest.Mock).mockRejectedValue(axiosError);
+
+            await expect(getPlayerLeaderboard(null, null)).rejects.toThrow(
+                'Network error: Unable to connect to core service'
+            );
+        });
+
+        it('should throw generic error for non-AxiosError', async () => {
+            (axios.get as jest.Mock).mockRejectedValue(new Error('Unknown error'));
+
+            await expect(getPlayerLeaderboard(null, null)).rejects.toThrow('Failed to get leaderboard');
         });
     });
 });

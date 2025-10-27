@@ -18,8 +18,10 @@ export default [
     },
     ...compat
         .extends(
+            'eslint:recommended',
             'next/core-web-vitals',
             'next/typescript',
+            'plugin:react/recommended',
             'plugin:@typescript-eslint/recommended',
             'plugin:@next/next/recommended'
         )
@@ -40,7 +42,8 @@ export default [
 
             'react/display-name': 'off',
             'react/no-unescaped-entities': 'off',
-            '@next/next/no-html-link-for-pages': ['error', 'apps/frontend/src/app']
+            '@next/next/no-html-link-for-pages': ['error', 'apps/frontend/src/app'],
+            'react/react-in-jsx-scope': 'off'
         }
     },
     ...compat.extends('eslint:recommended', 'plugin:@typescript-eslint/recommended').map((config) => ({

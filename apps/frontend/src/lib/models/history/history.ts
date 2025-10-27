@@ -24,13 +24,6 @@ export type Move = {
     blackPlayerTime: number;
 };
 
-export type User = {
-    userId: string;
-    name: string;
-    elo: number;
-    avatarUrl: string | null;
-};
-
 export enum Winner {
     DRAW = 'd',
     BLACK = 'b',
@@ -41,3 +34,10 @@ export enum Color {
     BLACK = 'b',
     WHITE = 'w'
 }
+
+type User = {
+    userId: string;
+    name: string;
+    elo: number;
+    avatarUrl: string | null;
+};

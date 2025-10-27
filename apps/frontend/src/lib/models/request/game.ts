@@ -39,6 +39,11 @@ export type GetGameHistoryParams = {
     offset: number | null;
 };
 
+export type GetLeaderboardParams = {
+    limit: number | null;
+    offset: number | null;
+};
+
 export enum Winner {
     DRAW = 'd',
     BLACK = 'b',
