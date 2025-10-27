@@ -104,13 +104,15 @@ describe('Game Controller', () => {
             id: 'user1',
             name: 'Player One',
             email: 'player1@example.com',
-            elo: 1500
+            elo: 1500,
+            avatarUrl: 'avatar_url.com'
         };
         const blackPlayer: User = {
             id: 'user2',
             name: 'Player Two',
             email: 'player2@example.com',
-            elo: 1600
+            elo: 1600,
+            avatarUrl: 'avatar_url.com'
         };
 
         it('should get game history with all query parameters and return status 200', async () => {
@@ -150,16 +152,16 @@ describe('Game Controller', () => {
                 games: [
                     {
                         gameId: 'game1',
-                        whitePlayer: { userId: 'user1', name: 'Player One', elo: 1500 },
-                        blackPlayer: { userId: 'user2', name: 'Player Two', elo: 1600 },
+                        whitePlayer: { userId: 'user1', name: 'Player One', elo: 1500, avatarUrl: 'avatar_url.com' },
+                        blackPlayer: { userId: 'user2', name: 'Player Two', elo: 1600, avatarUrl: 'avatar_url.com' },
                         startedAt: new Date('2024-01-01'),
                         endedAt: new Date('2024-01-01'),
                         winner: Winner.WHITE
                     },
                     {
                         gameId: 'game2',
-                        whitePlayer: { userId: 'user1', name: 'Player One', elo: 1500 },
-                        blackPlayer: { userId: 'user2', name: 'Player Two', elo: 1600 },
+                        whitePlayer: { userId: 'user1', name: 'Player One', elo: 1500, avatarUrl: 'avatar_url.com' },
+                        blackPlayer: { userId: 'user2', name: 'Player Two', elo: 1600, avatarUrl: 'avatar_url.com' },
                         startedAt: new Date('2024-01-02'),
                         endedAt: new Date('2024-01-02'),
                         winner: Winner.BLACK
@@ -266,13 +268,15 @@ describe('Game Controller', () => {
             id: 'user1',
             name: 'Player One',
             email: 'player1@example.com',
-            elo: 1500
+            elo: 1500,
+            avatarUrl: 'avatar_url.com'
         };
         const blackPlayer: User = {
             id: 'user2',
             name: 'Player Two',
             email: 'player2@example.com',
-            elo: 1600
+            elo: 1600,
+            avatarUrl: 'avatar_url.com'
         };
 
         it('should get game with moves and return status 200', async () => {
@@ -319,8 +323,8 @@ describe('Game Controller', () => {
             };
             const expectedResponse: GetGameResponse = {
                 gameId: 'game1',
-                whitePlayer: { userId: 'user1', name: 'Player One', elo: 1500 },
-                blackPlayer: { userId: 'user2', name: 'Player Two', elo: 1600 },
+                whitePlayer: { userId: 'user1', name: 'Player One', elo: 1500, avatarUrl: 'avatar_url.com' },
+                blackPlayer: { userId: 'user2', name: 'Player Two', elo: 1600, avatarUrl: 'avatar_url.com' },
                 startedAt: new Date('2024-01-01'),
                 endedAt: new Date('2024-01-01'),
                 winner: Winner.WHITE,

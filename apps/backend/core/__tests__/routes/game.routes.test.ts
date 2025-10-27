@@ -24,9 +24,9 @@ jest.mock('chess-game-backend-common/config/env', () => ({
     }
 }));
 
-const createUser = async (id: string, name: string, email: string, elo: number) => {
-    const sql = 'INSERT INTO chess_game.users (id, name, email, elo) VALUES ($1, $2, $3, $4)';
-    await db.none(sql, [id, name, email, elo]);
+const createUser = async (id: string, name: string, email: string, elo: number, avatarUrl: string) => {
+    const sql = 'INSERT INTO chess_game.users (id, name, email, avatar_url, elo) VALUES ($1, $2, $3, $4, $5)';
+    await db.none(sql, [id, name, email, avatarUrl, elo]);
 };
 
 const createGame = async (
@@ -86,8 +86,8 @@ describe('Game routes', () => {
 
     describe('POST /api/games', () => {
         it('should create a game with valid players, persist to Redis and database', async () => {
-            await createUser('player1', 'Player One', 'player1@example.com', 1500);
-            await createUser('player2', 'Player Two', 'player2@example.com', 1600);
+            await createUser('player1', 'Player One', 'player1@example.com', 1500, 'avatar_url.com');
+            await createUser('player2', 'Player Two', 'player2@example.com', 1600, 'avatar_url.com');
 
             const players = ['player1', 'player2'];
             const res = await request(app).post('/api/games').send({ players });
@@ -157,9 +157,9 @@ describe('Game routes', () => {
 
     describe('GET /api/games', () => {
         it('should return game history for a user with games', async () => {
-            await createUser('user1', 'User One', 'user1@example.com', 1500);
-            await createUser('user2', 'User Two', 'user2@example.com', 1600);
-            await createUser('user3', 'User Three', 'user3@example.com', 1550);
+            await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
+            await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
+            await createUser('user3', 'User Three', 'user3@example.com', 1550, 'avatar_url.com');
 
             const now = new Date();
             const game1Id = '550e8400-e29b-41d4-a716-446655440001';
@@ -191,7 +191,7 @@ describe('Game routes', () => {
         });
 
         it('should return empty array for user with no games', async () => {
-            await createUser('user1', 'User One', 'user1@example.com', 1500);
+            await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
 
             const res = await request(app).get('/api/games').query({ userId: 'user1' });
 
@@ -201,8 +201,8 @@ describe('Game routes', () => {
         });
 
         it('should apply limit parameter correctly', async () => {
-            await createUser('user1', 'User One', 'user1@example.com', 1500);
-            await createUser('user2', 'User Two', 'user2@example.com', 1600);
+            await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
+            await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
 
             const now = new Date();
             const game1Id = '550e8400-e29b-41d4-a716-446655440001';
@@ -241,8 +241,8 @@ describe('Game routes', () => {
         });
 
         it('should apply offset parameter correctly', async () => {
-            await createUser('user1', 'User One', 'user1@example.com', 1500);
-            await createUser('user2', 'User Two', 'user2@example.com', 1600);
+            await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
+            await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
 
             const now = new Date();
             const game1Id = '550e8400-e29b-41d4-a716-446655440001';
@@ -283,8 +283,8 @@ describe('Game routes', () => {
         });
 
         it('should apply both limit and offset correctly', async () => {
-            await createUser('user1', 'User One', 'user1@example.com', 1500);
-            await createUser('user2', 'User Two', 'user2@example.com', 1600);
+            await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
+            await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
 
             const now = new Date();
             const game1Id = '550e8400-e29b-41d4-a716-446655440001';
@@ -334,8 +334,8 @@ describe('Game routes', () => {
 
     describe('GET /api/games/:gameId', () => {
         it('should return game with moves for completed game', async () => {
-            await createUser('user1', 'User One', 'user1@example.com', 1500);
-            await createUser('user2', 'User Two', 'user2@example.com', 1600);
+            await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
+            await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
 
             const gameId = '550e8400-e29b-41d4-a716-446655440000';
             const now = new Date();
@@ -380,8 +380,8 @@ describe('Game routes', () => {
         });
 
         it('should return 500 for game still in progress', async () => {
-            await createUser('user1', 'User One', 'user1@example.com', 1500);
-            await createUser('user2', 'User Two', 'user2@example.com', 1600);
+            await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
+            await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
 
             const gameId = '550e8400-e29b-41d4-a716-446655440000';
             const now = new Date();

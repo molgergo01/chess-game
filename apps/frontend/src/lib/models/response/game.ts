@@ -47,6 +47,7 @@ export type UserDto = {
     userId: string;
     name: string;
     elo: number;
+    avatarUrl: string | null;
 };
 
 export type PlayerTimes = {

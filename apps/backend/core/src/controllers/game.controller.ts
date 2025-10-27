@@ -63,12 +63,14 @@ class GameController {
                     whitePlayer: {
                         userId: game.whitePlayer.id,
                         name: game.whitePlayer.name,
-                        elo: game.whitePlayer.elo
+                        elo: game.whitePlayer.elo,
+                        avatarUrl: game.whitePlayer.avatarUrl
                     },
                     blackPlayer: {
                         userId: game.blackPlayer.id,
                         name: game.blackPlayer.name,
-                        elo: game.blackPlayer.elo
+                        elo: game.blackPlayer.elo,
+                        avatarUrl: game.blackPlayer.avatarUrl
                     },
                     startedAt: game.startedAt,
                     // These fallbacks should not happen as null check is performed in the query
@@ -80,7 +82,6 @@ class GameController {
                 games: gameDtos,
                 totalCount: historyResult.totalCount
             };
-            console.log('response: ', response);
             res.status(200).json(response);
         } catch (error) {
             next(error);
@@ -106,12 +107,14 @@ class GameController {
                 whitePlayer: {
                     userId: gameWithMoves.whitePlayer.id,
                     name: gameWithMoves.whitePlayer.name,
-                    elo: gameWithMoves.whitePlayer.elo
+                    elo: gameWithMoves.whitePlayer.elo,
+                    avatarUrl: gameWithMoves.whitePlayer.avatarUrl
                 },
                 blackPlayer: {
                     userId: gameWithMoves.blackPlayer.id,
                     name: gameWithMoves.blackPlayer.name,
-                    elo: gameWithMoves.blackPlayer.elo
+                    elo: gameWithMoves.blackPlayer.elo,
+                    avatarUrl: gameWithMoves.blackPlayer.avatarUrl
                 },
                 startedAt: gameWithMoves.startedAt,
                 // These fallbacks should not happen as null check is performed in the service

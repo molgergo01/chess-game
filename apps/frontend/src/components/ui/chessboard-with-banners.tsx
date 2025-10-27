@@ -9,7 +9,7 @@ import ClientOnlyChessboard from '@/components/ui/client-only-chessboard';
 interface PlayerInfo {
     name: string;
     elo: number;
-    avatarUrl?: string;
+    avatarUrl: string | null;
 }
 
 interface ChessboardWithBannersProps {

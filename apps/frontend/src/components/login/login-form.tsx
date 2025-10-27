@@ -7,7 +7,7 @@ import React from 'react';
 export default function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
     return (
         <div className={cn('flex flex-col gap-6', className)} {...props} data-cy="login-form">
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden border-2 bg-muted">
                 <CardContent className="grid p-0 md:grid-cols-2 items-center">
                     <div className="p-6 md:p-8">
                         <div className="flex flex-col gap-6 md:gap-20">

@@ -25,12 +25,14 @@ function GameHistory({ game }: GameHistoryParams) {
 
     const whitePlayerInfo = {
         name: game.whitePlayer.name,
-        elo: game.whitePlayer.elo
+        elo: game.whitePlayer.elo,
+        avatarUrl: game.whitePlayer.avatarUrl
     };
 
     const blackPlayerInfo = {
         name: game.blackPlayer.name,
-        elo: game.blackPlayer.elo
+        elo: game.blackPlayer.elo,
+        avatarUrl: game.blackPlayer.avatarUrl
     };
 
     const currentWhiteTime =

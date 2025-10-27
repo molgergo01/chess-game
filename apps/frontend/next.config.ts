@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
                 source: '/games',
                 destination: '/games/history',
                 permanent: true
+            },
+            {
+                source: '/',
+                destination: '/play',
+                permanent: true
             }
         ];
     }

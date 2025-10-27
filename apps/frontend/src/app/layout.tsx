@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import NavBar from '@/components/layout/navbar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/hooks/auth/useAuth';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import AppSidebar from '@/components/sidebar/app-sidebar';
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -28,14 +29,17 @@ export default function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                <AuthProvider>
-                    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                        <div className="w-[100vw] h-[100vh] overflow-hidden flex flex-col">
-                            <NavBar className="hidden sm:block !flex-none" />
-                            {children}
-                        </div>
-                    </ThemeProvider>
-                </AuthProvider>
+                <SidebarProvider>
+                    <AuthProvider>
+                        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+                            <AppSidebar />
+                            <div className="w-[100vw] h-[100vh] overflow-hidden flex flex-col">
+                                <SidebarTrigger />
+                                {children}
+                            </div>
+                        </ThemeProvider>
+                    </AuthProvider>
+                </SidebarProvider>
             </body>
         </html>
     );

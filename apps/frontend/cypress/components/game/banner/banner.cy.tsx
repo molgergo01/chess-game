@@ -30,7 +30,7 @@ describe('<Banner />', () => {
     it('should display avatar fallback when no image', () => {
         cy.mount(<Banner {...defaultProps} avatarUrl="" />);
         cy.getDataCy('banner-avatar').should('be.visible');
-        cy.getDataCy('banner-avatar').should('contain.text', 'CN');
+        cy.getDataCy('banner-avatar').should('contain.text', 'T');
     });
 
     it('should display player name', () => {

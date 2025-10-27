@@ -136,7 +136,7 @@ function Matchmaking() {
     }
 
     return (
-        <div className="flex h-full flex-col items-center justify-center bg-muted p-6 md:p-10">
+        <div className="flex h-full flex-col items-center justify-center p-6 md:p-10">
             {errorMessage && (
                 <ErrorAlert
                     message={errorMessage}
@@ -146,7 +146,7 @@ function Matchmaking() {
                 />
             )}
             <div className="w-full max-w-md">
-                <Card className="overflow-hidden" data-cy="matchmaking-card">
+                <Card className="overflow-hidden bg-muted" data-cy="matchmaking-card">
                     <CardContent className="p-0">
                         <div className="p-6 md:p-8">
                             <div className="flex flex-col gap-10 md:gap-20">
@@ -176,10 +176,7 @@ function Matchmaking() {
                                 {isQueued && queueId !== null && (
                                     <div className="flex flex-col gap-6">
                                         <CopyableLink link={getLink()} autoCopy={isNewQueue} />
-                                        <p
-                                            className="text-center text-muted-foreground"
-                                            data-cy="matchmaking-waiting-text"
-                                        >
+                                        <p className="text-center" data-cy="matchmaking-waiting-text">
                                             Waiting for friend to join...
                                         </p>
                                         <CancelInviteButton

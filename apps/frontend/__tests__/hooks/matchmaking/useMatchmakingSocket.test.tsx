@@ -35,6 +35,8 @@ describe('useMatchmakingSocket', () => {
         it('should initialize socket when userId is available', async () => {
             mockUseAuth.mockReturnValue({
                 userId: 'user123',
+                userName: 'userName',
+                userAvatarUrl: 'avatar_url.com',
                 refetch: jest.fn()
             });
 
@@ -56,6 +58,8 @@ describe('useMatchmakingSocket', () => {
         it('should not initialize socket when userId is null', () => {
             mockUseAuth.mockReturnValue({
                 userId: null,
+                userName: null,
+                userAvatarUrl: null,
                 refetch: jest.fn()
             });
 
@@ -74,6 +78,8 @@ describe('useMatchmakingSocket', () => {
         it('should disconnect socket on unmount', async () => {
             mockUseAuth.mockReturnValue({
                 userId: 'user123',
+                userName: 'userName',
+                userAvatarUrl: 'avatar_url.com',
                 refetch: jest.fn()
             });
 
@@ -103,6 +109,8 @@ describe('useMatchmakingSocket', () => {
 
             mockUseAuth.mockReturnValue({
                 userId: 'user123',
+                userName: 'userName',
+                userAvatarUrl: 'avatar_url.com',
                 refetch: jest.fn()
             });
 
@@ -139,6 +147,8 @@ describe('useMatchmakingSocket', () => {
 
             mockUseAuth.mockReturnValue({
                 userId: 'user123',
+                userName: 'userName',
+                userAvatarUrl: 'avatar_url.com',
                 refetch: jest.fn()
             });
 

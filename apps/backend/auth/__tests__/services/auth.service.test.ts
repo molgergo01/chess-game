@@ -15,7 +15,7 @@ describe('Auth Service', () => {
 
     beforeEach(() => {
         mockUserRepository = new UserRepository() as jest.Mocked<UserRepository>;
-        mockUserRepository.createUserIfNotExists = jest.fn();
+        mockUserRepository.upsertUser = jest.fn();
 
         authService = new AuthService(mockUserRepository);
     });
@@ -29,7 +29,8 @@ describe('Auth Service', () => {
         const user: Express.User = {
             id: 'id',
             name: 'name',
-            email: 'email@email.com'
+            email: 'email@email.com',
+            avatarUrl: 'avatar_url.com'
         };
         it('should persist user and return token', async () => {
             const token = 'token';
@@ -40,10 +41,11 @@ describe('Auth Service', () => {
 
             const result = await authService.login(user);
 
-            expect(mockUserRepository.createUserIfNotExists).toHaveBeenCalledWith({
+            expect(mockUserRepository.upsertUser).toHaveBeenCalledWith({
                 id: user.id,
                 name: user.name,
-                email: user.email
+                email: user.email,
+                avatarUrl: user.avatarUrl
             });
             expect(result).toEqual(token);
         });
@@ -55,7 +57,7 @@ describe('Auth Service', () => {
                 );
             });
             it('when db call fails', async () => {
-                mockUserRepository.createUserIfNotExists.mockRejectedValue(new Error());
+                mockUserRepository.upsertUser.mockRejectedValue(new Error());
 
                 await expect(authService.login(user)).rejects.toThrow(FailedLoginError);
             });

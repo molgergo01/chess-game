@@ -17,17 +17,21 @@ class AuthService {
         if (!reqUser) {
             throw new FailedLoginError('User is missing from auth request');
         }
-        const user = new User(reqUser.id, reqUser.name, reqUser.email);
+        const user = new User(reqUser.id, reqUser.name, reqUser.email, reqUser.avatarUrl);
         try {
-            await this.userRepository.createUserIfNotExists(user);
+            await this.userRepository.upsertUser(user);
         } catch (error) {
             console.error(error);
             throw new FailedLoginError();
         }
 
-        return jwt.sign({ id: user.id, email: user.email }, env.JWT_SECRET!, {
-            expiresIn: '7d'
-        });
+        return jwt.sign(
+            { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl },
+            env.JWT_SECRET!,
+            {
+                expiresIn: '7d'
+            }
+        );
     }
 
     getUserFromToken(token: string | undefined) {

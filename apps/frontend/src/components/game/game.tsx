@@ -70,12 +70,14 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
 
     const whitePlayerInfo = {
         name: 'joe biden',
-        elo: 1234
+        elo: 1234,
+        avatarUrl: null
     };
 
     const blackPlayerInfo = {
         name: 'donald trump',
-        elo: 1234
+        elo: 1234,
+        avatarUrl: null
     };
 
     if (!color || !turnColor || !timesRemaining) {

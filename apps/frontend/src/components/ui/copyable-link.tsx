@@ -35,7 +35,7 @@ export default function CopyableLink({ link, autoCopy = false }: CopyableLinkPro
     }
 
     return (
-        <div className="relative p-4 bg-muted rounded-lg border" data-cy="matchmaking-invite-link-container">
+        <div className="relative p-4 bg-background rounded-lg border" data-cy="matchmaking-invite-link-container">
             <input
                 type="text"
                 readOnly
