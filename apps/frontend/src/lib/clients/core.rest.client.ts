@@ -1,8 +1,9 @@
 import { GameHistory, GameWithMoves } from '@/lib/models/history/history';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import env from '@/lib/config/env';
-import { GameDto, GetGameHistoryResponse, GetGameResponse } from '@/lib/models/response/game';
-import { GetGameHistoryParams } from '@/lib/models/request/game';
+import { GameDto, GetGameHistoryResponse, GetGameResponse, GetLeaderboardResponse } from '@/lib/models/response/game';
+import { GetGameHistoryParams, GetLeaderboardParams } from '@/lib/models/request/game';
+import { PlayerLeaderboard } from '@/lib/models/leaderboard/playerLeaderboard';
 
 export async function getGameHistory(
     userId: string,
@@ -88,6 +89,42 @@ export async function getGame(gameId: string): Promise<GameWithMoves> {
             throw new Error('Network error: Unable to connect to core service');
         } else {
             throw new Error('Failed to get game');
+        }
+    }
+}
+
+export async function getPlayerLeaderboard(limit: number | null, offset: number | null): Promise<PlayerLeaderboard> {
+    try {
+        const params: GetLeaderboardParams = {
+            limit: limit,
+            offset: offset
+        };
+        const response: AxiosResponse<GetLeaderboardResponse> = await axios.get(
+            `${env.REST_URLS.CORE}/api/leaderboard`,
+            {
+                params: params
+            }
+        );
+
+        const users = response.data.users.map((user) => ({
+            userId: user.userId,
+            rank: user.rank,
+            name: user.name,
+            elo: user.elo,
+            avatarUrl: user.avatarUrl
+        }));
+
+        return {
+            users: users,
+            totalCount: response.data.totalCount
+        };
+    } catch (error) {
+        if (error instanceof AxiosError && error.response) {
+            throw new Error(error.response.data.message || 'Failed to get leaderboard');
+        } else if (error instanceof AxiosError && error.request) {
+            throw new Error('Network error: Unable to connect to core service');
+        } else {
+            throw new Error('Failed to get leaderboard');
         }
     }
 }

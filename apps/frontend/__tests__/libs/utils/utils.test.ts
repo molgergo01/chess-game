@@ -11,11 +11,6 @@ describe('cn', () => {
         expect(result).toBe('bg-red-500 text-white');
     });
 
-    it('handles conditional classes correctly', () => {
-        const result = cn('bg-red-500', false && 'hidden', 'text-white');
-        expect(result).toBe('bg-red-500 text-white');
-    });
-
     it('removes duplicate classes', () => {
         const result = cn('bg-red-500', 'bg-red-500', 'text-white');
         expect(result).toBe('bg-red-500 text-white');

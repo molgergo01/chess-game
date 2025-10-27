@@ -40,7 +40,7 @@ function AppSidebar() {
         },
         {
             title: 'Leaderboard',
-            url: '#',
+            url: '/leaderboard',
             icon: Trophy,
             dataCy: 'sidebar-leaderboard'
         },

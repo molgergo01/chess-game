@@ -26,6 +26,11 @@ export type GetGameResponse = GameDto & {
     moves: Array<MoveDto>;
 };
 
+export type GetLeaderboardResponse = {
+    users: Array<LeaderboardUserDto>;
+    totalCount: number;
+};
+
 export type GameDto = {
     gameId: string;
     whitePlayer: UserDto;
@@ -45,6 +50,14 @@ export type MoveDto = {
 
 export type UserDto = {
     userId: string;
+    name: string;
+    elo: number;
+    avatarUrl: string | null;
+};
+
+export type LeaderboardUserDto = {
+    userId: string;
+    rank: number;
     name: string;
     elo: number;
     avatarUrl: string | null;

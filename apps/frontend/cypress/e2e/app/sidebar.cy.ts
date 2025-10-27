@@ -16,7 +16,7 @@ describe('Sidebar', () => {
         describe('Leaderboard button', () => {
             it('should navigate to leaderboard page', () => {
                 cy.getDataCy('sidebar-leaderboard').click();
-                // TODO Leaderboard nav url check
+                cy.url().should('include', '/leaderboard');
             });
         });
 

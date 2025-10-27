@@ -5,6 +5,7 @@ import passport from 'chess-game-backend-common/config/passport';
 import corsConfig from 'chess-game-backend-common/config/cors';
 import gameRoutes from './routes/game.routes';
 import { errorHandler } from 'chess-game-backend-common/middlewares/error.handler';
+import leaderboardRoutes from './routes/leaderboard.routes';
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(passport.initialize());
 
 // Routes
 app.use('/api/games', gameRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // Error Handler
 app.use(errorHandler);
