@@ -2,15 +2,16 @@ import { TimeDisplay } from '@/components/ui/timer';
 import { MatchmakingColor } from '@/lib/models/request/matchmaking';
 import { cn } from '@/lib/utils/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getFallbackNameAvatar } from '@/lib/utils/name.utils';
 
 interface BannerProps extends React.ComponentProps<'div'> {
     playerColor: MatchmakingColor;
     isOpponent: boolean;
     turnColor: MatchmakingColor | undefined;
     timeLeft: number;
-    playerName?: string;
-    elo?: number;
-    avatarUrl?: string;
+    playerName: string;
+    elo: number;
+    avatarUrl: string | null;
 }
 
 function Banner({
@@ -19,9 +20,9 @@ function Banner({
     isOpponent,
     turnColor,
     timeLeft,
-    playerName = 'Player13123',
-    elo = 1234,
-    avatarUrl = 'https://github.com/shadcn.png',
+    playerName,
+    elo,
+    avatarUrl,
     ...props
 }: BannerProps) {
     return (
@@ -37,8 +38,8 @@ function Banner({
         >
             <div className={cn('flex flex-col justify-center shrink-0 items-center')}>
                 <Avatar className="size-12 flex-shrink-0 border-2" data-cy="banner-avatar">
-                    <AvatarImage src={avatarUrl} />
-                    <AvatarFallback>CN</AvatarFallback>
+                    <AvatarImage src={avatarUrl || ''} />
+                    <AvatarFallback className={'text-foreground'}>{getFallbackNameAvatar(playerName)}</AvatarFallback>
                 </Avatar>
                 <span className="text-center text-base sm:text-sm" data-cy="banner-player-color">
                     {playerColor}

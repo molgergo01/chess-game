@@ -1,15 +1,14 @@
-//DUMMY TEST
 describe('Main Page', () => {
     beforeEach(() => {
         cy.applyToken();
         cy.visit('http://localhost:3000/');
     });
 
-    it('should contain Header', () => {
-        cy.get('h1').should('contain', 'Welcome to Chess Game');
+    it('should redirect to play', () => {
+        cy.url().should('contain', '/play');
     });
 
-    context('Theme Toggle', () => {
+    describe('Theme Toggle', () => {
         it('should toggle theme', () => {
             cy.getDataCy('mode-toggle-dropdown').click();
             cy.getDataCy('dark-theme').click();

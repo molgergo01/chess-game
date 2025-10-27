@@ -1,16 +1,15 @@
 'use client';
 import axios, { AxiosError } from 'axios';
 
-import { DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
 import { useRouter } from 'next/navigation';
 import env from '@/lib/config/env';
 
 export default function LogoutButton() {
     const router = useRouter();
     return (
-        <DropdownMenuItem onClick={handleLogout} data-cy={'logout-button'}>
+        <div onClick={handleLogout} data-cy={'logout-button'}>
             Logout
-        </DropdownMenuItem>
+        </div>
     );
 
     async function handleLogout() {

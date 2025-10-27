@@ -24,12 +24,14 @@ export async function getGameHistory(
                 whitePlayer: {
                     userId: game.whitePlayer.userId,
                     name: game.whitePlayer.name,
-                    elo: game.whitePlayer.elo
+                    elo: game.whitePlayer.elo,
+                    avatarUrl: game.whitePlayer.avatarUrl
                 },
                 blackPlayer: {
                     userId: game.blackPlayer.userId,
                     name: game.blackPlayer.name,
-                    elo: game.blackPlayer.elo
+                    elo: game.blackPlayer.elo,
+                    avatarUrl: game.blackPlayer.avatarUrl
                 },
                 startedAt: game.startedAt,
                 winner: game.winner
@@ -55,12 +57,14 @@ export async function getGame(gameId: string): Promise<GameWithMoves> {
             whitePlayer: {
                 userId: response.data.whitePlayer.userId,
                 name: response.data.whitePlayer.name,
-                elo: response.data.whitePlayer.elo
+                elo: response.data.whitePlayer.elo,
+                avatarUrl: response.data.whitePlayer.avatarUrl
             },
             blackPlayer: {
                 userId: response.data.blackPlayer.userId,
                 name: response.data.blackPlayer.name,
-                elo: response.data.blackPlayer.elo
+                elo: response.data.blackPlayer.elo,
+                avatarUrl: response.data.blackPlayer.avatarUrl
             },
             startedAt: response.data.startedAt,
             winner: response.data.winner,

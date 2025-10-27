@@ -34,10 +34,12 @@ class GamesRepository {
                    wU.name  as white_user_name,
                    wU.email as white_user_email,
                    wU.elo   as white_user_elo,
+                   wU.avatar_url as white_user_avatar_url,
                    bU.id    as black_user_id,
                    bU.name  as black_user_name,
                    bU.email as black_user_email,
-                   bU.elo   as black_user_elo
+                   bU.elo   as black_user_elo,
+                   bU.avatar_url as black_user_avatar_url
             FROM chess_game.games g
                      LEFT JOIN chess_game.users wU ON g.white_player_id = wU.id
                      LEFT JOIN chess_game.users bU ON g.black_player_id = bU.id
@@ -62,10 +64,12 @@ class GamesRepository {
                 white_user_name: string;
                 white_user_email: string;
                 white_user_elo: number;
+                white_user_avatar_url: string | null;
                 black_user_id: string;
                 black_user_name: string;
                 black_user_email: string;
                 black_user_elo: number;
+                black_user_avatar_url: string | null;
             }
         > = await db.query(sql, params);
 
@@ -77,13 +81,15 @@ class GamesRepository {
                 id: row.white_user_id,
                 name: row.white_user_name,
                 email: row.white_user_email,
-                elo: row.white_user_elo
+                elo: row.white_user_elo,
+                avatarUrl: row.white_user_avatar_url
             };
             const blackPlayer: User = {
                 id: row.black_user_id,
                 name: row.black_user_name,
                 email: row.black_user_email,
-                elo: row.black_user_elo
+                elo: row.black_user_elo,
+                avatarUrl: row.black_user_avatar_url
             };
             return {
                 id: row.id,
@@ -103,10 +109,12 @@ class GamesRepository {
                    wU.name      as white_user_name,
                    wU.email     as white_user_email,
                    wU.elo       as white_user_elo,
+                   wU.avatar_url as white_user_avatar_url,
                    bU.id        as black_user_id,
                    bU.name      as black_user_name,
                    bU.email     as black_user_email,
                    bU.elo       as black_user_elo,
+                   bU.avatar_url as black_user_avatar_url,
                    m.id         as move_id,
                    m.move_number,
                    m.player_color,
@@ -132,10 +140,12 @@ class GamesRepository {
                     white_user_name: string;
                     white_user_email: string;
                     white_user_elo: number;
+                    white_user_avatar_url: string | null;
                     black_user_id: string;
                     black_user_name: string;
                     black_user_email: string;
                     black_user_elo: number;
+                    black_user_avatar_url: string | null;
                 }
         > = await db.query(sql, [id]);
 
@@ -148,13 +158,15 @@ class GamesRepository {
             id: firstRow.white_user_id,
             name: firstRow.white_user_name,
             email: firstRow.white_user_email,
-            elo: firstRow.white_user_elo
+            elo: firstRow.white_user_elo,
+            avatarUrl: firstRow.white_user_avatar_url
         };
         const blackPlayer: User = {
             id: firstRow.black_user_id,
             name: firstRow.black_user_name,
             email: firstRow.black_user_email,
-            elo: firstRow.black_user_elo
+            elo: firstRow.black_user_elo,
+            avatarUrl: firstRow.black_user_avatar_url
         };
         const game: GameWithPlayers = {
             id: firstRow.id,
@@ -201,7 +213,6 @@ class GamesRepository {
             game.endedAt,
             game.winner
         ]);
-        console.log('Successfully created game in DB:', game);
     }
 
     async update(game: Game) {
@@ -224,7 +235,6 @@ class GamesRepository {
             game.endedAt,
             game.winner
         ]);
-        console.log('Successfully updated game in DB:', game);
     }
 }
 

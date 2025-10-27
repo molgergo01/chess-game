@@ -65,6 +65,8 @@ describe('useChessGame', () => {
         mockUseCoreSocket.mockReturnValue({ socket: mockSocket as Socket });
         mockUseAuth.mockReturnValue({
             userId: 'user123',
+            userName: 'userName',
+            userAvatarUrl: 'avatar_url.com',
             refetch: jest.fn()
         });
         mockGetCurrentUserColor.mockReturnValue(MatchmakingColor.WHITE);

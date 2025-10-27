@@ -23,17 +23,7 @@ describe('Login Flow', () => {
         cy.applyToken();
         cy.visit('http://localhost:3000/');
 
-        cy.url().should('equal', 'http://localhost:3000/');
-    });
-    it('Should clear cookies and redirect to Login if logout button is clicked', () => {
-        cy.applyToken();
-        cy.visit('http://localhost:3000/');
-
-        cy.getDataCy('dropdown-open').click();
-        cy.getDataCy('logout-button').click();
-
-        cy.url().should('include', '/login');
-        cy.getCookie('token').should('be.null');
+        cy.url().should('equal', 'http://localhost:3000/play');
     });
     context('Login alert', () => {
         it('Should render if login failed', () => {

@@ -28,6 +28,7 @@ export type User = {
     userId: string;
     name: string;
     elo: number;
+    avatarUrl: string | null;
 };
 
 export enum Winner {

@@ -798,13 +798,15 @@ describe('Game Service', () => {
                         id: '5678',
                         name: 'White Player',
                         email: 'white@example.com',
-                        elo: 1500
+                        elo: 1500,
+                        avatarUrl: 'avatar_url.com'
                     },
                     blackPlayer: {
                         id: '1234',
                         name: 'Black Player',
                         email: 'black@example.com',
-                        elo: 1600
+                        elo: 1600,
+                        avatarUrl: 'avatar_url.com'
                     },
                     startedAt: new Date(NOW),
                     endedAt: new Date(NOW + 1000),
@@ -816,13 +818,15 @@ describe('Game Service', () => {
                         id: '1234',
                         name: 'Black Player',
                         email: 'black@example.com',
-                        elo: 1600
+                        elo: 1600,
+                        avatarUrl: 'avatar_url.com'
                     },
                     blackPlayer: {
                         id: '5678',
                         name: 'White Player',
                         email: 'white@example.com',
-                        elo: 1500
+                        elo: 1500,
+                        avatarUrl: 'avatar_url.com'
                     },
                     startedAt: new Date(NOW + 2000),
                     endedAt: new Date(NOW + 3000),
@@ -929,13 +933,15 @@ describe('Game Service', () => {
                     id: '5678',
                     name: 'White Player',
                     email: 'white@example.com',
-                    elo: 1500
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
                 },
                 blackPlayer: {
                     id: '1234',
                     name: 'Black Player',
                     email: 'black@example.com',
-                    elo: 1600
+                    elo: 1600,
+                    avatarUrl: 'avatar_url.com'
                 },
                 startedAt: new Date(NOW),
                 endedAt: new Date(NOW + 1000),
@@ -992,13 +998,15 @@ describe('Game Service', () => {
                     id: '5678',
                     name: 'White Player',
                     email: 'white@example.com',
-                    elo: 1500
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
                 },
                 blackPlayer: {
                     id: '1234',
                     name: 'Black Player',
                     email: 'black@example.com',
-                    elo: 1600
+                    elo: 1600,
+                    avatarUrl: 'avatar_url.com'
                 },
                 startedAt: new Date(NOW),
                 endedAt: null,
