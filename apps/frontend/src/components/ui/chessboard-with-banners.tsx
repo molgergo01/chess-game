@@ -22,6 +22,7 @@ interface ChessboardWithBannersProps {
     blackTimeLeft: number;
     onPieceDrop?: (args: PieceDropHandlerArgs) => boolean;
     animationDuration?: number;
+    allowDragging: boolean;
 }
 
 function ChessboardWithBanners({
@@ -33,7 +34,8 @@ function ChessboardWithBanners({
     whiteTimeLeft,
     blackTimeLeft,
     onPieceDrop,
-    animationDuration = 0
+    animationDuration = 0,
+    allowDragging = true
 }: ChessboardWithBannersProps) {
     const topPlayerInfo = boardOrientation === MatchmakingColor.WHITE ? blackPlayerInfo : whitePlayerInfo;
     const bottomPlayerInfo = boardOrientation === MatchmakingColor.WHITE ? whitePlayerInfo : blackPlayerInfo;
@@ -48,7 +50,8 @@ function ChessboardWithBanners({
         position: boardPosition,
         boardOrientation: boardOrientation,
         onPieceDrop: onPieceDrop || (() => false),
-        animationDurationInMs: animationDuration
+        animationDurationInMs: animationDuration,
+        allowDragging: allowDragging
     };
 
     return (

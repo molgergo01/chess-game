@@ -366,7 +366,7 @@ describe('matchmaking.rest.client', () => {
         it('should return QueueStatus with isQueued true and queueId when user is in queue', async () => {
             const userId = 'user123';
             const queueId = 'queue-abc-123';
-            const mockResponse = { data: { queueId } };
+            const mockResponse = { data: { isQueued: true, queueId: queueId, hasActiveGame: false } };
 
             (axios.get as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -375,25 +375,7 @@ describe('matchmaking.rest.client', () => {
             expect(axios.get).toHaveBeenCalledWith('http://localhost:8081/api/matchmaking/queue/status', {
                 params: { userId }
             });
-            expect(result).toEqual({ isQueued: true, queueId });
-        });
-
-        it('should return QueueStatus with isQueued false when status is 404', async () => {
-            const userId = 'user123';
-            const axiosError = new AxiosError('Not Found');
-            axiosError.response = {
-                data: {},
-                status: 404,
-                statusText: 'Not Found',
-                headers: {},
-                config: {} as InternalAxiosRequestConfig
-            };
-
-            (axios.get as jest.Mock).mockRejectedValue(axiosError);
-
-            const result = await getQueueStatus(userId);
-
-            expect(result).toEqual({ isQueued: false, queueId: null });
+            expect(result).toEqual({ isQueued: true, queueId: queueId, hasActiveGame: false });
         });
 
         it('should throw error with message from response when AxiosError has non-404 response', async () => {

@@ -14,6 +14,7 @@ import GamesRepository from '../repositories/games.repository';
 import { DEFAULT_START_TIMEOUT_IN_MINUTES } from '../config/constants';
 import MovesRepository from '../repositories/moves.repository';
 import { Move } from '../models/move';
+import ConflictError from 'chess-game-backend-common/errors/conflict.error';
 
 @injectable()
 class GameService {
@@ -33,6 +34,18 @@ class GameService {
     }
 
     async create(playerIds: string[]): Promise<GameCreated> {
+        if (playerIds.length !== 2) {
+            throw new BadRequestError('playerIds must be exactly 2 players');
+        }
+        if (playerIds[0] === playerIds[1]) {
+            throw new BadRequestError('playerIds must be 2 distinct players');
+        }
+
+        const isAnyPlayerInGame = await this.gamesRepository.existsActiveGameByUserIds(playerIds);
+        if (isAnyPlayerInGame) {
+            throw new ConflictError('A player is already in game');
+        }
+
         const playersWithColors = this.assignColorsToPlayers(playerIds);
         const id = uuidv4();
         const game = new Chess();
@@ -245,6 +258,28 @@ class GameService {
         }
 
         return game;
+    }
+
+    async getActiveGame(userId: string) {
+        const game = await this.gamesRepository.findActiveGameByUserId(userId);
+        if (!game) {
+            throw new NotFoundError('No active game found for user');
+        }
+
+        const gameState = await this.getGameState(game.id);
+        const position = gameState.game.fen();
+        const times = this.getPlayerTimesFromGameState(gameState, Date.now());
+        const isGameOver = await this.isGameOver(game.id);
+        const winner = isGameOver ? await this.getWinner(game.id) : null;
+
+        return {
+            game,
+            position,
+            whiteTimeRemaining: times.whiteTimeRemaining,
+            blackTimeRemaining: times.blackTimeRemaining,
+            gameOver: isGameOver,
+            winner
+        };
     }
 
     private refreshPlayerTimes(gameState: GameState, currentPlayer: Player, requestTimestamp: number) {

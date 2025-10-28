@@ -1,5 +1,3 @@
-import { Player } from './game';
-
 export type JoinPrivateQueueParams = {
     queueId: string;
 };
@@ -34,8 +32,13 @@ export type LeavePrivateQueueRequest = {
 };
 
 export type MatchmakeMessage = {
-    players: Array<Player>;
     gameId: string;
+};
+
+export type GetQueueStatusResponse = {
+    isQueued: boolean;
+    queueId: string | null;
+    hasActiveGame: boolean;
 };
 
 export enum Color {

@@ -1,4 +1,4 @@
-import { getGameId, getTimes, joinGame, movePiece, getPosition } from '@/lib/clients/core.socket.client';
+import { getGameId, joinGame, movePiece, getPosition } from '@/lib/clients/core.socket.client';
 import { Socket } from 'socket.io-client';
 
 describe('core.socket.client', () => {
@@ -23,26 +23,6 @@ describe('core.socket.client', () => {
             const result = await getGameId(mockSocket as Socket);
 
             expect(mockSocket.emitWithAck).toHaveBeenCalledWith('getGameId');
-            expect(result).toBe(mockResponse);
-        });
-    });
-
-    describe('getTimes', () => {
-        it('should call socket.emitWithAck with correct event name and request body', async () => {
-            const gameId = 'game123';
-            const mockResponse = {
-                playerTimes: {
-                    whiteTimeRemaining: 600000,
-                    blackTimeRemaining: 600000
-                }
-            };
-            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(mockResponse);
-
-            const result = await getTimes(mockSocket as Socket, gameId);
-
-            expect(mockSocket.emitWithAck).toHaveBeenCalledWith('getTimes', {
-                gameId: gameId
-            });
             expect(result).toBe(mockResponse);
         });
     });

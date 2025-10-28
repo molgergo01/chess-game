@@ -4,6 +4,7 @@ import MatchmakingService from '../services/matchmaking.service';
 import {
     CreatePrivateQueueRequest,
     CreatePrivateQueueResponse,
+    GetQueueStatusResponse,
     JoinPrivateQueueParams,
     JoinPrivateQueueRequest,
     JoinQueueRequest,
@@ -92,11 +93,13 @@ class MatchmakingController {
                 return;
             }
 
-            const queueId = await this.matchmakingService.getQueue(userId);
-            res.status(200).json({
-                message: `User with id ${userId} is queued`,
-                queueId: queueId === '' ? null : queueId
-            });
+            const status = await this.matchmakingService.getQueueStatus(userId);
+            const response: GetQueueStatusResponse = {
+                isQueued: status.isQueued,
+                queueId: status.queueId,
+                hasActiveGame: status.hasActiveGame
+            };
+            res.status(200).json(response);
         } catch (error) {
             next(error);
         }

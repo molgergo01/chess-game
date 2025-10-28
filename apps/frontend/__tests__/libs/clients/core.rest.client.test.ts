@@ -1,6 +1,6 @@
 jest.mock('axios');
 
-import { getGame, getGameHistory, getPlayerLeaderboard } from '@/lib/clients/core.rest.client';
+import { getActiveGame, getGame, getGameHistory, getPlayerLeaderboard } from '@/lib/clients/core.rest.client';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import env from '@/lib/config/env';
 
@@ -324,6 +324,80 @@ describe('core.rest.client', () => {
             (axios.get as jest.Mock).mockRejectedValue(new Error('Unknown error'));
 
             await expect(getPlayerLeaderboard(null, null)).rejects.toThrow('Failed to get leaderboard');
+        });
+    });
+
+    describe('getActiveGame', () => {
+        it('should call axios.get with correct URL and params and return GetActiveGameResponse', async () => {
+            const userId = 'user123';
+            const mockResponse = {
+                data: {
+                    gameId: 'game456',
+                    isActive: true
+                }
+            };
+
+            (axios.get as jest.Mock).mockResolvedValue(mockResponse);
+
+            const result = await getActiveGame(userId);
+
+            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/games/active', {
+                params: { userId }
+            });
+            expect(result).toEqual({
+                gameId: 'game456',
+                isActive: true
+            });
+        });
+
+        it('should throw error with message from response when AxiosError has response', async () => {
+            const userId = 'user123';
+            const axiosError = new AxiosError('Request failed');
+            axiosError.response = {
+                data: { message: 'User not found' },
+                status: 404,
+                statusText: 'Not Found',
+                headers: {},
+                config: {} as InternalAxiosRequestConfig
+            };
+
+            (axios.get as jest.Mock).mockRejectedValue(axiosError);
+
+            await expect(getActiveGame(userId)).rejects.toThrow('User not found');
+        });
+
+        it('should throw default error message when AxiosError has response without message', async () => {
+            const userId = 'user123';
+            const axiosError = new AxiosError('Request failed');
+            axiosError.response = {
+                data: {},
+                status: 500,
+                statusText: 'Internal Server Error',
+                headers: {},
+                config: {} as InternalAxiosRequestConfig
+            };
+
+            (axios.get as jest.Mock).mockRejectedValue(axiosError);
+
+            await expect(getActiveGame(userId)).rejects.toThrow('Failed to get active game');
+        });
+
+        it('should throw network error when AxiosError has request but no response', async () => {
+            const userId = 'user123';
+            const axiosError = new AxiosError('Network Error');
+            axiosError.request = {};
+
+            (axios.get as jest.Mock).mockRejectedValue(axiosError);
+
+            await expect(getActiveGame(userId)).rejects.toThrow('Network error: Unable to connect to core service');
+        });
+
+        it('should throw generic error for non-AxiosError', async () => {
+            const userId = 'user123';
+
+            (axios.get as jest.Mock).mockRejectedValue(new Error('Unknown error'));
+
+            await expect(getActiveGame(userId)).rejects.toThrow('Failed to get active game');
         });
     });
 });

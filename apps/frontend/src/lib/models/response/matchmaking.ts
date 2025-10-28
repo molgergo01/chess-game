@@ -1,4 +1,5 @@
 export type GetQueueStatusResponse = {
-    message: string;
+    isQueued: boolean;
     queueId: string | null;
+    hasActiveGame: boolean;
 };

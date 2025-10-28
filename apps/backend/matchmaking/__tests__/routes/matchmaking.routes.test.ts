@@ -37,6 +37,13 @@ jest.mock('chess-game-backend-common/config/env', () => ({
 }));
 
 describe('Matchmaking routes', () => {
+    let mockCoreRestClient: jest.Mocked<CoreRestClient>;
+
+    beforeEach(() => {
+        mockCoreRestClient = container.get(CoreRestClient) as jest.Mocked<CoreRestClient>;
+        mockCoreRestClient.checkActiveGame = jest.fn().mockResolvedValue(false);
+    });
+
     afterEach(async () => {
         let cursor = '0';
         do {
@@ -49,6 +56,7 @@ describe('Matchmaking routes', () => {
                 await Redis.del(result.keys);
             }
         } while (cursor !== '0');
+        jest.clearAllMocks();
     });
 
     afterAll(async () => {
@@ -118,19 +126,7 @@ describe('Matchmaking routes', () => {
 
             const mockCoreRestClient = container.get(CoreRestClient) as jest.Mocked<CoreRestClient>;
             const mockGameResponse = {
-                gameId: 'test-game-id',
-                players: [
-                    {
-                        id: user1,
-                        color: Color.WHITE,
-                        timer: { remainingMs: 600000 }
-                    },
-                    {
-                        id: user2,
-                        color: Color.BLACK,
-                        timer: { remainingMs: 600000 }
-                    }
-                ]
+                gameId: 'test-game-id'
             };
             mockCoreRestClient.createGame = jest.fn().mockResolvedValue(mockGameResponse);
 
@@ -242,23 +238,29 @@ describe('Matchmaking routes', () => {
             const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
 
             expect(res.status).toBe(200);
-            expect(res.body).toHaveProperty('message');
-            expect(res.body.message).toContain('is queued');
+            expect(res.body).toHaveProperty('isQueued');
+            expect(res.body.isQueued).toBe(true);
             expect(res.body).toHaveProperty('queueId');
             expect(res.body.queueId).toBeNull();
+            expect(res.body).toHaveProperty('hasActiveGame');
+            expect(res.body.hasActiveGame).toBe(false);
         });
 
-        it('should return 404 if user is not in queue', async () => {
+        it('should return 200 with isQueued false if user is not in queue', async () => {
             const userId = 'nonexistent-player';
 
             const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
 
-            expect(res.status).toBe(404);
-            expect(res.body).toHaveProperty('message');
-            expect(res.body.message).toContain('not queued');
+            expect(res.status).toBe(200);
+            expect(res.body).toHaveProperty('isQueued');
+            expect(res.body.isQueued).toBe(false);
+            expect(res.body).toHaveProperty('queueId');
+            expect(res.body.queueId).toBeNull();
+            expect(res.body).toHaveProperty('hasActiveGame');
+            expect(res.body.hasActiveGame).toBe(false);
         });
 
-        it('should return 404 if user was in queue but left', async () => {
+        it('should return 200 with isQueued false after leaving queue', async () => {
             const userId = 'player1';
 
             await request(app).post('/api/matchmaking/queue').send({ userId });
@@ -266,9 +268,46 @@ describe('Matchmaking routes', () => {
 
             const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
 
-            expect(res.status).toBe(404);
-            expect(res.body).toHaveProperty('message');
-            expect(res.body.message).toContain('not queued');
+            expect(res.status).toBe(200);
+            expect(res.body).toHaveProperty('isQueued');
+            expect(res.body.isQueued).toBe(false);
+            expect(res.body).toHaveProperty('queueId');
+            expect(res.body.queueId).toBeNull();
+            expect(res.body).toHaveProperty('hasActiveGame');
+            expect(res.body.hasActiveGame).toBe(false);
+        });
+
+        it('should return 200 with queueId when user is in private queue', async () => {
+            const userId = 'player1';
+
+            const createRes = await request(app).post('/api/matchmaking/queue/private').send({ userId });
+            const queueId = createRes.body.queueId;
+
+            const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
+
+            expect(res.status).toBe(200);
+            expect(res.body).toHaveProperty('isQueued');
+            expect(res.body.isQueued).toBe(true);
+            expect(res.body).toHaveProperty('queueId');
+            expect(res.body.queueId).toBe(queueId);
+            expect(res.body).toHaveProperty('hasActiveGame');
+            expect(res.body.hasActiveGame).toBe(false);
+        });
+
+        it('should return 200 with hasActiveGame true when user has active game', async () => {
+            const userId = 'player1';
+
+            mockCoreRestClient.checkActiveGame.mockResolvedValueOnce(true);
+
+            const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
+
+            expect(res.status).toBe(200);
+            expect(res.body).toHaveProperty('isQueued');
+            expect(res.body.isQueued).toBe(false);
+            expect(res.body).toHaveProperty('queueId');
+            expect(res.body.queueId).toBeNull();
+            expect(res.body).toHaveProperty('hasActiveGame');
+            expect(res.body.hasActiveGame).toBe(true);
         });
     });
 
@@ -455,19 +494,7 @@ describe('Matchmaking routes', () => {
 
             const mockCoreRestClient = container.get(CoreRestClient) as jest.Mocked<CoreRestClient>;
             const mockGameResponse = {
-                gameId: 'test-game-private',
-                players: [
-                    {
-                        id: user1,
-                        color: Color.WHITE,
-                        timer: { remainingMs: 600000 }
-                    },
-                    {
-                        id: user2,
-                        color: Color.BLACK,
-                        timer: { remainingMs: 600000 }
-                    }
-                ]
+                gameId: 'test-game-private'
             };
             mockCoreRestClient.createGame = jest.fn().mockResolvedValue(mockGameResponse);
 

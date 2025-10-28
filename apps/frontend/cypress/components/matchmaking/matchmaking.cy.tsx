@@ -19,7 +19,7 @@ describe('<Matchmaking />', () => {
 
         cy.intercept('POST', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/private`, {
             statusCode: 200,
-            body: { queueId: 'test-queue-id-123' }
+            body: { isQueued: true, queueId: 'test-queue-id-123', hasActiveGame: false }
         }).as('createPrivateQueue');
 
         cy.intercept('DELETE', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/private/*`, {
@@ -88,7 +88,7 @@ describe('<Matchmaking />', () => {
         beforeEach(() => {
             cy.intercept('GET', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/status*`, {
                 statusCode: 200,
-                body: { queueId: null }
+                body: { isQueued: true, queueId: null, hasActiveGame: false }
             }).as('checkQueue');
 
             const searchParams = new URLSearchParams();
@@ -122,7 +122,7 @@ describe('<Matchmaking />', () => {
         beforeEach(() => {
             cy.intercept('GET', `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/status*`, {
                 statusCode: 200,
-                body: { queueId: 'test-queue-id-123' }
+                body: { isQueued: true, queueId: 'test-queue-id-123', hasActiveGame: false }
             }).as('checkQueue');
 
             const searchParams = new URLSearchParams();

@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.post('/', gameController.createGame.bind(gameController));
 router.get('/', gameController.getGameHistory.bind(gameController));
+router.get('/active', gameController.getActiveGame.bind(gameController));
 router.get('/:gameId', gameController.getGame.bind(gameController));
 
 export default router;

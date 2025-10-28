@@ -5,7 +5,12 @@ import { NextFunction, Request, Response } from 'express';
 import { Color, GameCreated, GameHistoryResult, GameWithMoves, GameWithPlayers, Winner } from '../../src/models/game';
 import { Player } from '../../src/models/player';
 import { Timer } from '../../src/models/timer';
-import { CreateGameResponse, GetGameHistoryResponse, GetGameResponse } from '../../src/models/responses';
+import {
+    CreateGameResponse,
+    GetActiveGameResponse,
+    GetGameHistoryResponse,
+    GetGameResponse
+} from '../../src/models/responses';
 import { User } from '../../src/models/user';
 import { Move } from '../../src/models/move';
 import { GetGameParams } from '../../src/models/requests';
@@ -29,6 +34,7 @@ describe('Game Controller', () => {
         mockGameService.create = jest.fn();
         mockGameService.getGameHistory = jest.fn();
         mockGameService.getGameWithMoves = jest.fn();
+        mockGameService.getActiveGame = jest.fn();
 
         mockTimerWatcher = new TimerWatcher(null as never, null as never, null as never) as jest.Mocked<TimerWatcher>;
 
@@ -371,6 +377,121 @@ describe('Game Controller', () => {
             await gameController.getGame(req, res as Response, next);
 
             expect(mockGameService.getGameWithMoves).toHaveBeenCalledWith('game1');
+            expect(next).toHaveBeenCalledWith(expectedError);
+        });
+    });
+
+    describe('Get active game', () => {
+        const whitePlayer: User = {
+            id: 'user1',
+            name: 'Player One',
+            email: 'player1@example.com',
+            elo: 1500,
+            avatarUrl: 'avatar_url.com'
+        };
+        const blackPlayer: User = {
+            id: 'user2',
+            name: 'Player Two',
+            email: 'player2@example.com',
+            elo: 1600,
+            avatarUrl: 'avatar_url.com'
+        };
+
+        it('should get active game and return status 200', async () => {
+            const req = {
+                query: {
+                    userId: 'user1'
+                }
+            } as Partial<Request>;
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn().mockReturnThis()
+            } as Partial<Response>;
+
+            const gameWithPlayers: GameWithPlayers = {
+                id: 'game1',
+                whitePlayer,
+                blackPlayer,
+                startedAt: new Date('2024-01-01'),
+                endedAt: null,
+                winner: null
+            };
+            const activeGameResult = {
+                game: gameWithPlayers,
+                position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                whiteTimeRemaining: 600000,
+                blackTimeRemaining: 600000,
+                gameOver: false,
+                winner: null
+            };
+            const expectedResponse: GetActiveGameResponse = {
+                gameId: 'game1',
+                whitePlayer: { userId: 'user1', name: 'Player One', elo: 1500, avatarUrl: 'avatar_url.com' },
+                blackPlayer: { userId: 'user2', name: 'Player Two', elo: 1600, avatarUrl: 'avatar_url.com' },
+                position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                whiteTimeRemaining: 600000,
+                blackTimeRemaining: 600000,
+                gameOver: false,
+                winner: null
+            };
+
+            mockGameService.getActiveGame.mockResolvedValue(activeGameResult);
+
+            await gameController.getActiveGame(req as Request, res as Response, next);
+
+            expect(mockGameService.getActiveGame).toHaveBeenCalledWith('user1');
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expectedResponse);
+        });
+
+        it('should return 400 when userId is missing', async () => {
+            const req = {
+                query: {}
+            } as Partial<Request>;
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn().mockReturnThis()
+            } as Partial<Response>;
+
+            await gameController.getActiveGame(req as Request, res as Response, next);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ message: 'userId query parameter is required' });
+            expect(mockGameService.getActiveGame).not.toHaveBeenCalled();
+        });
+
+        it('should return 400 when userId is not a string', async () => {
+            const req = {
+                query: {
+                    userId: 123 as unknown
+                }
+            } as Partial<Request>;
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn().mockReturnThis()
+            } as Partial<Response>;
+
+            await gameController.getActiveGame(req as Request, res as Response, next);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ message: 'userId query parameter is required' });
+            expect(mockGameService.getActiveGame).not.toHaveBeenCalled();
+        });
+
+        it('should call next function with error when error is thrown', async () => {
+            const req = {
+                query: {
+                    userId: 'user1'
+                }
+            } as Partial<Request>;
+            const res = {} as Partial<Response>;
+            const expectedError = new Error('error');
+
+            mockGameService.getActiveGame.mockRejectedValue(expectedError);
+
+            await gameController.getActiveGame(req as Request, res as Response, next);
+
+            expect(mockGameService.getActiveGame).toHaveBeenCalledWith('user1');
             expect(next).toHaveBeenCalledWith(expectedError);
         });
     });

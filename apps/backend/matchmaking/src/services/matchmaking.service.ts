@@ -4,7 +4,6 @@ import { SocketIdRepository } from '../repositories/socket.id.repository';
 import CoreRestClient from '../clients/core.rest.client';
 import ConflictError from 'chess-game-backend-common/errors/conflict.error';
 import NotFoundError from 'chess-game-backend-common/errors/not.found.error';
-import { Player } from '../models/game';
 import MatchmakingNotificationService from './matchmaking.notification.service';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -29,12 +28,18 @@ class MatchmakingService {
         if ((await this.queueRepository.getQueueId(userId)) !== null) {
             throw new ConflictError(`User with id ${userId} is already in queue`);
         }
+        if (await this.coreRestClient.checkActiveGame(userId)) {
+            throw new ConflictError('User is already in an active game');
+        }
         this.queueRepository.pushToQueueEnd(userId, null);
     }
 
     async createPrivateQueue(userId: string): Promise<string> {
         if ((await this.queueRepository.getQueueId(userId)) !== null) {
             throw new ConflictError(`User with id ${userId} is already in queue`);
+        }
+        if (await this.coreRestClient.checkActiveGame(userId)) {
+            throw new ConflictError('User is already in an active game');
         }
 
         const queueId = uuidv4();
@@ -46,6 +51,9 @@ class MatchmakingService {
     async joinPrivateQueue(userId: string, queueId: string) {
         if ((await this.queueRepository.getQueueId(userId)) !== null) {
             throw new ConflictError(`User with id ${userId} is already in queue`);
+        }
+        if (await this.coreRestClient.checkActiveGame(userId)) {
+            throw new ConflictError('User is already in an active game');
         }
         const queueCount = await this.queueRepository.getQueueCount(queueId);
         if (queueCount === 0) {
@@ -67,12 +75,15 @@ class MatchmakingService {
         this.queueRepository.removeFromQueue(userId, queueId);
     }
 
-    async getQueue(userId: string) {
+    async getQueueStatus(userId: string) {
         const queueId = await this.queueRepository.getQueueId(userId);
-        if (queueId === null) {
-            throw new NotFoundError(`User with id ${userId} is not queued`);
-        }
-        return queueId;
+        const hasActiveGame = await this.coreRestClient.checkActiveGame(userId);
+
+        return {
+            isQueued: queueId !== null,
+            queueId: queueId === '' ? null : queueId,
+            hasActiveGame
+        };
     }
 
     async matchMake(queueId: string | null) {
@@ -91,11 +102,10 @@ class MatchmakingService {
 
         const response = await this.coreRestClient.createGame(players);
 
-        await this.emitMatchmakeMessage(response.players, response.gameId);
+        await this.emitMatchmakeMessage(players, response.gameId);
     }
 
-    private async emitMatchmakeMessage(players: Array<Player>, gameId: string) {
-        const playerIds = players.map((player) => player.id);
+    private async emitMatchmakeMessage(playerIds: string[], gameId: string) {
         const socketIds = (
             await Promise.all(
                 playerIds.map(async (playerId) => await this.socketIdRepository.getSocketIdForUser(playerId))
@@ -106,7 +116,7 @@ class MatchmakingService {
             throw Error('Socket ids are missing for some players');
         }
         socketIds.forEach((socketId) => {
-            this.matchmakingNotificationService.sendMatchmakeNotification(socketId, players, gameId);
+            this.matchmakingNotificationService.sendMatchmakeNotification(socketId, gameId);
         });
     }
 }

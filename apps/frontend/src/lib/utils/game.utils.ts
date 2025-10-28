@@ -1,19 +1,12 @@
-import { MatchmakingColor, Player } from '@/lib/models/request/matchmaking';
+import { MatchmakingColor } from '@/lib/models/request/matchmaking';
+import { UserDto } from '@/lib/models/response/game';
 
-export function getCurrentUserColor(userId: string): MatchmakingColor {
-    const playerDataString = localStorage.getItem('playerData');
-    if (!playerDataString) throw new Error('playerData not set');
-
-    const playerData: Array<Player> = JSON.parse(playerDataString);
-    if (playerData.length !== 2) throw new Error('playerData is corrupted');
-
-    const currentPlayer = playerData.filter((player: Player) => player.id === userId)[0];
-
-    return currentPlayer.color === 'w'
-        ? MatchmakingColor.WHITE
-        : currentPlayer.color === 'b'
-          ? MatchmakingColor.BLACK
-          : (() => {
-                throw new Error('Invalid color in playerData');
-            })();
+export function getCurrentUserColor(userId: string, whitePlayer: UserDto, blackPlayer: UserDto): MatchmakingColor {
+    if (whitePlayer.userId === userId) {
+        return MatchmakingColor.WHITE;
+    } else if (blackPlayer.userId === userId) {
+        return MatchmakingColor.BLACK;
+    } else {
+        throw new Error('User is not part of this game');
+    }
 }
