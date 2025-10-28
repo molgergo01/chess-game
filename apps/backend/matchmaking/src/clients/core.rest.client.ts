@@ -12,6 +12,21 @@ class CoreRestClient {
         const response = await axios.post(`http://localhost:${env.PORTS.CORE}/api/games`, requestBody);
         return response.data as CreateGameResponse;
     }
+
+    async checkActiveGame(userId: string): Promise<boolean> {
+        try {
+            await axios.get(`http://localhost:${env.PORTS.CORE}/api/games/active`, {
+                params: { userId }
+            });
+            return true;
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                console.log(error);
+                return false;
+            }
+            throw error;
+        }
+    }
 }
 
 export default CoreRestClient;

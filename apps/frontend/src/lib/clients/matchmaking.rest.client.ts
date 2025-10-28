@@ -111,17 +111,12 @@ export async function getQueueStatus(userId: string): Promise<QueueStatus> {
             }
         );
         return {
-            isQueued: true,
-            queueId: res.data.queueId
+            isQueued: res.data.isQueued,
+            queueId: res.data.queueId,
+            hasActiveGame: res.data.hasActiveGame
         };
     } catch (error) {
         if (error instanceof AxiosError && error.response) {
-            if (error.response.status === 404) {
-                return {
-                    isQueued: false,
-                    queueId: null
-                };
-            }
             throw new Error(error.response.data.message || 'Failed to get queue status');
         } else if (error instanceof AxiosError && error.request) {
             throw new Error('Network error: Unable to connect to matchmaking service');

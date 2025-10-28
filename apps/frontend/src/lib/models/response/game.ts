@@ -63,6 +63,17 @@ export type LeaderboardUserDto = {
     avatarUrl: string | null;
 };
 
+export type GetActiveGameResponse = {
+    gameId: string;
+    whitePlayer: UserDto;
+    blackPlayer: UserDto;
+    position: string;
+    whiteTimeRemaining: number;
+    blackTimeRemaining: number;
+    gameOver: boolean;
+    winner: Winner | null;
+};
+
 export type PlayerTimes = {
     whiteTimeRemaining: number;
     blackTimeRemaining: number;

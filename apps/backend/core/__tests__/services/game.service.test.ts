@@ -12,6 +12,7 @@ import { Chess } from 'chess.js';
 import Fen from 'chess-fen';
 import GamesRepository from '../../src/repositories/games.repository';
 import MovesRepository from '../../src/repositories/moves.repository';
+import ConflictError from 'chess-game-backend-common/errors/conflict.error';
 
 const mockGame = {
     fen: jest.fn(),
@@ -75,6 +76,8 @@ describe('Game Service', () => {
         mockGamesRepository.countAllByUserId = jest.fn();
         mockGamesRepository.save = jest.fn();
         mockGamesRepository.update = jest.fn();
+        mockGamesRepository.existsActiveGameByUserIds = jest.fn();
+        mockGamesRepository.findActiveGameByUserId = jest.fn();
 
         mockMovesRepository = new MovesRepository() as jest.Mocked<MovesRepository>;
         mockMovesRepository.save = jest.fn();
@@ -140,6 +143,28 @@ describe('Game Service', () => {
             const playerIds = ['1234'];
 
             await expect(gameService.create(playerIds)).rejects.toThrow(BadRequestError);
+        });
+
+        it('should throw error if more than 2 players are provided', async () => {
+            const playerIds = ['1234', '5678', '9012'];
+
+            await expect(gameService.create(playerIds)).rejects.toThrow(BadRequestError);
+            await expect(gameService.create(playerIds)).rejects.toThrow('playerIds must be exactly 2 players');
+        });
+
+        it('should throw error if the same player is provided twice', async () => {
+            const playerIds = ['1234', '1234'];
+
+            await expect(gameService.create(playerIds)).rejects.toThrow(BadRequestError);
+            await expect(gameService.create(playerIds)).rejects.toThrow('playerIds must be 2 distinct players');
+        });
+
+        it('should throw error if a player is already in an active game', async () => {
+            const playerIds = ['1234', '5678'];
+            mockGamesRepository.existsActiveGameByUserIds.mockResolvedValue(true);
+
+            await expect(gameService.create(playerIds)).rejects.toThrow(ConflictError);
+            await expect(gameService.create(playerIds)).rejects.toThrow('A player is already in game');
         });
     });
 
@@ -1020,6 +1045,140 @@ describe('Game Service', () => {
             await expect(gameService.getGameWithMoves(gameId)).rejects.toThrow(
                 `Game with id ${gameId} is still in progress`
             );
+        });
+    });
+
+    describe('Get Active Game', () => {
+        it('should return active game with position, times, and status for ongoing game', async () => {
+            const userId = '1234';
+            const gameId = '0000';
+            const mockGameWithPlayers = {
+                id: gameId,
+                whitePlayer: {
+                    id: userId,
+                    name: 'White Player',
+                    email: 'white@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
+                },
+                blackPlayer: {
+                    id: '5678',
+                    name: 'Black Player',
+                    email: 'black@example.com',
+                    elo: 1600,
+                    avatarUrl: 'avatar_url.com'
+                },
+                startedAt: new Date(NOW),
+                endedAt: null,
+                winner: null
+            };
+
+            mockGamesRepository.findActiveGameByUserId.mockResolvedValue(mockGameWithPlayers);
+
+            const player1: StoredPlayer = {
+                id: userId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.fen.mockReturnValue(Fen.startingPosition);
+            mockGame.turn.mockReturnValue(Color.WHITE);
+            mockGame.isGameOver.mockReturnValue(false);
+
+            const result = await gameService.getActiveGame(userId);
+
+            expect(result.game).toEqual(mockGameWithPlayers);
+            expect(result.position).toEqual(Fen.startingPosition);
+            expect(result.whiteTimeRemaining).toEqual(95000);
+            expect(result.blackTimeRemaining).toEqual(200000);
+            expect(result.gameOver).toBe(false);
+            expect(result.winner).toBeNull();
+            expect(mockGamesRepository.findActiveGameByUserId).toHaveBeenCalledWith(userId);
+        });
+
+        it('should return active game with winner when game is over', async () => {
+            const userId = '1234';
+            const gameId = '0000';
+            const mockGameWithPlayers = {
+                id: gameId,
+                whitePlayer: {
+                    id: userId,
+                    name: 'White Player',
+                    email: 'white@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
+                },
+                blackPlayer: {
+                    id: '5678',
+                    name: 'Black Player',
+                    email: 'black@example.com',
+                    elo: 1600,
+                    avatarUrl: 'avatar_url.com'
+                },
+                startedAt: new Date(NOW),
+                endedAt: null,
+                winner: null
+            };
+
+            mockGamesRepository.findActiveGameByUserId.mockResolvedValue(mockGameWithPlayers);
+
+            const player1: StoredPlayer = {
+                id: userId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.fen.mockReturnValue(Fen.startingPosition);
+            mockGame.turn.mockReturnValue(Color.WHITE);
+            mockGame.isGameOver.mockReturnValue(true);
+            mockGame.isDraw.mockReturnValue(false);
+            mockGame.isCheckmate.mockReturnValue(true);
+
+            const result = await gameService.getActiveGame(userId);
+
+            expect(result.game).toEqual(mockGameWithPlayers);
+            expect(result.gameOver).toBe(true);
+            expect(result.winner).toEqual(Winner.BLACK);
+        });
+
+        it('should throw NotFoundError when no active game found for user', async () => {
+            const userId = '1234';
+            mockGamesRepository.findActiveGameByUserId.mockResolvedValue(null);
+
+            await expect(gameService.getActiveGame(userId)).rejects.toThrow(NotFoundError);
+            await expect(gameService.getActiveGame(userId)).rejects.toThrow('No active game found for user');
         });
     });
 });

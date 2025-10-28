@@ -1,8 +1,6 @@
 import MatchmakingNotificationService from '../../src/services/matchmaking.notification.service';
 import { Server } from 'socket.io';
 import { Container } from 'inversify';
-import { Player } from '../../src/models/game';
-import { Color } from '../../src/models/game';
 import { MatchmakeMessage } from '../../src/models/matchmaking';
 
 jest.mock('socket.io');
@@ -33,25 +31,13 @@ describe('Matchmaking Notification Service', () => {
 
         it('should send notification to socket with correct message', () => {
             const socketId = 'socket-1234';
-            const player1: Player = {
-                id: '1234',
-                color: Color.WHITE,
-                timer: { remainingMs: 600000 }
-            };
-            const player2: Player = {
-                id: '5678',
-                color: Color.BLACK,
-                timer: { remainingMs: 600000 }
-            };
-            const players = [player1, player2];
             const gameId = 'game-0000';
 
             const expectedMessage: MatchmakeMessage = {
-                players: players,
                 gameId: gameId
             };
 
-            matchmakingNotificationService.sendMatchmakeNotification(socketId, players, gameId);
+            matchmakingNotificationService.sendMatchmakeNotification(socketId, gameId);
 
             expect(mockIo.to).toHaveBeenCalledWith(socketId);
             expect(mockIo.emit).toHaveBeenCalledWith(matchmakeEvent, expectedMessage);

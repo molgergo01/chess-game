@@ -34,6 +34,7 @@ describe('Matchmaking Service', () => {
 
         mockCoreRestClient = new CoreRestClient() as jest.Mocked<CoreRestClient>;
         mockCoreRestClient.createGame = jest.fn();
+        mockCoreRestClient.checkActiveGame = jest.fn().mockResolvedValue(false);
 
         mockMatchmakingNotificationService = new MatchmakingNotificationService(
             null as never
@@ -68,10 +69,12 @@ describe('Matchmaking Service', () => {
         it('should add user to queue if not already in queue', async () => {
             const userId = '1234';
             mockQueueRepository.getQueueId.mockResolvedValue(null);
+            mockCoreRestClient.checkActiveGame.mockResolvedValue(false);
 
             await matchmakingService.joinQueue(userId);
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
+            expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.pushToQueueEnd).toHaveBeenCalledWith(userId, null);
         });
 
@@ -84,6 +87,20 @@ describe('Matchmaking Service', () => {
             );
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
+            expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
+        });
+
+        it('should throw ConflictError if user is already in an active game', async () => {
+            const userId = '1234';
+            mockQueueRepository.getQueueId.mockResolvedValue(null);
+            mockCoreRestClient.checkActiveGame.mockResolvedValue(true);
+
+            await expect(matchmakingService.joinQueue(userId)).rejects.toThrow(
+                new ConflictError('User is already in an active game')
+            );
+
+            expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
+            expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
         });
     });
@@ -123,37 +140,70 @@ describe('Matchmaking Service', () => {
         });
     });
 
-    describe('Get Queue', () => {
-        it('should return empty string if user is in default queue', async () => {
+    describe('Get Queue Status', () => {
+        it('should return status with isQueued false and null queueId when user is not in queue', async () => {
             const userId = '1234';
-            mockQueueRepository.getQueueId.mockResolvedValue('');
+            mockQueueRepository.getQueueId.mockResolvedValue(null);
+            mockCoreRestClient.checkActiveGame.mockResolvedValue(false);
 
-            const result = await matchmakingService.getQueue(userId);
+            const result = await matchmakingService.getQueueStatus(userId);
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
-            expect(result).toBe('');
+            expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
+            expect(result).toEqual({
+                isQueued: false,
+                queueId: null,
+                hasActiveGame: false
+            });
         });
 
-        it('should return queueId if user is in private queue', async () => {
+        it('should return status with isQueued true and null queueId when user is in default queue', async () => {
+            const userId = '1234';
+            mockQueueRepository.getQueueId.mockResolvedValue('');
+            mockCoreRestClient.checkActiveGame.mockResolvedValue(false);
+
+            const result = await matchmakingService.getQueueStatus(userId);
+
+            expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
+            expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
+            expect(result).toEqual({
+                isQueued: true,
+                queueId: null,
+                hasActiveGame: false
+            });
+        });
+
+        it('should return status with isQueued true and queueId when user is in private queue', async () => {
             const userId = '1234';
             const queueId = 'private-456';
             mockQueueRepository.getQueueId.mockResolvedValue(queueId);
+            mockCoreRestClient.checkActiveGame.mockResolvedValue(false);
 
-            const result = await matchmakingService.getQueue(userId);
+            const result = await matchmakingService.getQueueStatus(userId);
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
-            expect(result).toBe(queueId);
+            expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
+            expect(result).toEqual({
+                isQueued: true,
+                queueId: queueId,
+                hasActiveGame: false
+            });
         });
 
-        it('should throw NotFoundError if user is not in queue', async () => {
+        it('should return status with hasActiveGame true when user has an active game', async () => {
             const userId = '1234';
             mockQueueRepository.getQueueId.mockResolvedValue(null);
+            mockCoreRestClient.checkActiveGame.mockResolvedValue(true);
 
-            await expect(matchmakingService.getQueue(userId)).rejects.toThrow(
-                new NotFoundError(`User with id ${userId} is not queued`)
-            );
+            const result = await matchmakingService.getQueueStatus(userId);
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
+            expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
+            expect(result).toEqual({
+                isQueued: false,
+                queueId: null,
+                hasActiveGame: true
+            });
         });
     });
 
@@ -223,12 +273,10 @@ describe('Matchmaking Service', () => {
             expect(mockSocketIdRepository.getSocketIdForUser).toHaveBeenCalledWith('5678');
             expect(mockMatchmakingNotificationService.sendMatchmakeNotification).toHaveBeenCalledWith(
                 'socket-1234',
-                [player1, player2],
                 gameId
             );
             expect(mockMatchmakingNotificationService.sendMatchmakeNotification).toHaveBeenCalledWith(
                 'socket-5678',
-                [player1, player2],
                 gameId
             );
         });
@@ -268,12 +316,10 @@ describe('Matchmaking Service', () => {
             expect(mockSocketIdRepository.getSocketIdForUser).toHaveBeenCalledWith('5678');
             expect(mockMatchmakingNotificationService.sendMatchmakeNotification).toHaveBeenCalledWith(
                 'socket-1234',
-                [player1, player2],
                 gameId
             );
             expect(mockMatchmakingNotificationService.sendMatchmakeNotification).toHaveBeenCalledWith(
                 'socket-5678',
-                [player1, player2],
                 gameId
             );
         });
@@ -314,11 +360,13 @@ describe('Matchmaking Service', () => {
         it('should generate UUID and create private queue', async () => {
             const userId = '1234';
             mockQueueRepository.getQueueId.mockResolvedValue(null);
+            mockCoreRestClient.checkActiveGame.mockResolvedValue(false);
             mockQueueRepository.getQueueCount.mockResolvedValue(0);
 
             const result = await matchmakingService.createPrivateQueue(userId);
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
+            expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.pushToQueueEnd).toHaveBeenCalledWith(userId, result);
             expect(result).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
         });
@@ -334,6 +382,20 @@ describe('Matchmaking Service', () => {
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
         });
+
+        it('should throw ConflictError if user is already in an active game', async () => {
+            const userId = '1234';
+            mockQueueRepository.getQueueId.mockResolvedValue(null);
+            mockCoreRestClient.checkActiveGame.mockResolvedValue(true);
+
+            await expect(matchmakingService.createPrivateQueue(userId)).rejects.toThrow(
+                new ConflictError('User is already in an active game')
+            );
+
+            expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
+            expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
+            expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
+        });
     });
 
     describe('Join Private Queue', () => {
@@ -341,11 +403,13 @@ describe('Matchmaking Service', () => {
             const userId = '1234';
             const queueId = 'private-456';
             mockQueueRepository.getQueueId.mockResolvedValue(null);
+            mockCoreRestClient.checkActiveGame.mockResolvedValue(false);
             mockQueueRepository.getQueueCount.mockResolvedValue(1);
 
             await matchmakingService.joinPrivateQueue(userId, queueId);
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
+            expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.getQueueCount).toHaveBeenCalledWith(queueId);
             expect(mockQueueRepository.pushToQueueEnd).toHaveBeenCalledWith(userId, queueId);
         });
@@ -371,6 +435,7 @@ describe('Matchmaking Service', () => {
             };
 
             mockQueueRepository.getQueueId.mockResolvedValue(null);
+            mockCoreRestClient.checkActiveGame.mockResolvedValue(false);
             mockQueueRepository.getQueueCount.mockResolvedValueOnce(1).mockResolvedValueOnce(2);
             mockQueueRepository.popQueue.mockResolvedValue(playerIds);
             mockCoreRestClient.createGame.mockResolvedValue(createGameResponse);
@@ -381,6 +446,7 @@ describe('Matchmaking Service', () => {
             await matchmakingService.joinPrivateQueue(userId, queueId);
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
+            expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.getQueueCount).toHaveBeenCalledWith(queueId);
             expect(mockQueueRepository.pushToQueueEnd).toHaveBeenCalledWith(userId, queueId);
             expect(mockQueueRepository.popQueue).toHaveBeenCalledWith(queueId);
@@ -427,6 +493,21 @@ describe('Matchmaking Service', () => {
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.getQueueCount).toHaveBeenCalledWith(queueId);
+            expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
+        });
+
+        it('should throw ConflictError if user is already in an active game', async () => {
+            const userId = '1234';
+            const queueId = 'private-456';
+            mockQueueRepository.getQueueId.mockResolvedValue(null);
+            mockCoreRestClient.checkActiveGame.mockResolvedValue(true);
+
+            await expect(matchmakingService.joinPrivateQueue(userId, queueId)).rejects.toThrow(
+                new ConflictError('User is already in an active game')
+            );
+
+            expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
+            expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
         });
     });

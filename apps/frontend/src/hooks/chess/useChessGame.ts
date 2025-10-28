@@ -1,40 +1,30 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Fen from 'chess-fen';
 import { getTurnColor, isPromotion, updatePosition } from '@/lib/utils/fen.utils';
-import { getPosition, getTimes, movePiece } from '@/lib/clients/core.socket.client';
-import { Winner } from '@/lib/models/response/game';
+import { joinGame, movePiece } from '@/lib/clients/core.socket.client';
+import { UserDto, Winner } from '@/lib/models/response/game';
 import { PieceDropHandlerArgs } from 'react-chessboard';
 import { GameUpdateMessage, PlayerTimes, TimeExpiredMessage } from '@/lib/models/request/game';
 import { getCurrentUserColor } from '@/lib/utils/game.utils';
 import { MatchmakingColor } from '@/lib/models/request/matchmaking';
-import useGameId from '@/hooks/chess/useGameId';
 import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { getActiveGame } from '@/lib/clients/core.rest.client';
 
 function useChessGame() {
-    const [gameId, setGameId] = useGameId();
+    const router = useRouter();
+    const [gameId, setGameId] = useState<string | undefined>(undefined);
     const [boardPosition, setBoardPosition] = useState<Fen>(new Fen(Fen.emptyPosition));
     const [gameOver, setGameOver] = useState(false);
     const [winner, setWinner] = useState<Winner | null>(null);
     const [color, setColor] = useState<MatchmakingColor | undefined>(undefined);
     const [turnColor, setTurnColor] = useState<MatchmakingColor | undefined>(undefined);
     const [timesRemaining, setTimesRemaining] = useState<PlayerTimes | undefined>(undefined);
+    const [whitePlayer, setWhitePlayer] = useState<UserDto | undefined>(undefined);
+    const [blackPlayer, setBlackPlayer] = useState<UserDto | undefined>(undefined);
     const { socket } = useCoreSocket();
     const { userId } = useAuth();
-
-    useEffect(() => {
-        if (!gameId || !socket) return;
-        const initializePosition = async () => {
-            const response = await getPosition(socket, gameId);
-            setBoardPosition(new Fen(response.position));
-            if (response.gameOver) {
-                setGameOver(true);
-                setWinner(response.winner);
-                setGameId(undefined);
-            }
-        };
-        initializePosition();
-    }, [gameId, socket, setGameId]);
 
     useEffect(() => {
         if (!socket) return;
@@ -64,27 +54,43 @@ function useChessGame() {
     }, [socket]);
 
     useEffect(() => {
-        if (!userId) return;
-        setColor(getCurrentUserColor(userId));
-    }, [userId]);
+        const fetchGameData = async () => {
+            if (!userId || !socket) return;
+            try {
+                const gameData = await getActiveGame(userId);
+                setGameId(gameData.gameId);
+                setWhitePlayer(gameData.whitePlayer);
+                setBlackPlayer(gameData.blackPlayer);
+                setBoardPosition(new Fen(gameData.position));
+                setTimesRemaining({
+                    whiteTimeRemaining: gameData.whiteTimeRemaining,
+                    blackTimeRemaining: gameData.blackTimeRemaining
+                });
+                setGameOver(gameData.gameOver);
+                setWinner(gameData.winner);
+
+                if (gameData.gameOver) {
+                    setGameId(undefined);
+                } else {
+                    joinGame(socket, gameData.gameId);
+                }
+            } catch (error) {
+                console.error('Failed to fetch game data:', error);
+                router.push('/play');
+            }
+        };
+
+        fetchGameData();
+    }, [userId, socket, router]);
+
+    useEffect(() => {
+        if (!userId || !whitePlayer || !blackPlayer) return;
+        setColor(getCurrentUserColor(userId, whitePlayer, blackPlayer));
+    }, [userId, whitePlayer, blackPlayer]);
 
     useEffect(() => {
         setTurnColor(getTurnColor(boardPosition));
     }, [boardPosition]);
-
-    useEffect(() => {
-        if (!socket || !gameId) return;
-        const initializeTimers = async () => {
-            const response = await getTimes(socket, gameId);
-
-            setTimesRemaining({
-                blackTimeRemaining: response.playerTimes.blackTimeRemaining,
-                whiteTimeRemaining: response.playerTimes.whiteTimeRemaining
-            });
-        };
-
-        initializeTimers();
-    }, [socket, gameId]);
 
     const onDrop = useCallback(
         ({ sourceSquare, targetSquare, piece }: PieceDropHandlerArgs): boolean => {
@@ -116,7 +122,9 @@ function useChessGame() {
         timesRemaining,
         gameOver,
         winner,
-        onDrop
+        onDrop,
+        whitePlayer,
+        blackPlayer
     };
 }
 

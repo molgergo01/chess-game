@@ -1,142 +1,41 @@
 import { getCurrentUserColor } from '@/lib/utils/game.utils';
-import { MatchmakingColor, Player } from '@/lib/models/request/matchmaking';
+import { MatchmakingColor } from '@/lib/models/request/matchmaking';
+import { UserDto } from '@/lib/models/response/game';
 
 describe('getCurrentUserColor', () => {
-    let localStorageMock: { [key: string]: string };
+    const whitePlayer: UserDto = {
+        userId: 'user123',
+        name: 'White Player',
+        elo: 1500,
+        avatarUrl: null
+    };
 
-    beforeEach(() => {
-        localStorageMock = {};
+    const blackPlayer: UserDto = {
+        userId: 'user456',
+        name: 'Black Player',
+        elo: 1600,
+        avatarUrl: null
+    };
 
-        global.Storage.prototype.getItem = jest.fn((key: string) => localStorageMock[key] || null);
-        global.Storage.prototype.setItem = jest.fn((key: string, value: string) => {
-            localStorageMock[key] = value;
-        });
-    });
-
-    afterEach(() => {
-        jest.clearAllMocks();
-    });
-
-    describe('when player color is white', () => {
-        it('should return Color.WHITE', () => {
-            const userId = 'user123';
-            const playerData: Array<Player> = [
-                {
-                    id: userId,
-                    color: 'w',
-                    timer: { remainingMs: 600000 }
-                },
-                {
-                    id: 'user456',
-                    color: 'b',
-                    timer: { remainingMs: 600000 }
-                }
-            ];
-            localStorageMock['playerData'] = JSON.stringify(playerData);
-
-            const result = getCurrentUserColor(userId);
-
+    describe('when user is white player', () => {
+        it('should return MatchmakingColor.WHITE', () => {
+            const result = getCurrentUserColor('user123', whitePlayer, blackPlayer);
             expect(result).toBe(MatchmakingColor.WHITE);
         });
     });
 
-    describe('when player color is black', () => {
-        it('should return Color.BLACK', () => {
-            const userId = 'user456';
-            const playerData: Array<Player> = [
-                {
-                    id: 'user123',
-                    color: 'w',
-                    timer: { remainingMs: 600000 }
-                },
-                {
-                    id: userId,
-                    color: 'b',
-                    timer: { remainingMs: 600000 }
-                }
-            ];
-            localStorageMock['playerData'] = JSON.stringify(playerData);
-
-            const result = getCurrentUserColor(userId);
-
+    describe('when user is black player', () => {
+        it('should return MatchmakingColor.BLACK', () => {
+            const result = getCurrentUserColor('user456', whitePlayer, blackPlayer);
             expect(result).toBe(MatchmakingColor.BLACK);
         });
     });
 
-    describe('when playerData is not set', () => {
+    describe('when user is not part of the game', () => {
         it('should throw an error', () => {
-            const userId = 'user123';
-
-            expect(() => getCurrentUserColor(userId)).toThrow('playerData not set');
-        });
-    });
-
-    describe('when playerData length is not 2', () => {
-        it('should throw an error when length is 1', () => {
-            const userId = 'user123';
-            const playerData: Array<Player> = [
-                {
-                    id: userId,
-                    color: 'w',
-                    timer: { remainingMs: 600000 }
-                }
-            ];
-            localStorageMock['playerData'] = JSON.stringify(playerData);
-
-            expect(() => getCurrentUserColor(userId)).toThrow('playerData is corrupted');
-        });
-
-        it('should throw an error when length is 3', () => {
-            const userId = 'user123';
-            const playerData: Array<Player> = [
-                {
-                    id: userId,
-                    color: 'w',
-                    timer: { remainingMs: 600000 }
-                },
-                {
-                    id: 'user456',
-                    color: 'b',
-                    timer: { remainingMs: 600000 }
-                },
-                {
-                    id: 'user789',
-                    color: 'w',
-                    timer: { remainingMs: 600000 }
-                }
-            ];
-            localStorageMock['playerData'] = JSON.stringify(playerData);
-
-            expect(() => getCurrentUserColor(userId)).toThrow('playerData is corrupted');
-        });
-
-        it('should throw an error when length is 0', () => {
-            const userId = 'user123';
-            const playerData: Array<Player> = [];
-            localStorageMock['playerData'] = JSON.stringify(playerData);
-
-            expect(() => getCurrentUserColor(userId)).toThrow('playerData is corrupted');
-        });
-    });
-
-    describe('when player color is invalid', () => {
-        it('should throw an error', () => {
-            const userId = 'user123';
-            const playerData: Array<Player> = [
-                {
-                    id: userId,
-                    color: 'invalid',
-                    timer: { remainingMs: 600000 }
-                },
-                {
-                    id: 'user456',
-                    color: 'b',
-                    timer: { remainingMs: 600000 }
-                }
-            ];
-            localStorageMock['playerData'] = JSON.stringify(playerData);
-
-            expect(() => getCurrentUserColor(userId)).toThrow('Invalid color in playerData');
+            expect(() => getCurrentUserColor('user789', whitePlayer, blackPlayer)).toThrow(
+                'User is not part of this game'
+            );
         });
     });
 });

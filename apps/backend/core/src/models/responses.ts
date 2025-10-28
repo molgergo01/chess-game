@@ -52,3 +52,14 @@ export type LeaderboardUserDto = {
     elo: number;
     avatarUrl: string | null;
 };
+
+export type GetActiveGameResponse = {
+    gameId: string;
+    whitePlayer: UserDto;
+    blackPlayer: UserDto;
+    position: string;
+    whiteTimeRemaining: number;
+    blackTimeRemaining: number;
+    gameOver: boolean;
+    winner: Winner | null;
+};

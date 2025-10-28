@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import MatchmakingButton from '@/components/matchmaking/machmaking-button';
 import { getQueueStatus, joinPrivateQueue, leavePrivateQueue, leaveQueue } from '@/lib/clients/matchmaking.rest.client';
-import { MatchmakeMessage } from '@/lib/models/request/matchmaking';
 import LeaveMatchmakingButton from '@/components/matchmaking/leave-matchmaking-button';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useMatchmakingSocket } from '@/hooks/matchmaking/useMatchmakingSocket';
@@ -33,6 +32,12 @@ function Matchmaking() {
             if (!userId) return;
             try {
                 const queueStatus = await getQueueStatus(userId);
+
+                if (queueStatus.hasActiveGame) {
+                    router.push('/game');
+                    return;
+                }
+
                 setIsQueued(queueStatus.isQueued);
                 setQueueId(queueStatus.queueId);
                 setErrorMessage(null);
@@ -48,7 +53,7 @@ function Matchmaking() {
                 }
             }
         },
-        [userId]
+        [userId, router]
     );
 
     const handleError = useCallback((error: Error) => {
@@ -77,9 +82,7 @@ function Matchmaking() {
     useEffect(() => {
         if (!socket) return;
 
-        const handleMatchmake = (matchmakeMessage: MatchmakeMessage) => {
-            localStorage.setItem('playerData', JSON.stringify(matchmakeMessage.players));
-            // TODO make player data not store userid
+        const handleMatchmake = () => {
             setIsQueued(false);
             router.push('/game');
         };

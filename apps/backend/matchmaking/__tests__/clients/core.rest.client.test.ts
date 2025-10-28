@@ -68,4 +68,55 @@ describe('Core Rest Client', () => {
             expect(axios.post).toHaveBeenCalledWith(expectedUrl, expectedRequestBody);
         });
     });
+
+    describe('checkActiveGame', () => {
+        it('should return true when user has an active game', async () => {
+            const userId = 'user1';
+            const expectedUrl = `http://localhost:${env.PORTS.CORE}/api/games/active`;
+            const mockResponse = { data: { gameId: 'game-0000' } };
+
+            (axios.get as jest.Mock).mockResolvedValue(mockResponse);
+
+            const result = await coreRestClient.checkActiveGame(userId);
+
+            expect(axios.get).toHaveBeenCalledWith(expectedUrl, {
+                params: { userId }
+            });
+            expect(result).toBe(true);
+        });
+
+        it('should return false when axios error with response occurs', async () => {
+            const userId = 'user1';
+            const expectedUrl = `http://localhost:${env.PORTS.CORE}/api/games/active`;
+            const axiosError = {
+                isAxiosError: true,
+                response: { status: 404, data: { message: 'No active game found' } }
+            };
+
+            (axios.get as jest.Mock).mockRejectedValue(axiosError);
+            jest.spyOn(axios, 'isAxiosError').mockReturnValue(true);
+
+            const result = await coreRestClient.checkActiveGame(userId);
+
+            expect(axios.get).toHaveBeenCalledWith(expectedUrl, {
+                params: { userId }
+            });
+            expect(result).toBe(false);
+        });
+
+        it('should propagate error when non-axios error occurs', async () => {
+            const userId = 'user1';
+            const expectedUrl = `http://localhost:${env.PORTS.CORE}/api/games/active`;
+            const expectedError = new Error('Network error');
+
+            (axios.get as jest.Mock).mockRejectedValue(expectedError);
+            jest.spyOn(axios, 'isAxiosError').mockReturnValue(false);
+
+            await expect(coreRestClient.checkActiveGame(userId)).rejects.toThrow(expectedError);
+
+            expect(axios.get).toHaveBeenCalledWith(expectedUrl, {
+                params: { userId }
+            });
+        });
+    });
 });

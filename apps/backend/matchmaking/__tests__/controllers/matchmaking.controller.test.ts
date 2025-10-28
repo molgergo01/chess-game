@@ -28,7 +28,7 @@ describe('Matchmaking Controller', () => {
         mockMatchmakingService.createPrivateQueue = jest.fn();
         mockMatchmakingService.joinPrivateQueue = jest.fn();
         mockMatchmakingService.leaveQueue = jest.fn();
-        mockMatchmakingService.getQueue = jest.fn();
+        mockMatchmakingService.getQueueStatus = jest.fn();
 
         mockMatchmakingScheduler = new MatchmakingScheduler(null as never) as jest.Mocked<MatchmakingScheduler>;
         mockMatchmakingScheduler.start = jest.fn();
@@ -129,15 +129,20 @@ describe('Matchmaking Controller', () => {
                 json: jest.fn().mockReturnThis()
             } as Partial<Response>;
 
-            mockMatchmakingService.getQueue.mockResolvedValue('');
+            mockMatchmakingService.getQueueStatus.mockResolvedValue({
+                isQueued: true,
+                queueId: null,
+                hasActiveGame: false
+            });
 
             await matchmakingController.getQueueStatus(req, res as Response, next);
 
-            expect(mockMatchmakingService.getQueue).toHaveBeenCalledWith(userId);
+            expect(mockMatchmakingService.getQueueStatus).toHaveBeenCalledWith(userId);
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
-                message: `User with id ${userId} is queued`,
-                queueId: null
+                isQueued: true,
+                queueId: null,
+                hasActiveGame: false
             });
         });
 
@@ -148,28 +153,33 @@ describe('Matchmaking Controller', () => {
             } as Partial<Response>;
 
             const privateQueueId = 'private-queue-123';
-            mockMatchmakingService.getQueue.mockResolvedValue(privateQueueId);
+            mockMatchmakingService.getQueueStatus.mockResolvedValue({
+                isQueued: true,
+                queueId: privateQueueId,
+                hasActiveGame: false
+            });
 
             await matchmakingController.getQueueStatus(req, res as Response, next);
 
-            expect(mockMatchmakingService.getQueue).toHaveBeenCalledWith(userId);
+            expect(mockMatchmakingService.getQueueStatus).toHaveBeenCalledWith(userId);
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
-                message: `User with id ${userId} is queued`,
-                queueId: privateQueueId
+                isQueued: true,
+                queueId: privateQueueId,
+                hasActiveGame: false
             });
         });
 
         it('should call next function with error when error is thrown', async () => {
             const res = {} as Partial<Response>;
             const expectedError = new Error('error');
-            mockMatchmakingService.getQueue.mockImplementation(() => {
+            mockMatchmakingService.getQueueStatus.mockImplementation(() => {
                 throw expectedError;
             });
 
             await matchmakingController.getQueueStatus(req, res as Response, next);
 
-            expect(mockMatchmakingService.getQueue).toHaveBeenCalledWith(userId);
+            expect(mockMatchmakingService.getQueueStatus).toHaveBeenCalledWith(userId);
             expect(next).toHaveBeenCalledWith(expectedError);
         });
 
@@ -186,6 +196,29 @@ describe('Matchmaking Controller', () => {
 
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalled();
+        });
+
+        it('should return status 200 with hasActiveGame true when user has active game', async () => {
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn().mockReturnThis()
+            } as Partial<Response>;
+
+            mockMatchmakingService.getQueueStatus.mockResolvedValue({
+                isQueued: false,
+                queueId: null,
+                hasActiveGame: true
+            });
+
+            await matchmakingController.getQueueStatus(req, res as Response, next);
+
+            expect(mockMatchmakingService.getQueueStatus).toHaveBeenCalledWith(userId);
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                isQueued: false,
+                queueId: null,
+                hasActiveGame: true
+            });
         });
     });
 

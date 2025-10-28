@@ -22,7 +22,8 @@ import LoadingScreen from '@/components/ui/loading-screen';
 
 function Game({ className, ...props }: React.ComponentProps<'div'>) {
     const router = useRouter();
-    const { color, boardPosition, turnColor, timesRemaining, gameOver, winner, onDrop } = useChessGame();
+    const { color, boardPosition, turnColor, timesRemaining, gameOver, winner, onDrop, whitePlayer, blackPlayer } =
+        useChessGame();
 
     const whiteTimerRef = useRef<TimerRef>(null);
     const blackTimerRef = useRef<TimerRef>(null);
@@ -68,19 +69,7 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
         router.push('/play');
     };
 
-    const whitePlayerInfo = {
-        name: 'joe biden',
-        elo: 1234,
-        avatarUrl: null
-    };
-
-    const blackPlayerInfo = {
-        name: 'donald trump',
-        elo: 1234,
-        avatarUrl: null
-    };
-
-    if (!color || !turnColor || !timesRemaining) {
+    if (!color || !turnColor || !timesRemaining || !whitePlayer || !blackPlayer) {
         return <LoadingScreen />;
     }
 
@@ -96,11 +85,12 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                             boardPosition={boardPosition.toString()}
                             boardOrientation={color}
                             turnColor={turnColor}
-                            whitePlayerInfo={whitePlayerInfo}
-                            blackPlayerInfo={blackPlayerInfo}
+                            whitePlayerInfo={whitePlayer}
+                            blackPlayerInfo={blackPlayer}
                             whiteTimeLeft={whiteTimeLeft}
                             blackTimeLeft={blackTimeLeft}
                             onPieceDrop={onDrop}
+                            allowDragging={true}
                         />
                     </div>
 

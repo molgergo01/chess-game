@@ -1,34 +1,37 @@
-jest.mock('@/hooks/chess/useGameId');
 jest.mock('@/hooks/chess/useCoreSocket');
 jest.mock('@/hooks/auth/useAuth');
 jest.mock('@/lib/clients/core.socket.client');
+jest.mock('@/lib/clients/core.rest.client');
 jest.mock('@/lib/utils/game.utils');
+jest.mock('next/navigation');
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import useChessGame from '@/hooks/chess/useChessGame';
-import useGameId from '@/hooks/chess/useGameId';
 import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { getPosition, getTimes, movePiece } from '@/lib/clients/core.socket.client';
+import { joinGame, movePiece } from '@/lib/clients/core.socket.client';
+import { getActiveGame } from '@/lib/clients/core.rest.client';
 import { getCurrentUserColor } from '@/lib/utils/game.utils';
+import { useRouter } from 'next/navigation';
 import { Socket } from 'socket.io-client';
 import Fen from 'chess-fen';
 import { MatchmakingColor } from '@/lib/models/request/matchmaking';
-import { Winner } from '@/lib/models/response/game';
+import { GetActiveGameResponse, Winner } from '@/lib/models/response/game';
 import type { PieceDropHandlerArgs } from 'react-chessboard';
 
 describe('useChessGame', () => {
-    const mockUseGameId = useGameId as jest.MockedFunction<typeof useGameId>;
     const mockUseCoreSocket = useCoreSocket as jest.MockedFunction<typeof useCoreSocket>;
     const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-    const mockGetPosition = getPosition as jest.MockedFunction<typeof getPosition>;
-    const mockGetTimes = getTimes as jest.MockedFunction<typeof getTimes>;
+    const mockJoinGame = joinGame as jest.MockedFunction<typeof joinGame>;
     const mockMovePiece = movePiece as jest.MockedFunction<typeof movePiece>;
+    const mockGetActiveGame = getActiveGame as jest.MockedFunction<typeof getActiveGame>;
     const mockGetCurrentUserColor = getCurrentUserColor as jest.MockedFunction<typeof getCurrentUserColor>;
+    const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
 
     let mockSocket: Partial<Socket>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let socketEventHandlers: Record<string, (...args: any[]) => void>;
+    const mockRouterPush = jest.fn();
 
     const createMockPieceDropArgs = (
         sourceSquare: string,
@@ -42,6 +45,28 @@ describe('useChessGame', () => {
             isSparePiece: false,
             position: sourceSquare
         }
+    });
+
+    const createMockGameData = (overrides?: Partial<GetActiveGameResponse>): GetActiveGameResponse => ({
+        gameId: 'game123',
+        whitePlayer: {
+            userId: 'user123',
+            name: 'White Player',
+            elo: 1200,
+            avatarUrl: 'white-avatar.jpg'
+        },
+        blackPlayer: {
+            userId: 'user456',
+            name: 'Black Player',
+            elo: 1300,
+            avatarUrl: 'black-avatar.jpg'
+        },
+        position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        whiteTimeRemaining: 600000,
+        blackTimeRemaining: 600000,
+        gameOver: false,
+        winner: null,
+        ...overrides
     });
 
     beforeEach(() => {
@@ -69,28 +94,23 @@ describe('useChessGame', () => {
             userAvatarUrl: 'avatar_url.com',
             refetch: jest.fn()
         });
+        mockUseRouter.mockReturnValue({
+            push: mockRouterPush,
+            replace: jest.fn(),
+            prefetch: jest.fn(),
+            back: jest.fn(),
+            forward: jest.fn(),
+            refresh: jest.fn()
+        } as never);
         mockGetCurrentUserColor.mockReturnValue(MatchmakingColor.WHITE);
 
         jest.clearAllMocks();
-        console.log = jest.fn();
+        console.error = jest.fn();
     });
 
-    it('should initialize board position when gameId is available', async () => {
-        const setGameId = jest.fn();
-        mockUseGameId.mockReturnValue(['game123', setGameId]);
-
-        mockGetPosition.mockResolvedValue({
-            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-            gameOver: false,
-            winner: null
-        });
-
-        mockGetTimes.mockResolvedValue({
-            playerTimes: {
-                whiteTimeRemaining: 600000,
-                blackTimeRemaining: 600000
-            }
-        });
+    it('should initialize board position and game data when user has active game', async () => {
+        const gameData = createMockGameData();
+        mockGetActiveGame.mockResolvedValue(gameData);
 
         const { result } = renderHook(() => useChessGame());
 
@@ -98,28 +118,25 @@ describe('useChessGame', () => {
             expect(result.current.boardPosition.toString()).not.toBe(Fen.emptyPosition);
         });
 
-        expect(mockGetPosition).toHaveBeenCalledWith(mockSocket, 'game123');
+        expect(mockGetActiveGame).toHaveBeenCalledWith('user123');
         expect(result.current.boardPosition.toString()).toBe(
             'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
         );
+        expect(result.current.whitePlayer).toEqual(gameData.whitePlayer);
+        expect(result.current.blackPlayer).toEqual(gameData.blackPlayer);
+        expect(result.current.timesRemaining).toEqual({
+            whiteTimeRemaining: 600000,
+            blackTimeRemaining: 600000
+        });
+        expect(mockJoinGame).toHaveBeenCalledWith(mockSocket, 'game123');
     });
 
-    it('should set gameOver when game is over', async () => {
-        const setGameId = jest.fn();
-        mockUseGameId.mockReturnValue(['game123', setGameId]);
-
-        mockGetPosition.mockResolvedValue({
-            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+    it('should set gameOver and not join game when game is already over', async () => {
+        const gameData = createMockGameData({
             gameOver: true,
             winner: Winner.WHITE
         });
-
-        mockGetTimes.mockResolvedValue({
-            playerTimes: {
-                whiteTimeRemaining: 600000,
-                blackTimeRemaining: 600000
-            }
-        });
+        mockGetActiveGame.mockResolvedValue(gameData);
 
         const { result } = renderHook(() => useChessGame());
 
@@ -128,25 +145,12 @@ describe('useChessGame', () => {
         });
 
         expect(result.current.winner).toBe(Winner.WHITE);
-        expect(setGameId).toHaveBeenCalledWith(undefined);
+        expect(mockJoinGame).not.toHaveBeenCalled();
     });
 
     it('should update position when update-position event is received', async () => {
-        const setGameId = jest.fn();
-        mockUseGameId.mockReturnValue(['game123', setGameId]);
-
-        mockGetPosition.mockResolvedValue({
-            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-            gameOver: false,
-            winner: null
-        });
-
-        mockGetTimes.mockResolvedValue({
-            playerTimes: {
-                whiteTimeRemaining: 600000,
-                blackTimeRemaining: 600000
-            }
-        });
+        const gameData = createMockGameData();
+        mockGetActiveGame.mockResolvedValue(gameData);
 
         const { result } = renderHook(() => useChessGame());
 
@@ -179,21 +183,8 @@ describe('useChessGame', () => {
     });
 
     it('should handle game over on update-position event', async () => {
-        const setGameId = jest.fn();
-        mockUseGameId.mockReturnValue(['game123', setGameId]);
-
-        mockGetPosition.mockResolvedValue({
-            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-            gameOver: false,
-            winner: null
-        });
-
-        mockGetTimes.mockResolvedValue({
-            playerTimes: {
-                whiteTimeRemaining: 600000,
-                blackTimeRemaining: 600000
-            }
-        });
+        const gameData = createMockGameData();
+        mockGetActiveGame.mockResolvedValue(gameData);
 
         const { result } = renderHook(() => useChessGame());
 
@@ -221,21 +212,8 @@ describe('useChessGame', () => {
     });
 
     it('should handle time-expired event', async () => {
-        const setGameId = jest.fn();
-        mockUseGameId.mockReturnValue(['game123', setGameId]);
-
-        mockGetPosition.mockResolvedValue({
-            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-            gameOver: false,
-            winner: null
-        });
-
-        mockGetTimes.mockResolvedValue({
-            playerTimes: {
-                whiteTimeRemaining: 600000,
-                blackTimeRemaining: 600000
-            }
-        });
+        const gameData = createMockGameData();
+        mockGetActiveGame.mockResolvedValue(gameData);
 
         const { result } = renderHook(() => useChessGame());
 
@@ -260,22 +238,9 @@ describe('useChessGame', () => {
         });
     });
 
-    it('should set user color when userId is available', async () => {
-        const setGameId = jest.fn();
-        mockUseGameId.mockReturnValue(['game123', setGameId]);
-
-        mockGetPosition.mockResolvedValue({
-            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-            gameOver: false,
-            winner: null
-        });
-
-        mockGetTimes.mockResolvedValue({
-            playerTimes: {
-                whiteTimeRemaining: 600000,
-                blackTimeRemaining: 600000
-            }
-        });
+    it('should set user color when userId and players are available', async () => {
+        const gameData = createMockGameData();
+        mockGetActiveGame.mockResolvedValue(gameData);
 
         const { result } = renderHook(() => useChessGame());
 
@@ -283,25 +248,12 @@ describe('useChessGame', () => {
             expect(result.current.color).toBe(MatchmakingColor.WHITE);
         });
 
-        expect(mockGetCurrentUserColor).toHaveBeenCalledWith('user123');
+        expect(mockGetCurrentUserColor).toHaveBeenCalledWith('user123', gameData.whitePlayer, gameData.blackPlayer);
     });
 
     it('should handle piece drop successfully', async () => {
-        const setGameId = jest.fn();
-        mockUseGameId.mockReturnValue(['game123', setGameId]);
-
-        mockGetPosition.mockResolvedValue({
-            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-            gameOver: false,
-            winner: null
-        });
-
-        mockGetTimes.mockResolvedValue({
-            playerTimes: {
-                whiteTimeRemaining: 600000,
-                blackTimeRemaining: 600000
-            }
-        });
+        const gameData = createMockGameData();
+        mockGetActiveGame.mockResolvedValue(gameData);
 
         mockMovePiece.mockResolvedValue({
             success: true,
@@ -325,21 +277,17 @@ describe('useChessGame', () => {
         expect(mockMovePiece).toHaveBeenCalledWith(mockSocket, 'game123', 'e2', 'e4', undefined);
     });
 
-    it('should return false on piece drop when gameId is not available', async () => {
-        const setGameId = jest.fn();
-        mockUseGameId.mockReturnValue([undefined, setGameId]);
-
-        mockGetTimes.mockResolvedValue({
-            playerTimes: {
-                whiteTimeRemaining: 600000,
-                blackTimeRemaining: 600000
-            }
+    it('should return false on piece drop when game is over', async () => {
+        const gameData = createMockGameData({
+            gameOver: true,
+            winner: Winner.WHITE
         });
+        mockGetActiveGame.mockResolvedValue(gameData);
 
         const { result } = renderHook(() => useChessGame());
 
         await waitFor(() => {
-            expect(result.current.onDrop).toBeDefined();
+            expect(result.current.gameOver).toBe(true);
         });
 
         const dropResult = result.current.onDrop(createMockPieceDropArgs('e2', 'e4', 'wP'));
@@ -349,21 +297,10 @@ describe('useChessGame', () => {
     });
 
     it('should handle promotion pieces', async () => {
-        const setGameId = jest.fn();
-        mockUseGameId.mockReturnValue(['game123', setGameId]);
-
-        mockGetPosition.mockResolvedValue({
-            position: 'rnbqkb1r/ppppppPp/8/8/8/8/PPPPPPP1/RNBQKBNR w KQkq - 0 1',
-            gameOver: false,
-            winner: null
+        const gameData = createMockGameData({
+            position: 'rnbqkb1r/ppppppPp/8/8/8/8/PPPPPPP1/RNBQKBNR w KQkq - 0 1'
         });
-
-        mockGetTimes.mockResolvedValue({
-            playerTimes: {
-                whiteTimeRemaining: 600000,
-                blackTimeRemaining: 600000
-            }
-        });
+        mockGetActiveGame.mockResolvedValue(gameData);
 
         mockMovePiece.mockResolvedValue({
             success: true,
@@ -384,21 +321,8 @@ describe('useChessGame', () => {
     });
 
     it('should cleanup socket listeners on unmount', async () => {
-        const setGameId = jest.fn();
-        mockUseGameId.mockReturnValue(['game123', setGameId]);
-
-        mockGetPosition.mockResolvedValue({
-            position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-            gameOver: false,
-            winner: null
-        });
-
-        mockGetTimes.mockResolvedValue({
-            playerTimes: {
-                whiteTimeRemaining: 600000,
-                blackTimeRemaining: 600000
-            }
-        });
+        const gameData = createMockGameData();
+        mockGetActiveGame.mockResolvedValue(gameData);
 
         const { unmount } = renderHook(() => useChessGame());
 
@@ -410,5 +334,42 @@ describe('useChessGame', () => {
 
         expect(mockSocket.off).toHaveBeenCalledWith('update-position', expect.any(Function));
         expect(mockSocket.off).toHaveBeenCalledWith('time-expired', expect.any(Function));
+    });
+
+    it('should handle error when fetching game data fails', async () => {
+        mockGetActiveGame.mockRejectedValue(new Error('Failed to get active game'));
+
+        renderHook(() => useChessGame());
+
+        await waitFor(() => {
+            expect(console.error).toHaveBeenCalledWith('Failed to fetch game data:', expect.any(Error));
+        });
+
+        expect(mockRouterPush).toHaveBeenCalledWith('/play');
+    });
+
+    it('should not call getActiveGame when socket is not available', async () => {
+        mockUseCoreSocket.mockReturnValue({ socket: null as never });
+
+        renderHook(() => useChessGame());
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        expect(mockGetActiveGame).not.toHaveBeenCalled();
+    });
+
+    it('should not call getActiveGame when userId is not available', async () => {
+        mockUseAuth.mockReturnValue({
+            userId: undefined as never,
+            userName: 'userName',
+            userAvatarUrl: 'avatar_url.com',
+            refetch: jest.fn()
+        });
+
+        renderHook(() => useChessGame());
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        expect(mockGetActiveGame).not.toHaveBeenCalled();
     });
 });

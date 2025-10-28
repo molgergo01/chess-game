@@ -2,7 +2,14 @@ import { inject, injectable } from 'inversify';
 import GameService from '../services/game.service';
 import { NextFunction, Request, Response } from 'express';
 import TimerWatcher from '../services/timer.watcher';
-import { CreateGameResponse, GameDto, GetGameHistoryResponse, GetGameResponse, MoveDto } from '../models/responses';
+import {
+    CreateGameResponse,
+    GameDto,
+    GetActiveGameResponse,
+    GetGameHistoryResponse,
+    GetGameResponse,
+    MoveDto
+} from '../models/responses';
 import { CreateGameRequest, GetGameParams } from '../models/requests';
 import { Move } from '../models/move';
 import { Winner } from '../models/game';
@@ -122,6 +129,44 @@ class GameController {
                 winner: gameWithMoves.winner ?? Winner.DRAW,
                 moves: moveDtos
             };
+            res.status(200).json(response);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getActiveGame(req: Request, res: Response, next: NextFunction) {
+        try {
+            const userId = req.query.userId;
+
+            if (!userId || typeof userId !== 'string') {
+                res.status(400).json({ message: 'userId query parameter is required' });
+                return;
+            }
+
+            const result = await this.gameService.getActiveGame(userId);
+
+            const response: GetActiveGameResponse = {
+                gameId: result.game.id,
+                whitePlayer: {
+                    userId: result.game.whitePlayer.id,
+                    name: result.game.whitePlayer.name,
+                    elo: result.game.whitePlayer.elo,
+                    avatarUrl: result.game.whitePlayer.avatarUrl
+                },
+                blackPlayer: {
+                    userId: result.game.blackPlayer.id,
+                    name: result.game.blackPlayer.name,
+                    elo: result.game.blackPlayer.elo,
+                    avatarUrl: result.game.blackPlayer.avatarUrl
+                },
+                position: result.position,
+                whiteTimeRemaining: result.whiteTimeRemaining,
+                blackTimeRemaining: result.blackTimeRemaining,
+                gameOver: result.gameOver,
+                winner: result.winner
+            };
+
             res.status(200).json(response);
         } catch (error) {
             next(error);

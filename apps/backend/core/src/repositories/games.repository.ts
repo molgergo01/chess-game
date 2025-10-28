@@ -23,6 +23,89 @@ class GamesRepository {
         } as Game;
     }
 
+    async existsActiveGameByUserIds(userIds: string[]): Promise<boolean> {
+        const sql = `
+            SELECT COUNT(1)
+            FROM chess_game.games
+            WHERE
+                (white_player_id = $1 OR
+                white_player_id = $2 OR
+                black_player_id = $1 OR
+                black_player_id = $2) AND
+                ended_at IS NULL
+        `;
+
+        const result = await db.query(sql, [userIds[0], userIds[1]]);
+
+        return Number(result[0].count) > 0;
+    }
+
+    async findActiveGameByUserId(userId: string): Promise<GameWithPlayers | null> {
+        const sql = `
+            SELECT g.*,
+                   wU.id        as white_user_id,
+                   wU.name      as white_user_name,
+                   wU.email     as white_user_email,
+                   wU.elo       as white_user_elo,
+                   wU.avatar_url as white_user_avatar_url,
+                   bU.id        as black_user_id,
+                   bU.name      as black_user_name,
+                   bU.email     as black_user_email,
+                   bU.elo       as black_user_elo,
+                   bU.avatar_url as black_user_avatar_url
+            FROM chess_game.games g
+                     LEFT JOIN chess_game.users wU ON g.white_player_id = wU.id
+                     LEFT JOIN chess_game.users bU ON g.black_player_id = bU.id
+            WHERE (g.black_player_id = $1 OR g.white_player_id = $1)
+              AND g.ended_at IS NULL
+            LIMIT 1
+        `;
+
+        const result: Array<
+            GameEntity & {
+                white_user_id: string;
+                white_user_name: string;
+                white_user_email: string;
+                white_user_elo: number;
+                white_user_avatar_url: string | null;
+                black_user_id: string;
+                black_user_name: string;
+                black_user_email: string;
+                black_user_elo: number;
+                black_user_avatar_url: string | null;
+            }
+        > = await db.query(sql, [userId]);
+
+        if (result.length === 0) {
+            return null;
+        }
+
+        const row = result[0];
+        const whitePlayer: User = {
+            id: row.white_user_id,
+            name: row.white_user_name,
+            email: row.white_user_email,
+            elo: row.white_user_elo,
+            avatarUrl: row.white_user_avatar_url
+        };
+        const blackPlayer: User = {
+            id: row.black_user_id,
+            name: row.black_user_name,
+            email: row.black_user_email,
+            elo: row.black_user_elo,
+            avatarUrl: row.black_user_avatar_url
+        };
+
+        return {
+            id: row.id,
+            whitePlayer: whitePlayer,
+            blackPlayer: blackPlayer,
+            startedAt: row.started_at,
+            endedAt: row.ended_at,
+            winner: row.winner
+        };
+    }
+
     async findAllByUserId(
         userId: string,
         limit: number | null,

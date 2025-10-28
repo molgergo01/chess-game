@@ -69,6 +69,7 @@ function GameHistory({ game }: GameHistoryParams) {
                             whiteTimeLeft={currentWhiteTime}
                             blackTimeLeft={currentBlackTime}
                             animationDuration={100}
+                            allowDragging={false}
                         />
                     </div>
 
