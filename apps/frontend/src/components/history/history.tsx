@@ -49,9 +49,8 @@ function History() {
 
     useEffect(() => {
         const getHistory = async () => {
-            if (!userId) return;
             try {
-                const historyResponse = await getGameHistory(userId, entriesPerPage, entriesPerPage * (pageNumber - 1));
+                const historyResponse = await getGameHistory(entriesPerPage, entriesPerPage * (pageNumber - 1));
                 setHistory(historyResponse);
                 if (entriesPerPage === 0 || historyResponse.totalCount === 0) {
                     setTotalPages(1);
@@ -67,7 +66,7 @@ function History() {
         };
 
         getHistory();
-    }, [pageNumber, userId, entriesPerPage]);
+    }, [pageNumber, entriesPerPage]);
 
     if (errorMessage) {
         return <ErrorAlertScreen errorMessage={errorMessage} title="History Error" dataCy="history-error-alert" />;

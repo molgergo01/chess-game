@@ -6,8 +6,10 @@ import { Server, Socket } from 'socket.io';
 import corsConfig from 'chess-game-backend-common/config/cors';
 import container from './config/container';
 import TimerWatcher from './services/timer.watcher';
+import SocketAuthMiddleware from './middlewares/socket.auth.middleware';
 
 const timerWatcher = container.get(TimerWatcher);
+const socketAuthMiddleware = container.get(SocketAuthMiddleware);
 
 const PORT = env.PORTS.CORE || 8080;
 const server = createServer(app);
@@ -18,6 +20,8 @@ export const io = new Server(server, {
 });
 
 container.bind('SocketIO').toConstantValue(io);
+
+io.use(socketAuthMiddleware.authenticate.bind(socketAuthMiddleware));
 
 export const onConnection = (socket: Socket) => {
     const { joinGame, movePiece } = gameListener(io, socket);

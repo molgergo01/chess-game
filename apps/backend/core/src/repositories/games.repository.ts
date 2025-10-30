@@ -108,8 +108,8 @@ class GamesRepository {
 
     async findAllByUserId(
         userId: string,
-        limit: number | null,
-        offset: number | null
+        limit: number | undefined,
+        offset: number | undefined
     ): Promise<Array<GameWithPlayers>> {
         let sql = `
             SELECT g.*,
@@ -131,12 +131,12 @@ class GamesRepository {
         `;
         const params: (string | number)[] = [userId];
 
-        if (limit !== null) {
+        if (limit) {
             params.push(limit);
             sql += ` LIMIT $${params.length}`;
         }
 
-        if (offset !== null) {
+        if (offset) {
             params.push(offset);
             sql += ` OFFSET $${params.length}`;
         }
@@ -300,6 +300,7 @@ class GamesRepository {
             WHERE 
                 (black_player_id = $1 OR white_player_id = $1) AND
                 ended_at IS NOT NULL AND
+                winner IS NOT NULL AND
                 winner != 'd'
         `;
 

@@ -4,14 +4,16 @@ import Redis from 'chess-game-backend-common/config/redis';
 import { createServer } from 'node:http';
 import { type AddressInfo } from 'node:net';
 import { io as ioc } from 'socket.io-client';
-import { Server } from 'socket.io';
-import { onConnection } from '../../src/server';
+import { Server, Socket } from 'socket.io';
 import container from '../../src/config/container';
 import MatchmakingService from '../../src/services/matchmaking.service';
 import CoreRestClient from '../../src/clients/core.rest.client';
 import { Color } from '../../src/models/game';
+import { authenticatedRequest, cleanupAuthMocks, mockAuthServiceVerify } from '../fixtures/auth.fixture';
 
 jest.mock('../../src/clients/core.rest.client');
+
+process.env.AUTH_SERVICE_URL = 'http://localhost:8082';
 
 jest.mock('chess-game-backend-common/config/env', () => ({
     __esModule: true,
@@ -36,63 +38,114 @@ jest.mock('chess-game-backend-common/config/env', () => ({
     }
 }));
 
+const mockSocketAuthMiddleware = (socket: Socket, next: (err?: Error) => void) => {
+    const userId = socket.handshake.auth.userId;
+    if (userId) {
+        socket.data.user = {
+            id: userId,
+            name: 'Test User',
+            email: 'test@example.com',
+            elo: 1500,
+            avatarUrl: 'avatar.jpg'
+        };
+    }
+    next();
+};
+
+const onConnection = async (socket: Socket) => {
+    const matchmakingService = container.get(MatchmakingService);
+    await matchmakingService.setSocketIdForUser(socket.data.user!.id, socket.id);
+};
+
 describe('Matchmaking routes', () => {
     let mockCoreRestClient: jest.Mocked<CoreRestClient>;
 
     beforeEach(() => {
         mockCoreRestClient = container.get(CoreRestClient) as jest.Mocked<CoreRestClient>;
         mockCoreRestClient.checkActiveGame = jest.fn().mockResolvedValue(false);
+        mockCoreRestClient.createGame = jest.fn();
     });
 
     afterEach(async () => {
-        let cursor = '0';
-        do {
-            const result = await Redis.scan(cursor, {
-                MATCH: 'matchmaking-queue*',
-                COUNT: 100
-            });
-            cursor = result.cursor;
-            if (result.keys.length > 0) {
-                await Redis.del(result.keys);
-            }
-        } while (cursor !== '0');
+        cleanupAuthMocks();
+        const keys = await Redis.keys('*');
+        if (keys.length > 0) {
+            await Redis.del(keys);
+        }
+        if (container.isBound('SocketIO')) {
+            await container.unbind('SocketIO');
+        }
         jest.clearAllMocks();
-    });
-
-    afterAll(async () => {
-        await Redis.quit();
     });
 
     describe('POST /api/matchmaking/queue', () => {
         it('should join queue and add user to Redis', async () => {
             const userId = 'player1';
-            const res = await request(app).post('/api/matchmaking/queue').send({ userId });
+
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(request(app).post('/api/matchmaking/queue'), userId);
 
             expect(res.status).toBe(200);
 
-            const position = await Redis.lPos('matchmaking-queue', userId);
-            expect(position).not.toBeNull();
-            expect(position).toBeGreaterThanOrEqual(0);
+            const queueScore = await Redis.zScore('matchmaking-queue', userId);
+            expect(queueScore).not.toBeNull();
+            expect(queueScore).toBeGreaterThan(0);
+
+            const playerData = await Redis.hGetAll(`player:${userId}`);
+            expect(playerData).toHaveProperty('queueTimestamp');
+            expect(playerData).toHaveProperty('elo', '1500');
+            expect(playerData).toHaveProperty('queueId', '');
         });
 
         it('should return 409 if user is already in queue', async () => {
             const userId = 'player1';
 
-            await request(app).post('/api/matchmaking/queue').send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
 
-            const res = await request(app).post('/api/matchmaking/queue').send({ userId });
+            await authenticatedRequest(request(app).post('/api/matchmaking/queue'), userId);
+
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(request(app).post('/api/matchmaking/queue'), userId);
 
             expect(res.status).toBe(409);
             expect(res.body).toHaveProperty('message');
             expect(res.body.message).toContain('already in queue');
 
-            const queueLength = await Redis.lLen('matchmaking-queue');
+            const queueLength = await Redis.zCard('matchmaking-queue');
             expect(queueLength).toBe(1);
         });
 
         it('should add multiple different users to queue and send matchmake notifications', async () => {
             const user1 = 'player1';
             const user2 = 'player2';
+
+            mockAuthServiceVerify({
+                id: user1,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
 
             const httpServer = createServer();
             const io = new Server(httpServer);
@@ -102,6 +155,7 @@ describe('Matchmaking routes', () => {
             }
             container.bind('SocketIO').toConstantValue(io);
 
+            io.use(mockSocketAuthMiddleware);
             io.on('connection', onConnection);
 
             const serverPort = await new Promise<number>((resolve) => {
@@ -124,7 +178,7 @@ describe('Matchmaking routes', () => {
 
             await new Promise((resolve) => setTimeout(resolve, 100));
 
-            const mockCoreRestClient = container.get(CoreRestClient) as jest.Mocked<CoreRestClient>;
+            const matchmakingService = container.get(MatchmakingService);
             const mockGameResponse = {
                 gameId: 'test-game-id'
             };
@@ -137,33 +191,38 @@ describe('Matchmaking routes', () => {
                 client2.on('matchmake', resolve);
             });
 
-            await request(app).post('/api/matchmaking/queue').send({
-                userId: user1
-            });
-            await request(app).post('/api/matchmaking/queue').send({
-                userId: user2
+            await authenticatedRequest(request(app).post('/api/matchmaking/queue'), user1);
+
+            mockAuthServiceVerify({
+                id: user2,
+                name: 'Player Two',
+                email: 'player2@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
             });
 
-            const position1 = await Redis.lPos('matchmaking-queue', user1);
-            const position2 = await Redis.lPos('matchmaking-queue', user2);
-            expect(position1).not.toBeNull();
-            expect(position2).not.toBeNull();
+            await authenticatedRequest(request(app).post('/api/matchmaking/queue'), user2);
 
-            const queueLength = await Redis.lLen('matchmaking-queue');
+            const score1 = await Redis.zScore('matchmaking-queue', user1);
+            const score2 = await Redis.zScore('matchmaking-queue', user2);
+            expect(score1).not.toBeNull();
+            expect(score2).not.toBeNull();
+
+            const queueLength = await Redis.zCard('matchmaking-queue');
             expect(queueLength).toBe(2);
 
-            const matchmakingService = container.get(MatchmakingService);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
             await matchmakingService.matchMake(null);
 
-            const [message1, message2] = await Promise.race([
+            await Promise.race([
                 Promise.all([client1Promise, client2Promise]),
                 new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
             ]);
 
-            expect(message1).toEqual(mockGameResponse);
-            expect(message2).toEqual(mockGameResponse);
+            expect(mockCoreRestClient.createGame).toHaveBeenCalledWith([user1, user2]);
 
-            const finalQueueLength = await Redis.lLen('matchmaking-queue');
+            const finalQueueLength = await Redis.zCard('matchmaking-queue');
             expect(finalQueueLength).toBe(0);
 
             client1.disconnect();
@@ -180,26 +239,53 @@ describe('Matchmaking routes', () => {
         it('should leave queue and remove user from Redis', async () => {
             const userId = 'player1';
 
-            await request(app).post('/api/matchmaking/queue').send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
 
-            let position = await Redis.lPos('matchmaking-queue', userId);
-            expect(position).not.toBeNull();
+            await authenticatedRequest(request(app).post('/api/matchmaking/queue'), userId);
 
-            const res = await request(app).delete('/api/matchmaking/queue').send({ userId });
+            let score = await Redis.zScore('matchmaking-queue', userId);
+            expect(score).not.toBeNull();
+
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(request(app).delete('/api/matchmaking/queue'), userId);
 
             expect(res.status).toBe(200);
 
-            position = await Redis.lPos('matchmaking-queue', userId);
-            expect(position).toBeNull();
+            score = await Redis.zScore('matchmaking-queue', userId);
+            expect(score).toBeNull();
 
-            const queueLength = await Redis.lLen('matchmaking-queue');
+            const playerData = await Redis.exists(`player:${userId}`);
+            expect(playerData).toBe(0);
+
+            const queueLength = await Redis.zCard('matchmaking-queue');
             expect(queueLength).toBe(0);
         });
 
         it('should return 404 if user is not in queue', async () => {
             const userId = 'nonexistent-player';
 
-            const res = await request(app).delete('/api/matchmaking/queue').send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Nonexistent Player',
+                email: 'nonexistent@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(request(app).delete('/api/matchmaking/queue'), userId);
 
             expect(res.status).toBe(404);
             expect(res.body).toHaveProperty('message');
@@ -210,21 +296,42 @@ describe('Matchmaking routes', () => {
             const user1 = 'player1';
             const user2 = 'player2';
 
-            await request(app).post('/api/matchmaking/queue').send({
-                userId: user1
+            mockAuthServiceVerify({
+                id: user1,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
             });
-            await request(app).post('/api/matchmaking/queue').send({
-                userId: user2
+
+            await authenticatedRequest(request(app).post('/api/matchmaking/queue'), user1);
+
+            mockAuthServiceVerify({
+                id: user2,
+                name: 'Player Two',
+                email: 'player2@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
             });
 
-            await request(app).delete('/api/matchmaking/queue').send({ userId: user1 });
+            await authenticatedRequest(request(app).post('/api/matchmaking/queue'), user2);
 
-            const position1 = await Redis.lPos('matchmaking-queue', user1);
-            const position2 = await Redis.lPos('matchmaking-queue', user2);
-            expect(position1).toBeNull();
-            expect(position2).not.toBeNull();
+            mockAuthServiceVerify({
+                id: user1,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
 
-            const queueLength = await Redis.lLen('matchmaking-queue');
+            await authenticatedRequest(request(app).delete('/api/matchmaking/queue'), user1);
+
+            const score1 = await Redis.zScore('matchmaking-queue', user1);
+            const score2 = await Redis.zScore('matchmaking-queue', user2);
+            expect(score1).toBeNull();
+            expect(score2).not.toBeNull();
+
+            const queueLength = await Redis.zCard('matchmaking-queue');
             expect(queueLength).toBe(1);
         });
     });
@@ -233,9 +340,25 @@ describe('Matchmaking routes', () => {
         it('should return 200 with queueId null if user is in default queue', async () => {
             const userId = 'player1';
 
-            await request(app).post('/api/matchmaking/queue').send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
 
-            const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
+            await authenticatedRequest(request(app).post('/api/matchmaking/queue'), userId);
+
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(request(app).get('/api/matchmaking/queue/status'), userId);
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('isQueued');
@@ -249,7 +372,15 @@ describe('Matchmaking routes', () => {
         it('should return 200 with isQueued false if user is not in queue', async () => {
             const userId = 'nonexistent-player';
 
-            const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Nonexistent Player',
+                email: 'nonexistent@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(request(app).get('/api/matchmaking/queue/status'), userId);
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('isQueued');
@@ -263,10 +394,35 @@ describe('Matchmaking routes', () => {
         it('should return 200 with isQueued false after leaving queue', async () => {
             const userId = 'player1';
 
-            await request(app).post('/api/matchmaking/queue').send({ userId });
-            await request(app).delete('/api/matchmaking/queue').send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
 
-            const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
+            await authenticatedRequest(request(app).post('/api/matchmaking/queue'), userId);
+
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            await authenticatedRequest(request(app).delete('/api/matchmaking/queue'), userId);
+
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(request(app).get('/api/matchmaking/queue/status'), userId);
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('isQueued');
@@ -280,10 +436,26 @@ describe('Matchmaking routes', () => {
         it('should return 200 with queueId when user is in private queue', async () => {
             const userId = 'player1';
 
-            const createRes = await request(app).post('/api/matchmaking/queue/private').send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const createRes = await authenticatedRequest(request(app).post('/api/matchmaking/queue/private'), userId);
             const queueId = createRes.body.queueId;
 
-            const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(request(app).get('/api/matchmaking/queue/status'), userId);
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('isQueued');
@@ -297,9 +469,17 @@ describe('Matchmaking routes', () => {
         it('should return 200 with hasActiveGame true when user has active game', async () => {
             const userId = 'player1';
 
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
             mockCoreRestClient.checkActiveGame.mockResolvedValueOnce(true);
 
-            const res = await request(app).get('/api/matchmaking/queue/status').query({ userId });
+            const res = await authenticatedRequest(request(app).get('/api/matchmaking/queue/status'), userId);
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('isQueued');
@@ -315,24 +495,51 @@ describe('Matchmaking routes', () => {
         it('should create private queue, return queueId, and add user to Redis', async () => {
             const userId = 'player1';
 
-            const res = await request(app).post('/api/matchmaking/queue/private').send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(request(app).post('/api/matchmaking/queue/private'), userId);
 
             expect(res.status).toBe(201);
             expect(res.body).toHaveProperty('queueId');
             expect(res.body.queueId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
 
             const queueKey = `matchmaking-queue:${res.body.queueId}`;
-            const position = await Redis.lPos(queueKey, userId);
-            expect(position).not.toBeNull();
-            expect(position).toBeGreaterThanOrEqual(0);
+            const score = await Redis.zScore(queueKey, userId);
+            expect(score).not.toBeNull();
+            expect(score).toBeGreaterThan(0);
+
+            const playerData = await Redis.hGetAll(`player:${userId}`);
+            expect(playerData).toHaveProperty('queueId', res.body.queueId);
         });
 
         it('should return 409 if user is already in queue', async () => {
             const userId = 'player1';
 
-            await request(app).post('/api/matchmaking/queue').send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
 
-            const res = await request(app).post('/api/matchmaking/queue/private').send({ userId });
+            await authenticatedRequest(request(app).post('/api/matchmaking/queue'), userId);
+
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(request(app).post('/api/matchmaking/queue/private'), userId);
 
             expect(res.status).toBe(409);
             expect(res.body).toHaveProperty('message');
@@ -344,25 +551,52 @@ describe('Matchmaking routes', () => {
         it('should join private queue and add user to Redis', async () => {
             const user1 = 'player1';
 
-            const createRes = await request(app).post('/api/matchmaking/queue/private').send({ userId: user1 });
+            mockAuthServiceVerify({
+                id: user1,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const createRes = await authenticatedRequest(request(app).post('/api/matchmaking/queue/private'), user1);
 
             const queueId = createRes.body.queueId;
             const queueKey = `matchmaking-queue:${queueId}`;
 
-            const position1 = await Redis.lPos(queueKey, user1);
-            expect(position1).not.toBeNull();
-            expect(position1).toBe(0);
+            const score1 = await Redis.zScore(queueKey, user1);
+            expect(score1).not.toBeNull();
+            expect(score1).toBeGreaterThan(0);
 
-            const queueLength = await Redis.lLen(queueKey);
+            const queueLength = await Redis.zCard(queueKey);
             expect(queueLength).toBe(1);
         });
 
         it('should return 409 if user is already in queue', async () => {
             const user1 = 'player1';
 
-            await request(app).post('/api/matchmaking/queue').send({ userId: user1 });
+            mockAuthServiceVerify({
+                id: user1,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
 
-            const res = await request(app).post('/api/matchmaking/queue/private/some-queue-id').send({ userId: user1 });
+            await authenticatedRequest(request(app).post('/api/matchmaking/queue'), user1);
+
+            mockAuthServiceVerify({
+                id: user1,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(
+                request(app).post('/api/matchmaking/queue/private/some-queue-id'),
+                user1
+            );
 
             expect(res.status).toBe(409);
             expect(res.body).toHaveProperty('message');
@@ -373,9 +607,18 @@ describe('Matchmaking routes', () => {
             const userId = 'player1';
             const nonExistentQueueId = 'non-existent-queue';
 
-            const res = await request(app)
-                .post(`/api/matchmaking/queue/private/${nonExistentQueueId}`)
-                .send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(
+                request(app).post(`/api/matchmaking/queue/private/${nonExistentQueueId}`),
+                userId
+            );
 
             expect(res.status).toBe(404);
             expect(res.body).toHaveProperty('message');
@@ -387,6 +630,14 @@ describe('Matchmaking routes', () => {
             const user2 = 'player2';
             const user3 = 'player3';
 
+            mockAuthServiceVerify({
+                id: user1,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
             const httpServer = createServer();
             const io = new Server(httpServer);
 
@@ -395,6 +646,7 @@ describe('Matchmaking routes', () => {
             }
             container.bind('SocketIO').toConstantValue(io);
 
+            io.use(mockSocketAuthMiddleware);
             io.on('connection', onConnection);
 
             const serverPort = await new Promise<number>((resolve) => {
@@ -435,15 +687,34 @@ describe('Matchmaking routes', () => {
             };
             mockCoreRestClient.createGame = jest.fn().mockResolvedValue(mockGameResponse);
 
-            const createRes = await request(app).post('/api/matchmaking/queue/private').send({ userId: user1 });
+            const createRes = await authenticatedRequest(request(app).post('/api/matchmaking/queue/private'), user1);
 
             const queueId = createRes.body.queueId;
 
-            await request(app).post(`/api/matchmaking/queue/private/${queueId}`).send({ userId: user2 });
+            mockAuthServiceVerify({
+                id: user2,
+                name: 'Player Two',
+                email: 'player2@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            await authenticatedRequest(request(app).post(`/api/matchmaking/queue/private/${queueId}`), user2);
 
             await new Promise((resolve) => setTimeout(resolve, 100));
 
-            const res = await request(app).post(`/api/matchmaking/queue/private/${queueId}`).send({ userId: user3 });
+            mockAuthServiceVerify({
+                id: user3,
+                name: 'Player Three',
+                email: 'player3@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(
+                request(app).post(`/api/matchmaking/queue/private/${queueId}`),
+                user3
+            );
 
             expect(res.status).toBe(404);
             expect(res.body).toHaveProperty('message');
@@ -462,6 +733,14 @@ describe('Matchmaking routes', () => {
             const user1 = 'player1';
             const user2 = 'player2';
 
+            mockAuthServiceVerify({
+                id: user1,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
             const httpServer = createServer();
             const io = new Server(httpServer);
 
@@ -470,6 +749,7 @@ describe('Matchmaking routes', () => {
             }
             container.bind('SocketIO').toConstantValue(io);
 
+            io.use(mockSocketAuthMiddleware);
             io.on('connection', onConnection);
 
             const serverPort = await new Promise<number>((resolve) => {
@@ -492,7 +772,6 @@ describe('Matchmaking routes', () => {
 
             await new Promise((resolve) => setTimeout(resolve, 100));
 
-            const mockCoreRestClient = container.get(CoreRestClient) as jest.Mocked<CoreRestClient>;
             const mockGameResponse = {
                 gameId: 'test-game-private'
             };
@@ -505,22 +784,31 @@ describe('Matchmaking routes', () => {
                 client2.on('matchmake', resolve);
             });
 
-            const createRes = await request(app).post('/api/matchmaking/queue/private').send({ userId: user1 });
+            const createRes = await authenticatedRequest(request(app).post('/api/matchmaking/queue/private'), user1);
 
             const queueId = createRes.body.queueId;
 
-            await request(app).post(`/api/matchmaking/queue/private/${queueId}`).send({ userId: user2 });
+            mockAuthServiceVerify({
+                id: user2,
+                name: 'Player Two',
+                email: 'player2@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
 
-            const [message1, message2] = await Promise.race([
+            await authenticatedRequest(request(app).post(`/api/matchmaking/queue/private/${queueId}`), user2);
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            await Promise.race([
                 Promise.all([client1Promise, client2Promise]),
                 new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
             ]);
 
-            expect(message1).toEqual(mockGameResponse);
-            expect(message2).toEqual(mockGameResponse);
+            expect(mockCoreRestClient.createGame).toHaveBeenCalled();
 
             const queueKey = `matchmaking-queue:${queueId}`;
-            const finalQueueLength = await Redis.lLen(queueKey);
+            const finalQueueLength = await Redis.zCard(queueKey);
             expect(finalQueueLength).toBe(0);
 
             client1.disconnect();
@@ -537,22 +825,44 @@ describe('Matchmaking routes', () => {
         it('should leave private queue and remove user from Redis', async () => {
             const userId = 'player1';
 
-            const createRes = await request(app).post('/api/matchmaking/queue/private').send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const createRes = await authenticatedRequest(request(app).post('/api/matchmaking/queue/private'), userId);
 
             const queueId = createRes.body.queueId;
             const queueKey = `matchmaking-queue:${queueId}`;
 
-            let position = await Redis.lPos(queueKey, userId);
-            expect(position).not.toBeNull();
+            let score = await Redis.zScore(queueKey, userId);
+            expect(score).not.toBeNull();
 
-            const res = await request(app).delete(`/api/matchmaking/queue/private/${queueId}`).send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(
+                request(app).delete(`/api/matchmaking/queue/private/${queueId}`),
+                userId
+            );
 
             expect(res.status).toBe(200);
 
-            position = await Redis.lPos(queueKey, userId);
-            expect(position).toBeNull();
+            score = await Redis.zScore(queueKey, userId);
+            expect(score).toBeNull();
 
-            const queueLength = await Redis.lLen(queueKey);
+            const playerData = await Redis.exists(`player:${userId}`);
+            expect(playerData).toBe(0);
+
+            const queueLength = await Redis.zCard(queueKey);
             expect(queueLength).toBe(0);
         });
 
@@ -560,7 +870,18 @@ describe('Matchmaking routes', () => {
             const userId = 'nonexistent-player';
             const queueId = 'some-queue-id';
 
-            const res = await request(app).delete(`/api/matchmaking/queue/private/${queueId}`).send({ userId });
+            mockAuthServiceVerify({
+                id: userId,
+                name: 'Nonexistent Player',
+                email: 'nonexistent@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            });
+
+            const res = await authenticatedRequest(
+                request(app).delete(`/api/matchmaking/queue/private/${queueId}`),
+                userId
+            );
 
             expect(res.status).toBe(404);
             expect(res.body).toHaveProperty('message');

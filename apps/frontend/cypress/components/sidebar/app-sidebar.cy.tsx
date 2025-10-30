@@ -12,10 +12,13 @@ describe('<AppSidebar />', () => {
         cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
             statusCode: 200,
             body: {
-                id: 'test-user-123',
-                name: 'Test User',
-                email: 'test@example.com',
-                avatarUrl: 'https://github.com/shadcn.png'
+                user: {
+                    id: 'test-user-123',
+                    name: 'Test User',
+                    email: 'test@example.com',
+                    avatarUrl: 'https://github.com/shadcn.png',
+                    elo: 1500
+                }
             }
         }).as('getUser');
     });
@@ -101,10 +104,13 @@ describe('<AppSidebar />', () => {
                 cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
                     statusCode: 200,
                     body: {
-                        id: 'test-user-456',
-                        name: 'John Doe',
-                        email: 'john@example.com',
-                        avatarUrl: null
+                        user: {
+                            id: 'test-user-456',
+                            name: 'John Doe',
+                            email: 'john@example.com',
+                            avatarUrl: null,
+                            elo: 1500
+                        }
                     }
                 }).as('getUserNoAvatar');
 
@@ -119,10 +125,13 @@ describe('<AppSidebar />', () => {
                 cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
                     statusCode: 200,
                     body: {
-                        id: 'test-user-789',
-                        name: null,
-                        email: 'user@example.com',
-                        avatarUrl: null
+                        user: {
+                            id: 'test-user-789',
+                            name: null,
+                            email: 'user@example.com',
+                            avatarUrl: null,
+                            elo: 1500
+                        }
                     }
                 }).as('getUserNoName');
 

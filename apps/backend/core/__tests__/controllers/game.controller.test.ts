@@ -1,27 +1,18 @@
 import GameService from '../../src/services/game.service';
 import GameController from '../../src/controllers/game.controller';
-import TimerWatcher from '../../src/services/timer.watcher';
-import { NextFunction, Request, Response } from 'express';
-import { Color, GameCreated, GameHistoryResult, GameWithMoves, GameWithPlayers, Winner } from '../../src/models/game';
-import { Player } from '../../src/models/player';
-import { Timer } from '../../src/models/timer';
-import {
-    CreateGameResponse,
-    GetActiveGameResponse,
-    GetGameHistoryResponse,
-    GetGameResponse
-} from '../../src/models/responses';
+import { NextFunction, Response } from 'express';
+import { Color, GameHistoryResult, GameWithMoves, GameWithPlayers, Winner } from '../../src/models/game';
+import { GetActiveGameResponse, GetGameHistoryResponse, GetGameResponse } from '../../src/models/responses';
 import { User } from '../../src/models/user';
 import { Move } from '../../src/models/move';
-import { GetGameParams } from '../../src/models/requests';
+import { GetGameParams, PaginationQueryParams } from '../../src/models/requests';
+import { AuthenticatedRequest } from 'chess-game-backend-common/types/authenticated.request';
 
 jest.mock('../../src/services/game.service');
-jest.mock('../../src/services/timer.watcher');
 jest.mock('../../src/config/container');
 
 describe('Game Controller', () => {
     let mockGameService: jest.Mocked<GameService>;
-    let mockTimerWatcher: jest.Mocked<TimerWatcher>;
     let gameController: GameController;
 
     beforeEach(() => {
@@ -29,16 +20,14 @@ describe('Game Controller', () => {
             null as never,
             null as never,
             null as never,
+            null as never,
             null as never
         ) as jest.Mocked<GameService>;
-        mockGameService.create = jest.fn();
         mockGameService.getGameHistory = jest.fn();
         mockGameService.getGameWithMoves = jest.fn();
         mockGameService.getActiveGame = jest.fn();
 
-        mockTimerWatcher = new TimerWatcher(null as never, null as never, null as never) as jest.Mocked<TimerWatcher>;
-
-        gameController = new GameController(mockGameService, mockTimerWatcher);
+        gameController = new GameController(mockGameService);
     });
 
     afterEach(() => {
@@ -47,63 +36,6 @@ describe('Game Controller', () => {
     });
 
     const next: NextFunction = jest.fn();
-
-    describe('Create game', () => {
-        const req = {
-            body: {
-                players: ['1234', '5678']
-            }
-        } as Partial<Request>;
-        it('should create a game and return status 201', async () => {
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn().mockReturnThis()
-            } as Partial<Response>;
-
-            const player1: Player = {
-                id: '1234',
-                color: Color.WHITE,
-                timer: new Timer()
-            };
-            const player2: Player = {
-                id: '5678',
-                color: Color.BLACK,
-                timer: new Timer()
-            };
-            const gameId = '0000';
-            const gameCreated: GameCreated = {
-                players: [player1, player2],
-                gameId: gameId
-            };
-            const expectedResponse: CreateGameResponse = {
-                players: [player1, player2],
-                gameId: gameId
-            };
-
-            mockGameService.create.mockResolvedValue(gameCreated);
-
-            await gameController.createGame(req as Request, res as Response, next);
-
-            expect(mockGameService.create).toHaveBeenCalledWith(req.body.players);
-            expect(mockTimerWatcher.start).toHaveBeenCalled();
-            expect(res.status).toHaveBeenCalledWith(201);
-            expect(res.json).toHaveBeenCalledWith(expectedResponse);
-        });
-
-        it('should call next function with error when error is thrown', () => {
-            const res = {} as Partial<Response>;
-            const expectedError = new Error('error');
-            mockGameService.create.mockImplementation(() => {
-                throw expectedError;
-            });
-
-            gameController.createGame(req as Request, res as Response, next);
-
-            expect(mockGameService.create).toHaveBeenCalledWith(req.body.players);
-            expect(next).toHaveBeenCalledWith(expectedError);
-            expect(mockTimerWatcher.start).not.toHaveBeenCalled();
-        });
-    });
 
     describe('Get game history', () => {
         const whitePlayer: User = {
@@ -123,12 +55,18 @@ describe('Game Controller', () => {
 
         it('should get game history with all query parameters and return status 200', async () => {
             const req = {
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
+                },
                 query: {
-                    userId: 'user1',
-                    limit: '10',
-                    offset: '0'
+                    limit: 10,
+                    offset: 0
                 }
-            } as Partial<Request>;
+            } as Partial<AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>>;
             const res = {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn().mockReturnThis()
@@ -178,19 +116,28 @@ describe('Game Controller', () => {
 
             mockGameService.getGameHistory.mockResolvedValue(historyResult);
 
-            await gameController.getGameHistory(req as Request, res as Response, next);
+            await gameController.getGameHistory(
+                req as AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>,
+                res as Response,
+                next
+            );
 
             expect(mockGameService.getGameHistory).toHaveBeenCalledWith('user1', 10, 0);
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith(expectedResponse);
         });
 
-        it('should get game history with only userId and return status 200', async () => {
+        it('should get game history with only user and return status 200', async () => {
             const req = {
-                query: {
-                    userId: 'user1'
-                }
-            } as Partial<Request>;
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
+                },
+                query: {}
+            } as Partial<AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>>;
             const res = {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn().mockReturnThis()
@@ -211,60 +158,39 @@ describe('Game Controller', () => {
 
             mockGameService.getGameHistory.mockResolvedValue(historyResult);
 
-            await gameController.getGameHistory(req as Request, res as Response, next);
+            await gameController.getGameHistory(
+                req as AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>,
+                res as Response,
+                next
+            );
 
-            expect(mockGameService.getGameHistory).toHaveBeenCalledWith('user1', null, null);
+            expect(mockGameService.getGameHistory).toHaveBeenCalledWith('user1', undefined, undefined);
             expect(res.status).toHaveBeenCalledWith(200);
-        });
-
-        it('should return 400 when userId is missing', async () => {
-            const req = {
-                query: {}
-            } as Partial<Request>;
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn().mockReturnThis()
-            } as Partial<Response>;
-
-            await gameController.getGameHistory(req as Request, res as Response, next);
-
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({ message: 'userId query parameter is required' });
-            expect(mockGameService.getGameHistory).not.toHaveBeenCalled();
-        });
-
-        it('should return 400 when userId is not a string', async () => {
-            const req = {
-                query: {
-                    userId: 123 as unknown
-                }
-            } as Partial<Request>;
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn().mockReturnThis()
-            } as Partial<Response>;
-
-            await gameController.getGameHistory(req as Request, res as Response, next);
-
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({ message: 'userId query parameter is required' });
-            expect(mockGameService.getGameHistory).not.toHaveBeenCalled();
         });
 
         it('should call next function with error when error is thrown', async () => {
             const req = {
-                query: {
-                    userId: 'user1'
-                }
-            } as Partial<Request>;
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
+                },
+                query: {}
+            } as Partial<AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>>;
             const res = {} as Partial<Response>;
             const expectedError = new Error('error');
 
             mockGameService.getGameHistory.mockRejectedValue(expectedError);
 
-            await gameController.getGameHistory(req as Request, res as Response, next);
+            await gameController.getGameHistory(
+                req as AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>,
+                res as Response,
+                next
+            );
 
-            expect(mockGameService.getGameHistory).toHaveBeenCalledWith('user1', null, null);
+            expect(mockGameService.getGameHistory).toHaveBeenCalledWith('user1', undefined, undefined);
             expect(next).toHaveBeenCalledWith(expectedError);
         });
     });
@@ -287,10 +213,17 @@ describe('Game Controller', () => {
 
         it('should get game with moves and return status 200', async () => {
             const req = {
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
+                },
                 params: {
                     gameId: 'game1'
                 }
-            } as Request<GetGameParams>;
+            } as AuthenticatedRequest<GetGameParams>;
             const res = {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn().mockReturnThis()
@@ -365,10 +298,17 @@ describe('Game Controller', () => {
 
         it('should call next function with error when error is thrown', async () => {
             const req = {
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
+                },
                 params: {
                     gameId: 'game1'
                 }
-            } as Request<GetGameParams>;
+            } as AuthenticatedRequest<GetGameParams>;
             const res = {} as Partial<Response>;
             const expectedError = new Error('error');
 
@@ -399,10 +339,14 @@ describe('Game Controller', () => {
 
         it('should get active game and return status 200', async () => {
             const req = {
-                query: {
-                    userId: 'user1'
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
                 }
-            } as Partial<Request>;
+            } as Partial<AuthenticatedRequest>;
             const res = {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn().mockReturnThis()
@@ -437,59 +381,29 @@ describe('Game Controller', () => {
 
             mockGameService.getActiveGame.mockResolvedValue(activeGameResult);
 
-            await gameController.getActiveGame(req as Request, res as Response, next);
+            await gameController.getActiveGame(req as AuthenticatedRequest, res as Response, next);
 
             expect(mockGameService.getActiveGame).toHaveBeenCalledWith('user1');
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith(expectedResponse);
         });
 
-        it('should return 400 when userId is missing', async () => {
-            const req = {
-                query: {}
-            } as Partial<Request>;
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn().mockReturnThis()
-            } as Partial<Response>;
-
-            await gameController.getActiveGame(req as Request, res as Response, next);
-
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({ message: 'userId query parameter is required' });
-            expect(mockGameService.getActiveGame).not.toHaveBeenCalled();
-        });
-
-        it('should return 400 when userId is not a string', async () => {
-            const req = {
-                query: {
-                    userId: 123 as unknown
-                }
-            } as Partial<Request>;
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn().mockReturnThis()
-            } as Partial<Response>;
-
-            await gameController.getActiveGame(req as Request, res as Response, next);
-
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({ message: 'userId query parameter is required' });
-            expect(mockGameService.getActiveGame).not.toHaveBeenCalled();
-        });
-
         it('should call next function with error when error is thrown', async () => {
             const req = {
-                query: {
-                    userId: 'user1'
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
                 }
-            } as Partial<Request>;
+            } as Partial<AuthenticatedRequest>;
             const res = {} as Partial<Response>;
             const expectedError = new Error('error');
 
             mockGameService.getActiveGame.mockRejectedValue(expectedError);
 
-            await gameController.getActiveGame(req as Request, res as Response, next);
+            await gameController.getActiveGame(req as AuthenticatedRequest, res as Response, next);
 
             expect(mockGameService.getActiveGame).toHaveBeenCalledWith('user1');
             expect(next).toHaveBeenCalledWith(expectedError);

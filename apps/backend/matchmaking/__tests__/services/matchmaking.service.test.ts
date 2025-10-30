@@ -433,22 +433,24 @@ describe('Matchmaking Service', () => {
     describe('Join Private Queue', () => {
         it('should add user to private queue when queue has 1 player', async () => {
             const userId = '1234';
+            const elo = 1500;
             const queueId = 'private-456';
             mockQueuedPlayerRepository.getQueueId.mockResolvedValue(null);
             mockCoreRestClient.checkActiveGame.mockResolvedValue(false);
             mockQueueRepository.getQueueCount.mockResolvedValue(1);
 
-            await matchmakingService.joinPrivateQueue(userId, queueId);
+            await matchmakingService.joinPrivateQueue(userId, elo, queueId);
 
             expect(mockQueuedPlayerRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.getQueueCount).toHaveBeenCalledWith(queueId);
             expect(mockQueueRepository.pushToQueue).toHaveBeenCalledWith(userId, queueId, expect.any(Number));
-            expect(mockQueuedPlayerRepository.save).toHaveBeenCalledWith(userId, expect.any(Number), 400, null);
+            expect(mockQueuedPlayerRepository.save).toHaveBeenCalledWith(userId, expect.any(Number), elo, null);
         });
 
         it('should trigger matchMake when 2nd player joins', async () => {
             const userId = '5678';
+            const elo = 1500;
             const queueId = 'private-789';
             const players = [
                 { value: '1234', score: Date.now() - 1000 },
@@ -479,7 +481,7 @@ describe('Matchmaking Service', () => {
                 .mockResolvedValueOnce('socket-1234')
                 .mockResolvedValueOnce('socket-5678');
 
-            await matchmakingService.joinPrivateQueue(userId, queueId);
+            await matchmakingService.joinPrivateQueue(userId, elo, queueId);
 
             expect(mockQueuedPlayerRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
@@ -491,10 +493,11 @@ describe('Matchmaking Service', () => {
 
         it('should throw ConflictError if user is already in queue', async () => {
             const userId = '1234';
+            const elo = 1500;
             const queueId = 'private-456';
             mockQueuedPlayerRepository.getQueueId.mockResolvedValue('another-queue');
 
-            await expect(matchmakingService.joinPrivateQueue(userId, queueId)).rejects.toThrow(
+            await expect(matchmakingService.joinPrivateQueue(userId, elo, queueId)).rejects.toThrow(
                 new ConflictError(`User with id ${userId} is already in queue`)
             );
 
@@ -504,11 +507,12 @@ describe('Matchmaking Service', () => {
 
         it('should throw NotFoundError if private queue does not exist', async () => {
             const userId = '1234';
+            const elo = 1500;
             const queueId = 'non-existent';
             mockQueuedPlayerRepository.getQueueId.mockResolvedValue(null);
             mockQueueRepository.getQueueCount.mockResolvedValue(0);
 
-            await expect(matchmakingService.joinPrivateQueue(userId, queueId)).rejects.toThrow(
+            await expect(matchmakingService.joinPrivateQueue(userId, elo, queueId)).rejects.toThrow(
                 new NotFoundError(`Private queue with id ${queueId} not found`)
             );
 
@@ -519,11 +523,12 @@ describe('Matchmaking Service', () => {
 
         it('should throw ConflictError if private queue is full', async () => {
             const userId = '1234';
+            const elo = 1500;
             const queueId = 'full-queue';
             mockQueuedPlayerRepository.getQueueId.mockResolvedValue(null);
             mockQueueRepository.getQueueCount.mockResolvedValue(2);
 
-            await expect(matchmakingService.joinPrivateQueue(userId, queueId)).rejects.toThrow(
+            await expect(matchmakingService.joinPrivateQueue(userId, elo, queueId)).rejects.toThrow(
                 new ConflictError(`Private queue with id ${queueId} is full`)
             );
 
@@ -534,11 +539,12 @@ describe('Matchmaking Service', () => {
 
         it('should throw ConflictError if user is already in an active game', async () => {
             const userId = '1234';
+            const elo = 1500;
             const queueId = 'private-456';
             mockQueuedPlayerRepository.getQueueId.mockResolvedValue(null);
             mockCoreRestClient.checkActiveGame.mockResolvedValue(true);
 
-            await expect(matchmakingService.joinPrivateQueue(userId, queueId)).rejects.toThrow(
+            await expect(matchmakingService.joinPrivateQueue(userId, elo, queueId)).rejects.toThrow(
                 new ConflictError('User is already in an active game')
             );
 

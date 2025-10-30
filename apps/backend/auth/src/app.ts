@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.routes';
 import { errorHandler } from 'chess-game-backend-common/middlewares/error.handler';
 import { authErrorHandler } from './middlewares/auth.error.handler';
 import userRoutes from './routes/user.routes';
+import internalAuthRoutes from './routes/internal.auth.routes';
 
 const app = express();
 
@@ -19,6 +20,9 @@ app.use(passport.initialize());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+
+// Internal Routes
+app.use('/internal/auth', internalAuthRoutes);
 
 // Error Handlers
 app.use(authErrorHandler);

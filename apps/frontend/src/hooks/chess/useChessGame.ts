@@ -58,9 +58,9 @@ function useChessGame() {
 
     useEffect(() => {
         const fetchGameData = async () => {
-            if (!userId || !socket) return;
+            if (!socket) return;
             try {
-                const gameData = await getActiveGame(userId);
+                const gameData = await getActiveGame();
                 setGameId(gameData.gameId);
                 setWhitePlayer(gameData.whitePlayer);
                 setBlackPlayer(gameData.blackPlayer);
@@ -78,13 +78,17 @@ function useChessGame() {
                     joinGame(socket, gameData.gameId);
                 }
             } catch (error) {
-                console.error('Failed to fetch game data:', error);
-                router.push('/play');
+                if (error instanceof Error && 'status' in error && error.status === 404) {
+                    router.push('/play');
+                } else {
+                    console.error('Failed to fetch game data:', error);
+                    router.push('/play');
+                }
             }
         };
 
         fetchGameData();
-    }, [userId, socket, router]);
+    }, [socket, router]);
 
     useEffect(() => {
         if (!userId || !whitePlayer || !blackPlayer) return;
@@ -97,7 +101,7 @@ function useChessGame() {
 
     const onDrop = useCallback(
         ({ sourceSquare, targetSquare, piece }: PieceDropHandlerArgs): boolean => {
-            if (!gameId || !userId || !socket) return false;
+            if (!gameId || !socket) return false;
             if (targetSquare === null) return false;
             const updatedPosition = updatePosition(boardPosition, sourceSquare, targetSquare, piece);
             setBoardPosition(updatedPosition);
@@ -115,7 +119,7 @@ function useChessGame() {
             });
             return true;
         },
-        [boardPosition, gameId, userId, socket]
+        [boardPosition, gameId, socket]
     );
 
     return {

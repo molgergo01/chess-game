@@ -9,13 +9,13 @@ class CoreRestClient {
         const requestBody: CreateGameRequest = {
             players: players
         };
-        const response = await axios.post(`http://localhost:${env.PORTS.CORE}/api/games`, requestBody);
+        const response = await axios.post(`http://localhost:${env.PORTS.CORE}/internal/games`, requestBody);
         return response.data as CreateGameResponse;
     }
 
     async checkActiveGame(userId: string): Promise<boolean> {
         try {
-            await axios.get(`http://localhost:${env.PORTS.CORE}/api/games/active`, {
+            await axios.get(`http://localhost:${env.PORTS.CORE}/internal/games/active`, {
                 params: { userId }
             });
             return true;

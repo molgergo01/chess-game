@@ -2,7 +2,7 @@
 
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Socket } from 'socket.io-client';
-import { initializeCoreSocket } from '@/lib/sockets/core.socket';
+import { disconnectCoreSocket, initializeCoreSocket } from '@/lib/sockets/core.socket';
 import { useAuth } from '@/hooks/auth/useAuth';
 
 interface CoreSocketContextType {
@@ -22,15 +22,13 @@ export function CoreSocketProvider({ children }: CoreSocketProviderProps) {
     useEffect(() => {
         if (!userId) return;
 
-        const socketInstance = initializeCoreSocket(userId);
+        const socketInstance = initializeCoreSocket();
         setSocket(socketInstance);
 
         return () => {
             try {
-                if (socketInstance && !socketInstance.disconnected) {
-                    socketInstance.disconnect();
-                    setSocket(null);
-                }
+                disconnectCoreSocket();
+                setSocket(null);
             } catch (error) {
                 console.warn('Socket disconnect error:', error);
                 setSocket(null);

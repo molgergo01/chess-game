@@ -1,6 +1,6 @@
 // cypress/support/index.ts
 import { mount } from 'cypress/react';
-import { CreateUserParams, CreateGameParams, CreateMoveParams } from './db-tasks';
+import { CreateGameParams, CreateMoveParams, CreateUserParams } from './db-tasks';
 
 export {};
 
@@ -48,6 +48,7 @@ declare global {
              * @example cy.cleanupTestData()
              */
             cleanupTestData(): Chainable;
+            createTestUserForToken(): Chainable;
         }
     }
 }

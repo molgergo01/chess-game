@@ -72,10 +72,11 @@ describe('Game Listener', () => {
         });
     });
 
-    afterAll(() => {
-        io.close();
+    afterAll(async () => {
         clientSocket.disconnect();
-        httpServer.close();
+        io.disconnectSockets();
+        await io.close();
+        httpServer.closeAllConnections();
     });
 
     afterEach(() => {

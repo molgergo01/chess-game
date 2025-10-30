@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { getUser } from '@/lib/clients/auth.rest.client';
 
 interface AuthContextType {
@@ -13,33 +14,32 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+    const pathname = usePathname();
     const [userId, setUserId] = useState<string | null>(null);
     const [userName, setUserName] = useState<string | null>(null);
     const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
 
     const fetchUserData = async () => {
         try {
-            const response = await getUser();
+            const user = await getUser();
 
-            if (response.status === 200) {
-                const data = response.data;
-                setUserId(data.id);
-                setUserName(data.name);
-                setUserAvatarUrl(data.avatarUrl);
-            } else {
-                setUserId(null);
-                setUserName(null);
-                setUserAvatarUrl(null);
-            }
+            setUserId(user.id);
+            setUserName(user.name);
+            setUserAvatarUrl(user.avatarUrl);
         } catch (error) {
             console.error('Failed to fetch user data:', error);
             setUserId(null);
+            setUserName(null);
+            setUserAvatarUrl(null);
         }
     };
 
     useEffect(() => {
+        if (pathname === '/login') {
+            return;
+        }
         fetchUserData();
-    }, []);
+    }, [pathname]);
 
     return (
         <AuthContext.Provider value={{ userId, userName, userAvatarUrl, refetch: fetchUserData }}>

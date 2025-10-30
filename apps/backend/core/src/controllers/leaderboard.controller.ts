@@ -1,7 +1,9 @@
 import UserService from '../services/user.service';
 import { inject, injectable } from 'inversify';
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Response } from 'express';
 import { GetLeaderboardResponse, LeaderboardUserDto } from '../models/responses';
+import { AuthenticatedRequest } from 'chess-game-backend-common/types/authenticated.request';
+import { PaginationQueryParams } from '../models/requests';
 
 @injectable()
 class LeaderboardController {
@@ -10,25 +12,13 @@ class LeaderboardController {
         private readonly userService: UserService
     ) {}
 
-    async getLeaderboard(req: Request, res: Response, next: NextFunction) {
+    async getLeaderboard(
+        req: AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>,
+        res: Response,
+        next: NextFunction
+    ) {
         try {
-            let limit: number | null;
-            let offset: number | null;
-
-            const limitParam = req.query.limit;
-            const offsetParam = req.query.offset;
-            if (!limitParam || typeof limitParam !== 'string') {
-                limit = null;
-            } else {
-                limit = parseInt(limitParam);
-            }
-            if (!offsetParam || typeof offsetParam !== 'string') {
-                offset = null;
-            } else {
-                offset = parseInt(offsetParam);
-            }
-
-            const result = await this.userService.getUsers(limit, offset);
+            const result = await this.userService.getUsers(req.query.limit, req.query.offset);
 
             const userDtos = result.users.map(
                 (user): LeaderboardUserDto => ({

@@ -1,20 +1,17 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import env from '@/lib/config/env';
-import {
-    CreateQueueRequest,
-    GetQueueStatusParams,
-    JoinQueueRequest,
-    LeaveQueueRequest
-} from '@/lib/models/request/matchmaking';
 import { GetQueueStatusResponse } from '@/lib/models/response/matchmaking';
 import { QueueStatus } from '@/lib/models/matchmaking/matchmaking';
 
-export async function joinQueue(userId: string) {
-    const requestBody: JoinQueueRequest = {
-        userId: userId
-    };
+export async function joinQueue() {
     try {
-        await axios.post(`${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue`, requestBody);
+        await axios.post(
+            `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue`,
+            {},
+            {
+                withCredentials: true
+            }
+        );
     } catch (error) {
         if (error instanceof AxiosError && error.response) {
             throw new Error(error.response.data.message || 'Failed to join queue');
@@ -26,12 +23,15 @@ export async function joinQueue(userId: string) {
     }
 }
 
-export async function createPrivateQueue(userId: string): Promise<string> {
-    const requestBody: CreateQueueRequest = {
-        userId: userId
-    };
+export async function createPrivateQueue(): Promise<string> {
     try {
-        const response = await axios.post(`${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/private`, requestBody);
+        const response = await axios.post(
+            `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/private`,
+            {},
+            {
+                withCredentials: true
+            }
+        );
         return response.data.queueId;
     } catch (error) {
         if (error instanceof AxiosError && error.response) {
@@ -44,12 +44,15 @@ export async function createPrivateQueue(userId: string): Promise<string> {
     }
 }
 
-export async function joinPrivateQueue(userId: string, queueId: string) {
-    const requestBody: JoinQueueRequest = {
-        userId: userId
-    };
+export async function joinPrivateQueue(queueId: string) {
     try {
-        await axios.post(`${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/private/${queueId}`, requestBody);
+        await axios.post(
+            `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/private/${queueId}`,
+            {},
+            {
+                withCredentials: true
+            }
+        );
     } catch (error) {
         if (error instanceof AxiosError && error.response) {
             throw new Error(error.response.data.message || 'Failed to join private queue');
@@ -61,13 +64,10 @@ export async function joinPrivateQueue(userId: string, queueId: string) {
     }
 }
 
-export async function leaveQueue(userId: string) {
-    const requestBody: LeaveQueueRequest = {
-        userId: userId
-    };
+export async function leaveQueue() {
     try {
         await axios.delete(`${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue`, {
-            data: requestBody
+            withCredentials: true
         });
     } catch (error) {
         if (error instanceof AxiosError && error.response) {
@@ -80,13 +80,10 @@ export async function leaveQueue(userId: string) {
     }
 }
 
-export async function leavePrivateQueue(userId: string, queueId: string) {
-    const requestBody: LeaveQueueRequest = {
-        userId: userId
-    };
+export async function leavePrivateQueue(queueId: string) {
     try {
         await axios.delete(`${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/private/${queueId}`, {
-            data: requestBody
+            withCredentials: true
         });
     } catch (error) {
         if (error instanceof AxiosError && error.response) {
@@ -99,15 +96,12 @@ export async function leavePrivateQueue(userId: string, queueId: string) {
     }
 }
 
-export async function getQueueStatus(userId: string): Promise<QueueStatus> {
-    const params: GetQueueStatusParams = {
-        userId: userId
-    };
+export async function getQueueStatus(): Promise<QueueStatus> {
     try {
         const res: AxiosResponse<GetQueueStatusResponse> = await axios.get(
             `${env.REST_URLS.MATCHMAKING}/api/matchmaking/queue/status`,
             {
-                params: params
+                withCredentials: true
             }
         );
         return {

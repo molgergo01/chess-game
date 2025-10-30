@@ -1,16 +1,9 @@
 import { inject, injectable } from 'inversify';
 import GameService from '../services/game.service';
-import { NextFunction, Request, Response } from 'express';
-import TimerWatcher from '../services/timer.watcher';
-import {
-    CreateGameResponse,
-    GameDto,
-    GetActiveGameResponse,
-    GetGameHistoryResponse,
-    GetGameResponse,
-    MoveDto
-} from '../models/responses';
-import { CreateGameRequest, GetGameParams } from '../models/requests';
+import { NextFunction, Response } from 'express';
+import { AuthenticatedRequest } from 'chess-game-backend-common/types/authenticated.request';
+import { GameDto, GetActiveGameResponse, GetGameHistoryResponse, GetGameResponse, MoveDto } from '../models/responses';
+import { GetGameParams, PaginationQueryParams } from '../models/requests';
 import { Move } from '../models/move';
 import { Winner } from '../models/game';
 
@@ -18,51 +11,16 @@ import { Winner } from '../models/game';
 class GameController {
     constructor(
         @inject(GameService)
-        public readonly gameService: GameService,
-        @inject(TimerWatcher)
-        private readonly timerWatcher: TimerWatcher
+        public readonly gameService: GameService
     ) {}
 
-    async createGame(req: Request<unknown, unknown, CreateGameRequest>, res: Response, next: NextFunction) {
+    async getGameHistory(
+        req: AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>,
+        res: Response,
+        next: NextFunction
+    ) {
         try {
-            const gameCreated = await this.gameService.create(req.body.players);
-            this.timerWatcher.start();
-            const responseBody: CreateGameResponse = {
-                players: gameCreated.players,
-                gameId: gameCreated.gameId
-            };
-            res.status(201).json(responseBody);
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    async getGameHistory(req: Request, res: Response, next: NextFunction) {
-        try {
-            const userId = req.query.userId;
-
-            if (!userId || typeof userId !== 'string') {
-                res.status(400).json({ message: 'userId query parameter is required' });
-                return;
-            }
-
-            let limit: number | null;
-            let offset: number | null;
-
-            const limitParam = req.query.limit;
-            const offsetParam = req.query.offset;
-            if (!limitParam || typeof limitParam !== 'string') {
-                limit = null;
-            } else {
-                limit = parseInt(limitParam);
-            }
-            if (!offsetParam || typeof offsetParam !== 'string') {
-                offset = null;
-            } else {
-                offset = parseInt(offsetParam);
-            }
-
-            const historyResult = await this.gameService.getGameHistory(userId, limit, offset);
+            const historyResult = await this.gameService.getGameHistory(req.user.id, req.query.limit, req.query.offset);
 
             const gameDtos = historyResult.games.map(
                 (game): GameDto => ({
@@ -95,7 +53,7 @@ class GameController {
         }
     }
 
-    async getGame(req: Request<GetGameParams, unknown, unknown>, res: Response, next: NextFunction) {
+    async getGame(req: AuthenticatedRequest<GetGameParams, unknown, unknown>, res: Response, next: NextFunction) {
         try {
             const gameWithMoves = await this.gameService.getGameWithMoves(req.params.gameId);
 
@@ -135,16 +93,9 @@ class GameController {
         }
     }
 
-    async getActiveGame(req: Request, res: Response, next: NextFunction) {
+    async getActiveGame(req: AuthenticatedRequest<unknown, unknown, unknown>, res: Response, next: NextFunction) {
         try {
-            const userId = req.query.userId;
-
-            if (!userId || typeof userId !== 'string') {
-                res.status(400).json({ message: 'userId query parameter is required' });
-                return;
-            }
-
-            const result = await this.gameService.getActiveGame(userId);
+            const result = await this.gameService.getActiveGame(req.user.id);
 
             const response: GetActiveGameResponse = {
                 gameId: result.game.id,

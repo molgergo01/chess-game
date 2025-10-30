@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button';
 import { leaveQueue } from '@/lib/clients/matchmaking.rest.client';
-import { useAuth } from '@/hooks/auth/useAuth';
 
 interface LeaveMatchmakingButtonProps {
     onLeaveQueue?: () => void;
@@ -10,15 +9,9 @@ interface LeaveMatchmakingButtonProps {
 }
 
 function LeaveMatchmakingButton({ onLeaveQueue, onError }: LeaveMatchmakingButtonProps) {
-    const { userId } = useAuth();
     const handleLeave = async () => {
-        if (!userId) {
-            const error = new Error('User id is not set');
-            onError?.(error);
-            return;
-        }
         try {
-            await leaveQueue(userId);
+            await leaveQueue();
             onLeaveQueue?.();
         } catch (error) {
             if (error instanceof Error) {

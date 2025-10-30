@@ -27,9 +27,17 @@ describe('<Game />', () => {
     };
 
     beforeEach(() => {
-        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
+        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me*`, {
             statusCode: 200,
-            body: { id: 'white-user-id', name: 'White Player' }
+            body: {
+                user: {
+                    id: 'white-user-id',
+                    name: 'White Player',
+                    email: 'white@example.com',
+                    elo: 1500,
+                    avatarUrl: null
+                }
+            }
         }).as('getUser');
     });
 

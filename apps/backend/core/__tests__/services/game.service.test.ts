@@ -898,11 +898,11 @@ describe('Game Service', () => {
             mockGamesRepository.findAllByUserId.mockResolvedValue(mockGames);
             mockGamesRepository.countAllByUserId.mockResolvedValue(totalCount);
 
-            const result = await gameService.getGameHistory(userId, null, null);
+            const result = await gameService.getGameHistory(userId, undefined, undefined);
 
             expect(result.games).toEqual(mockGames);
             expect(result.totalCount).toEqual(totalCount);
-            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, null, null);
+            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, undefined, undefined);
             expect(mockGamesRepository.countAllByUserId).toHaveBeenCalledWith(userId);
         });
 
@@ -911,7 +911,7 @@ describe('Game Service', () => {
             mockGamesRepository.findAllByUserId.mockResolvedValue([]);
             mockGamesRepository.countAllByUserId.mockResolvedValue(0);
 
-            const result = await gameService.getGameHistory(userId, null, null);
+            const result = await gameService.getGameHistory(userId, undefined, undefined);
 
             expect(result.games).toEqual([]);
             expect(result.totalCount).toEqual(0);
@@ -923,9 +923,9 @@ describe('Game Service', () => {
             mockGamesRepository.findAllByUserId.mockResolvedValue([]);
             mockGamesRepository.countAllByUserId.mockResolvedValue(0);
 
-            await gameService.getGameHistory(userId, limit, null);
+            await gameService.getGameHistory(userId, limit, undefined);
 
-            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, limit, null);
+            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, limit, undefined);
         });
 
         it('should apply offset parameter correctly', async () => {
@@ -934,9 +934,9 @@ describe('Game Service', () => {
             mockGamesRepository.findAllByUserId.mockResolvedValue([]);
             mockGamesRepository.countAllByUserId.mockResolvedValue(0);
 
-            await gameService.getGameHistory(userId, null, offset);
+            await gameService.getGameHistory(userId, undefined, offset);
 
-            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, null, offset);
+            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, undefined, offset);
         });
 
         it('should apply both limit and offset together', async () => {
@@ -956,17 +956,17 @@ describe('Game Service', () => {
             mockGamesRepository.findAllByUserId.mockResolvedValue([]);
             mockGamesRepository.countAllByUserId.mockResolvedValue(0);
 
-            await gameService.getGameHistory(userId, null, null);
+            await gameService.getGameHistory(userId, undefined, undefined);
 
-            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, null, null);
+            expect(mockGamesRepository.findAllByUserId).toHaveBeenCalledWith(userId, undefined, undefined);
         });
 
         it('should throw BadRequestError when limit is negative', async () => {
             const userId = '1234';
             const limit = -5;
 
-            await expect(gameService.getGameHistory(userId, limit, null)).rejects.toThrow(BadRequestError);
-            await expect(gameService.getGameHistory(userId, limit, null)).rejects.toThrow(
+            await expect(gameService.getGameHistory(userId, limit, undefined)).rejects.toThrow(BadRequestError);
+            await expect(gameService.getGameHistory(userId, limit, undefined)).rejects.toThrow(
                 'Limit must be a non-negative number'
             );
         });
@@ -975,8 +975,8 @@ describe('Game Service', () => {
             const userId = '1234';
             const offset = -10;
 
-            await expect(gameService.getGameHistory(userId, null, offset)).rejects.toThrow(BadRequestError);
-            await expect(gameService.getGameHistory(userId, null, offset)).rejects.toThrow(
+            await expect(gameService.getGameHistory(userId, undefined, offset)).rejects.toThrow(BadRequestError);
+            await expect(gameService.getGameHistory(userId, undefined, offset)).rejects.toThrow(
                 'Offset must be a non-negative number'
             );
         });

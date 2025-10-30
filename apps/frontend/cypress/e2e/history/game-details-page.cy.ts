@@ -22,6 +22,7 @@ describe('/games/[gameId] Page', () => {
         const testGameId = uuid();
 
         beforeEach(() => {
+            cy.createTestUserForToken();
             cy.applyToken();
 
             cy.createUser({
@@ -153,6 +154,7 @@ describe('/games/[gameId] Page', () => {
         const testGameId = uuid();
 
         beforeEach(() => {
+            cy.createTestUserForToken();
             cy.applyToken();
 
             cy.createUser({
@@ -264,6 +266,7 @@ describe('/games/[gameId] Page', () => {
         const testGameId = uuid();
 
         beforeEach(() => {
+            cy.createTestUserForToken();
             cy.applyToken();
 
             cy.createUser({
@@ -387,6 +390,7 @@ describe('/games/[gameId] Page', () => {
         const testGameId = uuid();
 
         beforeEach(() => {
+            cy.createTestUserForToken();
             cy.applyToken();
 
             cy.createUser({
@@ -463,6 +467,7 @@ describe('/games/[gameId] Page', () => {
         const testGameId = uuid();
 
         beforeEach(() => {
+            cy.createTestUserForToken();
             cy.applyToken();
 
             cy.createUser({
@@ -554,6 +559,7 @@ describe('/games/[gameId] Page', () => {
 
     describe('Error Handling', () => {
         beforeEach(() => {
+            cy.createTestUserForToken();
             cy.applyToken();
         });
 

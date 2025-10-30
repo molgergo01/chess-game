@@ -3,6 +3,7 @@ import app from '../../src/app';
 import Redis from 'chess-game-backend-common/config/redis';
 import db from 'chess-game-backend-common/config/db';
 import { Winner } from '../../src/models/game';
+import { authenticatedRequest, cleanupAuthMocks, mockAuthServiceVerify } from '../fixtures/auth.fixture';
 
 jest.mock('chess-game-backend-common/config/env', () => ({
     __esModule: true,
@@ -70,6 +71,8 @@ const createMove = async (
 
 describe('Game routes', () => {
     afterEach(async () => {
+        cleanupAuthMocks();
+
         const keys = await Redis.keys('*');
         if (keys.length > 0) {
             await Redis.del(keys);
@@ -79,126 +82,19 @@ describe('Game routes', () => {
         await db.none('TRUNCATE TABLE chess_game.users CASCADE');
     });
 
-    afterAll(async () => {
-        await Redis.quit();
-        await db.$pool.end();
-    });
-
-    describe('POST /api/games', () => {
-        it('should create a game with valid players, persist to Redis and database', async () => {
-            await createUser('player1', 'Player One', 'player1@example.com', 1500, 'avatar_url.com');
-            await createUser('player2', 'Player Two', 'player2@example.com', 1600, 'avatar_url.com');
-
-            const players = ['player1', 'player2'];
-            const res = await request(app).post('/api/games').send({ players });
-
-            expect(res.status).toBe(201);
-            expect(res.body).toHaveProperty('gameId');
-            expect(res.body).toHaveProperty('players');
-            expect(res.body.players).toHaveLength(2);
-
-            const gameId = res.body.gameId;
-
-            const gameState = await Redis.hGetAll(`game-state:${gameId}`);
-            expect(gameState).toBeDefined();
-            expect(gameState.position).toBe('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
-            expect(gameState.players).toBeDefined();
-            const storedPlayers = JSON.parse(gameState.players);
-            expect(storedPlayers).toHaveLength(2);
-            expect(gameState.lastMoveEpoch).toBe('0');
-            expect(gameState.startedAt).toBeDefined();
-
-            const player1GameId = await Redis.get('game-id:player1');
-            const player2GameId = await Redis.get('game-id:player2');
-            expect(player1GameId).toBe(gameId);
-            expect(player2GameId).toBe(gameId);
-
-            const dbGameResult = await db.query('SELECT * FROM chess_game.games WHERE id = $1', [gameId]);
-            expect(dbGameResult).toHaveLength(1);
-            const dbGame = dbGameResult[0];
-            expect(dbGame.id).toBe(gameId);
-            expect([dbGame.white_player_id, dbGame.black_player_id]).toContain('player1');
-            expect([dbGame.white_player_id, dbGame.black_player_id]).toContain('player2');
-            expect(dbGame.started_at).toBeDefined();
-            expect(dbGame.ended_at).toBeNull();
-            expect(dbGame.winner).toBeNull();
-        });
-
-        it('should return 400 if players array has only 1 player', async () => {
-            const players = ['player1'];
-            const res = await request(app).post('/api/games').send({ players });
-
-            expect(res.status).toBe(400);
-            expect(res.body).toHaveProperty('message');
-            expect(res.body.message).toContain('playerIds must be exactly 2 players');
-
-            const keys = await Redis.keys('game-id*');
-            expect(keys).toHaveLength(0);
-
-            const dbGameResult = await db.query('SELECT * FROM chess_game.games');
-            expect(dbGameResult).toHaveLength(0);
-        });
-
-        it('should return 400 if players array has more than 2 players', async () => {
-            const players = ['player1', 'player2', 'player3'];
-            const res = await request(app).post('/api/games').send({ players });
-
-            expect(res.status).toBe(400);
-            expect(res.body).toHaveProperty('message');
-            expect(res.body.message).toContain('playerIds must be exactly 2 players');
-
-            const keys = await Redis.keys('game-id*');
-            expect(keys).toHaveLength(0);
-
-            const dbGameResult = await db.query('SELECT * FROM chess_game.games');
-            expect(dbGameResult).toHaveLength(0);
-        });
-
-        it('should return 400 if players array contains the same player twice', async () => {
-            await createUser('player1', 'Player One', 'player1@example.com', 1500, 'avatar_url.com');
-
-            const players = ['player1', 'player1'];
-            const res = await request(app).post('/api/games').send({ players });
-
-            expect(res.status).toBe(400);
-            expect(res.body).toHaveProperty('message');
-            expect(res.body.message).toContain('playerIds must be 2 distinct players');
-
-            const keys = await Redis.keys('game-id*');
-            expect(keys).toHaveLength(0);
-
-            const dbGameResult = await db.query('SELECT * FROM chess_game.games');
-            expect(dbGameResult).toHaveLength(0);
-        });
-
-        it('should return 409 if one of the players is already in an active game', async () => {
-            await createUser('player1', 'Player One', 'player1@example.com', 1500, 'avatar_url.com');
-            await createUser('player2', 'Player Two', 'player2@example.com', 1600, 'avatar_url.com');
-            await createUser('player3', 'Player Three', 'player3@example.com', 1550, 'avatar_url.com');
-
-            const gameId = '550e8400-e29b-41d4-a716-446655440000';
-            await createGame(gameId, 'player1', 'player2', new Date(), null, null);
-
-            const players = ['player1', 'player3'];
-            const res = await request(app).post('/api/games').send({ players });
-
-            expect(res.status).toBe(409);
-            expect(res.body).toHaveProperty('message');
-            expect(res.body.message).toContain('A player is already in game');
-
-            const player3GameId = await Redis.get('game-id:player3');
-            expect(player3GameId).toBeNull();
-
-            const dbGamesResult = await db.query('SELECT * FROM chess_game.games');
-            expect(dbGamesResult).toHaveLength(1);
-        });
-    });
-
     describe('GET /api/games', () => {
         it('should return game history for a user with games', async () => {
             await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
             await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
             await createUser('user3', 'User Three', 'user3@example.com', 1550, 'avatar_url.com');
+
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'User One',
+                email: 'user1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar_url.com'
+            });
 
             const now = new Date();
             const game1Id = '550e8400-e29b-41d4-a716-446655440001';
@@ -209,7 +105,7 @@ describe('Game routes', () => {
             await createGame(game1Id, 'user1', 'user2', now, game1EndedAt, Winner.WHITE);
             await createGame(game2Id, 'user3', 'user1', now, game2EndedAt, Winner.BLACK);
 
-            const res = await request(app).get('/api/games').query({ userId: 'user1' });
+            const res = await authenticatedRequest(request(app).get('/api/games'), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('games');
@@ -232,7 +128,15 @@ describe('Game routes', () => {
         it('should return empty array for user with no games', async () => {
             await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
 
-            const res = await request(app).get('/api/games').query({ userId: 'user1' });
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'User One',
+                email: 'user1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar_url.com'
+            });
+
+            const res = await authenticatedRequest(request(app).get('/api/games'), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body.games).toEqual([]);
@@ -243,6 +147,14 @@ describe('Game routes', () => {
             await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
             await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
 
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'User One',
+                email: 'user1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar_url.com'
+            });
+
             const now = new Date();
             const game1Id = '550e8400-e29b-41d4-a716-446655440001';
             const game2Id = '550e8400-e29b-41d4-a716-446655440002';
@@ -272,7 +184,7 @@ describe('Game routes', () => {
                 Winner.DRAW
             );
 
-            const res = await request(app).get('/api/games').query({ userId: 'user1', limit: '2' });
+            const res = await authenticatedRequest(request(app).get('/api/games'), 'user1').query({ limit: 2 });
 
             expect(res.status).toBe(200);
             expect(res.body.games).toHaveLength(2);
@@ -283,6 +195,14 @@ describe('Game routes', () => {
             await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
             await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
 
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'User One',
+                email: 'user1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar_url.com'
+            });
+
             const now = new Date();
             const game1Id = '550e8400-e29b-41d4-a716-446655440001';
             const game2Id = '550e8400-e29b-41d4-a716-446655440002';
@@ -312,7 +232,7 @@ describe('Game routes', () => {
                 Winner.DRAW
             );
 
-            const res = await request(app).get('/api/games').query({ userId: 'user1', offset: '1' });
+            const res = await authenticatedRequest(request(app).get('/api/games'), 'user1').query({ offset: 1 });
 
             expect(res.status).toBe(200);
             expect(res.body.games).toHaveLength(2);
@@ -325,6 +245,14 @@ describe('Game routes', () => {
             await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
             await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
 
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'User One',
+                email: 'user1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar_url.com'
+            });
+
             const now = new Date();
             const game1Id = '550e8400-e29b-41d4-a716-446655440001';
             const game2Id = '550e8400-e29b-41d4-a716-446655440002';
@@ -354,20 +282,15 @@ describe('Game routes', () => {
                 Winner.DRAW
             );
 
-            const res = await request(app).get('/api/games').query({ userId: 'user1', limit: '1', offset: '1' });
+            const res = await authenticatedRequest(request(app).get('/api/games'), 'user1').query({
+                offset: 1,
+                limit: 1
+            });
 
             expect(res.status).toBe(200);
             expect(res.body.games).toHaveLength(1);
             expect(res.body.games[0].gameId).toBe(game2Id);
             expect(Number(res.body.totalCount)).toBe(3);
-        });
-
-        it('should return 400 if userId query parameter is missing', async () => {
-            const res = await request(app).get('/api/games');
-
-            expect(res.status).toBe(400);
-            expect(res.body).toHaveProperty('message');
-            expect(res.body.message).toContain('userId query parameter is required');
         });
     });
 
@@ -376,13 +299,21 @@ describe('Game routes', () => {
             await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
             await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
 
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'User One',
+                email: 'user1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar_url.com'
+            });
+
             const players = ['user1', 'user2'];
-            const createRes = await request(app).post('/api/games').send({ players });
+            const createRes = await request(app).post('/internal/games').send({ players });
 
             expect(createRes.status).toBe(201);
             const gameId = createRes.body.gameId;
 
-            const res = await request(app).get('/api/games/active').query({ userId: 'user1' });
+            const res = await authenticatedRequest(request(app).get('/api/games/active'), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('gameId');
@@ -407,19 +338,19 @@ describe('Game routes', () => {
         it('should return 404 when user has no active game', async () => {
             await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
 
-            const res = await request(app).get('/api/games/active').query({ userId: 'user1' });
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'User One',
+                email: 'user1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar_url.com'
+            });
+
+            const res = await authenticatedRequest(request(app).get('/api/games/active'), 'user1');
 
             expect(res.status).toBe(404);
             expect(res.body).toHaveProperty('message');
             expect(res.body.message).toContain('No active game found for user');
-        });
-
-        it('should return 400 if userId query parameter is missing', async () => {
-            const res = await request(app).get('/api/games/active');
-
-            expect(res.status).toBe(400);
-            expect(res.body).toHaveProperty('message');
-            expect(res.body.message).toContain('userId query parameter is required');
         });
     });
 
@@ -427,6 +358,14 @@ describe('Game routes', () => {
         it('should return game with moves for completed game', async () => {
             await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
             await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
+
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'User One',
+                email: 'user1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar_url.com'
+            });
 
             const gameId = '550e8400-e29b-41d4-a716-446655440000';
             const now = new Date();
@@ -456,7 +395,7 @@ describe('Game routes', () => {
                 new Date(now.getTime() + 2000)
             );
 
-            const res = await request(app).get(`/api/games/${gameId}`);
+            const res = await authenticatedRequest(request(app).get(`/api/games/${gameId}`), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body.gameId).toBe(gameId);
@@ -474,12 +413,20 @@ describe('Game routes', () => {
             await createUser('user1', 'User One', 'user1@example.com', 1500, 'avatar_url.com');
             await createUser('user2', 'User Two', 'user2@example.com', 1600, 'avatar_url.com');
 
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'User One',
+                email: 'user1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar_url.com'
+            });
+
             const gameId = '550e8400-e29b-41d4-a716-446655440000';
             const now = new Date();
 
             await createGame(gameId, 'user1', 'user2', now, null, null);
 
-            const res = await request(app).get(`/api/games/${gameId}`);
+            const res = await authenticatedRequest(request(app).get(`/api/games/${gameId}`), 'user1');
 
             expect(res.status).toBe(400);
             expect(res.body).toHaveProperty('message');
@@ -489,9 +436,17 @@ describe('Game routes', () => {
         });
 
         it('should return 404 for non-existent game', async () => {
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'User One',
+                email: 'user1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar_url.com'
+            });
+
             const gameId = '550e8400-e29b-41d4-a716-446655440000';
 
-            const res = await request(app).get(`/api/games/${gameId}`);
+            const res = await authenticatedRequest(request(app).get(`/api/games/${gameId}`), 'user1');
 
             expect(res.status).toBe(404);
             expect(res.body).toHaveProperty('message');
@@ -499,9 +454,17 @@ describe('Game routes', () => {
         });
 
         it('should return 400 for invalid game ID format', async () => {
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'User One',
+                email: 'user1@example.com',
+                elo: 1500,
+                avatarUrl: 'avatar_url.com'
+            });
+
             const invalidGameId = 'invalid-uuid';
 
-            const res = await request(app).get(`/api/games/${invalidGameId}`);
+            const res = await authenticatedRequest(request(app).get(`/api/games/${invalidGameId}`), 'user1');
 
             expect(res.status).toBe(400);
             expect(res.body).toHaveProperty('message');

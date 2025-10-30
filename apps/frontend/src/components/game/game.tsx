@@ -135,8 +135,13 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                                 {winner === Winner.DRAW && 'Draw'}
                             </span>
                             <span className="flex items-center gap-2">
-                                <span className="text-base" data-cy="new-rating">New rating: {playerNewRating}</span>
-                                <span className={`text-sm ${getRatingChangeColor(playerRatingChange)}`} data-cy="rating-change">
+                                <span className="text-base" data-cy="new-rating">
+                                    New rating: {playerNewRating}
+                                </span>
+                                <span
+                                    className={`text-sm ${getRatingChangeColor(playerRatingChange)}`}
+                                    data-cy="rating-change"
+                                >
                                     {playerRatingChange !== undefined && playerRatingChange >= 0 ? '+' : ''}
                                     {playerRatingChange}
                                 </span>

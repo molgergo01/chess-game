@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button';
 import { joinQueue } from '@/lib/clients/matchmaking.rest.client';
-import { useAuth } from '@/hooks/auth/useAuth';
 
 interface MatchmakingButtonProps {
     onJoinQueue?: () => void;
@@ -10,15 +9,9 @@ interface MatchmakingButtonProps {
 }
 
 function MatchmakingButton({ onJoinQueue, onError }: MatchmakingButtonProps) {
-    const { userId } = useAuth();
     const handleMatchmaking = async () => {
-        if (!userId) {
-            const error = new Error('User id is not set');
-            onError?.(error);
-            return;
-        }
         try {
-            await joinQueue(userId);
+            await joinQueue();
             onJoinQueue?.();
         } catch (error) {
             if (error instanceof Error) {

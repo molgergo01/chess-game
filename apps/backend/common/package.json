@@ -17,7 +17,9 @@
         "./errors/internal.server.error": "./dist/errors/internal.server.error.js",
         "./errors/not.found.error": "./dist/errors/not.found.error.js",
         "./errors/unauthorized.error": "./dist/errors/unauthorized.error.js",
-        "./middlewares/error.handler": "./dist/middlewares/error.handler.js"
+        "./middlewares/error.handler": "./dist/middlewares/error.handler.js",
+        "./models/user": "./dist/models/user.js",
+        "./types/authenticated.request": "./dist/types/authenticated.request.js"
     },
     "private": true,
     "scripts": {

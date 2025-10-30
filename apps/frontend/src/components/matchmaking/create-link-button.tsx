@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button';
 import { createPrivateQueue } from '@/lib/clients/matchmaking.rest.client';
-import { useAuth } from '@/hooks/auth/useAuth';
 
 interface CreateLinkButtonProps {
     onCreateLink?: (queueId: string | null) => void;
@@ -10,16 +9,9 @@ interface CreateLinkButtonProps {
 }
 
 function CreateLinkButton({ onCreateLink, onError }: CreateLinkButtonProps) {
-    const { userId } = useAuth();
     const handleInviteLink = async () => {
-        if (!userId) {
-            const error = new Error('User id is not set');
-            onError?.(error);
-            return;
-        }
-
         try {
-            const queueId = await createPrivateQueue(userId);
+            const queueId = await createPrivateQueue();
             onCreateLink?.(queueId);
         } catch (error) {
             if (error instanceof Error) {

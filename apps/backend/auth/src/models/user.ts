@@ -8,7 +8,7 @@ export class User {
         id: string | undefined,
         name: string | undefined,
         email: string | undefined,
-        avatarUrl: string | undefined
+        avatarUrl: string | null | undefined
     ) {
         if (!id || !name || !email) {
             throw new Error('User must have an id, name and email');
@@ -23,3 +23,11 @@ export class User {
         }
     }
 }
+
+export type AuthUser = {
+    id: string;
+    name: string;
+    email: string;
+    elo: number;
+    avatarUrl: string | null;
+};

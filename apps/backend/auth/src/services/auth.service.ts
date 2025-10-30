@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import UserRepository from '../repositories/user.repository';
-import { User } from '../models/user';
+import { AuthUser, User } from '../models/user';
 import env from 'chess-game-backend-common/config/env';
 import FailedLoginError from '../errors/failed.login.error';
 import UnauthorizedError from 'chess-game-backend-common/errors/unauthorized.error';
@@ -25,26 +25,45 @@ class AuthService {
             throw new FailedLoginError();
         }
 
-        return jwt.sign(
-            { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl },
-            env.JWT_SECRET!,
-            {
-                expiresIn: '7d'
-            }
-        );
+        const now = Math.floor(Date.now() / 1000);
+        const payload: JwtPayload = {
+            sub: user.id,
+            iat: now,
+            exp: now + 7 * 24 * 60 * 60 // 7d
+        };
+
+        return jwt.sign(payload, env.JWT_SECRET!);
     }
 
-    getUserFromToken(token: string | undefined) {
+    async getUserFromToken(token: string | undefined): Promise<AuthUser> {
         if (!token) {
             throw new UnauthorizedError('Token not found');
         }
 
+        let decoded: unknown;
         try {
-            return jwt.verify(token, env.JWT_SECRET!);
+            decoded = jwt.verify(token, env.JWT_SECRET!);
         } catch (error) {
             console.warn(error);
             throw new UnauthorizedError('Invalid Token');
         }
+        if (typeof decoded === 'string') {
+            throw new UnauthorizedError('Invalid Token');
+        }
+
+        const payload = decoded as JwtPayload;
+
+        if (!payload.sub) {
+            throw new UnauthorizedError('Invalid Token');
+        }
+
+        const user = await this.userRepository.getUserById(payload.sub);
+
+        if (!user) {
+            throw new UnauthorizedError('Invalid User in Token');
+        }
+
+        return user;
     }
 }
 

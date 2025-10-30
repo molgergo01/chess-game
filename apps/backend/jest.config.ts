@@ -4,6 +4,7 @@ const config: Config = {
     preset: 'ts-jest',
     verbose: true,
     projects: ['<rootDir>/auth/', '<rootDir>/core/', '<rootDir>/matchmaking/'],
+    testPathIgnorePatterns: ['<rootDir>/.*/fixtures/'],
     collectCoverage: true,
     collectCoverageFrom: [
         'src/**/*.{js,ts}',
@@ -31,7 +32,8 @@ const config: Config = {
     coverageProvider: 'v8',
     moduleNameMapper: {
         '^chess-game-backend-common/(.*)$': '<rootDir>/common/src/$1'
-    }
+    },
+    maxWorkers: 1
 };
 
 export default config;

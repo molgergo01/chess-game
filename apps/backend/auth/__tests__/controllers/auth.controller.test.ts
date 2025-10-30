@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import AuthService from '../../src/services/auth.service';
 import AuthController from '../../src/controllers/auth.controller';
+import { AuthenticatedRequest } from 'chess-game-backend-common/types/authenticated.request';
 
 jest.mock('chess-game-backend-common/config/env', () => ({
     __esModule: true,
@@ -70,14 +71,22 @@ describe('Auth Controller', () => {
 
     describe('Logout User', () => {
         it('should clear token from cookies and return status 200', () => {
-            const req = {} as Partial<Request>;
+            const req = {
+                user: {
+                    id: '1234',
+                    name: 'Test User',
+                    email: 'test@example.com',
+                    elo: 1200,
+                    avatarUrl: 'avatar.jpg'
+                }
+            } as Partial<AuthenticatedRequest>;
             const res: Partial<jest.Mocked<Response>> = {
                 clearCookie: jest.fn().mockReturnThis(),
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn()
             };
 
-            authController.logoutUser(req as Request, res as Response, next as NextFunction);
+            authController.logoutUser(req as AuthenticatedRequest, res as Response, next as NextFunction);
 
             expect(res.clearCookie).toHaveBeenCalledWith('token', {
                 domain: 'localhost',
@@ -91,7 +100,7 @@ describe('Auth Controller', () => {
     });
 
     describe('Verify Token', () => {
-        it('should return status 200 and authenticated when token is valid', () => {
+        it('should return status 200 and authenticated when token is valid', async () => {
             const req = {
                 cookies: {
                     token: 'validToken'
@@ -103,12 +112,12 @@ describe('Auth Controller', () => {
                 json: jest.fn()
             };
 
-            authController.verifyToken(req as Request, res as Response, next as NextFunction);
+            await authController.verifyToken(req as Request, res as Response, next as NextFunction);
 
             expect(res.status).toHaveBeenCalledWith(200);
         });
 
-        it('should call next function with error when error is thrown', () => {
+        it('should call next function with error when error is thrown', async () => {
             const req = {
                 cookies: {}
             } as Partial<Request>;
@@ -120,11 +129,9 @@ describe('Auth Controller', () => {
 
             const expectedError = new Error('Unauthorized');
 
-            mockAuthService.getUserFromToken.mockImplementation(() => {
-                throw expectedError;
-            });
+            mockAuthService.getUserFromToken.mockRejectedValue(expectedError);
 
-            authController.verifyToken(req as Request, res as Response, next as NextFunction);
+            await authController.verifyToken(req as Request, res as Response, next as NextFunction);
             expect(next).toHaveBeenCalledWith(expectedError);
         });
     });

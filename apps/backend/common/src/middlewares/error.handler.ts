@@ -27,6 +27,7 @@ export function errorHandler(
 
     if (err instanceof ForbiddenError) {
         res.status(403).json({ message: err.message });
+        return;
     }
 
     if (err instanceof NotFoundError) {
@@ -41,6 +42,7 @@ export function errorHandler(
 
     if (err instanceof UnprocessableEntityError) {
         res.status(422).json({ message: err.message });
+        return;
     }
 
     if (err instanceof InternalServerError) {

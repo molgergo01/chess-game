@@ -28,6 +28,7 @@ const config: Config = {
             statements: 80
         }
     },
+    maxWorkers: 1,
     coverageProvider: 'v8'
 };
 
