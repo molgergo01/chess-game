@@ -251,11 +251,15 @@ class GameService {
         return gameState;
     }
 
-    async getGameHistory(userId: string, limit: number | null, offset: number | null): Promise<GameHistoryResult> {
-        if (limit && limit < 0) {
+    async getGameHistory(
+        userId: string,
+        limit: number | undefined,
+        offset: number | undefined
+    ): Promise<GameHistoryResult> {
+        if (limit && Number(limit) < 0) {
             throw new BadRequestError('Limit must be a non-negative number');
         }
-        if (offset && offset < 0) {
+        if (offset && Number(offset) < 0) {
             throw new BadRequestError('Offset must be a non-negative number');
         }
 

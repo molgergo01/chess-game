@@ -1,7 +1,8 @@
 import { DEFAULT_ELO } from 'chess-game-backend-common/config/constants';
 import { injectable } from 'inversify';
 import db from 'chess-game-backend-common/config/db';
-import { User } from '../models/user';
+import { AuthUser, User } from '../models/user';
+import { UserEntity } from '../models/entities';
 
 @injectable()
 class UserRepository {
@@ -12,6 +13,30 @@ class UserRepository {
                         email = EXCLUDED.email,
                         avatar_url = EXCLUDED.avatar_url`;
         await db.none(sql, [user.id, user.name, user.email, DEFAULT_ELO, user.avatarUrl]);
+    }
+
+    async getUserById(id: string): Promise<AuthUser | null> {
+        const sql = `
+            SELECT *
+            FROM chess_game.users
+            WHERE id = $1;
+        `;
+
+        const result: Array<UserEntity> = await db.query(sql, [id]);
+
+        if (result.length === 0) {
+            return null;
+        }
+
+        const row = result[0];
+
+        return {
+            id: row.id,
+            name: row.name,
+            email: row.email,
+            elo: row.elo,
+            avatarUrl: row.avatar_url
+        };
     }
 }
 

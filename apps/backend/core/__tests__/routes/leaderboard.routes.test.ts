@@ -2,6 +2,7 @@ import request from 'supertest';
 import app from '../../src/app';
 import Redis from 'chess-game-backend-common/config/redis';
 import db from 'chess-game-backend-common/config/db';
+import { authenticatedRequest, cleanupAuthMocks, mockAuthServiceVerify } from '../fixtures/auth.fixture';
 
 jest.mock('chess-game-backend-common/config/env', () => ({
     __esModule: true,
@@ -30,16 +31,13 @@ const createUser = async (id: string, name: string, email: string, elo: number, 
 
 describe('Leaderboard routes', () => {
     afterEach(async () => {
+        cleanupAuthMocks();
+
         const keys = await Redis.keys('*');
         if (keys.length > 0) {
             await Redis.del(keys);
         }
         await db.none('TRUNCATE TABLE chess_game.users CASCADE');
-    });
-
-    afterAll(async () => {
-        await Redis.quit();
-        await db.$pool.end();
     });
 
     describe('GET /api/leaderboard', () => {
@@ -49,7 +47,15 @@ describe('Leaderboard routes', () => {
             await createUser('user3', 'Player Three', 'player3@example.com', 1500, 'avatar3.com');
             await createUser('user4', 'Player Four', 'player4@example.com', 1700, 'avatar4.com');
 
-            const res = await request(app).get('/api/leaderboard');
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1600,
+                avatarUrl: 'avatar1.com'
+            });
+
+            const res = await authenticatedRequest(request(app).get('/api/leaderboard'), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('users');
@@ -85,7 +91,17 @@ describe('Leaderboard routes', () => {
             await createUser('user3', 'Player Three', 'player3@example.com', 1500, 'avatar3.com');
             await createUser('user4', 'Player Four', 'player4@example.com', 1700, 'avatar4.com');
 
-            const res = await request(app).get('/api/leaderboard').query({ limit: '2' });
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1600,
+                avatarUrl: 'avatar1.com'
+            });
+
+            const res = await authenticatedRequest(request(app).get('/api/leaderboard'), 'user1').query({
+                limit: '2'
+            });
 
             expect(res.status).toBe(200);
             expect(res.body.users).toHaveLength(2);
@@ -100,7 +116,17 @@ describe('Leaderboard routes', () => {
             await createUser('user3', 'Player Three', 'player3@example.com', 1500, 'avatar3.com');
             await createUser('user4', 'Player Four', 'player4@example.com', 1700, 'avatar4.com');
 
-            const res = await request(app).get('/api/leaderboard').query({ offset: '1' });
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1600,
+                avatarUrl: 'avatar1.com'
+            });
+
+            const res = await authenticatedRequest(request(app).get('/api/leaderboard'), 'user1').query({
+                offset: '1'
+            });
 
             expect(res.status).toBe(200);
             expect(res.body.users).toHaveLength(3);
@@ -116,7 +142,18 @@ describe('Leaderboard routes', () => {
             await createUser('user3', 'Player Three', 'player3@example.com', 1500, 'avatar3.com');
             await createUser('user4', 'Player Four', 'player4@example.com', 1700, 'avatar4.com');
 
-            const res = await request(app).get('/api/leaderboard').query({ limit: '2', offset: '1' });
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1600,
+                avatarUrl: 'avatar1.com'
+            });
+
+            const res = await authenticatedRequest(request(app).get('/api/leaderboard'), 'user1').query({
+                limit: '2',
+                offset: '1'
+            });
 
             expect(res.status).toBe(200);
             expect(res.body.users).toHaveLength(2);
@@ -126,7 +163,15 @@ describe('Leaderboard routes', () => {
         });
 
         it('should return empty array when no users exist', async () => {
-            const res = await request(app).get('/api/leaderboard');
+            mockAuthServiceVerify({
+                id: 'user1',
+                name: 'Player One',
+                email: 'player1@example.com',
+                elo: 1600,
+                avatarUrl: 'avatar1.com'
+            });
+
+            const res = await authenticatedRequest(request(app).get('/api/leaderboard'), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body.users).toEqual([]);

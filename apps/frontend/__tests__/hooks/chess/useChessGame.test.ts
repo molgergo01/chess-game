@@ -118,7 +118,7 @@ describe('useChessGame', () => {
             expect(result.current.boardPosition.toString()).not.toBe(Fen.emptyPosition);
         });
 
-        expect(mockGetActiveGame).toHaveBeenCalledWith('user123');
+        expect(mockGetActiveGame).toHaveBeenCalled();
         expect(result.current.boardPosition.toString()).toBe(
             'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
         );
@@ -350,21 +350,6 @@ describe('useChessGame', () => {
 
     it('should not call getActiveGame when socket is not available', async () => {
         mockUseCoreSocket.mockReturnValue({ socket: null as never });
-
-        renderHook(() => useChessGame());
-
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        expect(mockGetActiveGame).not.toHaveBeenCalled();
-    });
-
-    it('should not call getActiveGame when userId is not available', async () => {
-        mockUseAuth.mockReturnValue({
-            userId: undefined as never,
-            userName: 'userName',
-            userAvatarUrl: 'avatar_url.com',
-            refetch: jest.fn()
-        });
 
         renderHook(() => useChessGame());
 

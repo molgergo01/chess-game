@@ -12,6 +12,9 @@ import UsersRepository from '../repositories/users.repository';
 import UserService from '../services/user.service';
 import LeaderboardController from '../controllers/leaderboard.controller';
 import RatingService from '../services/rating.service';
+import AuthMiddleware from '../middlewares/auth.middleware';
+import SocketAuthMiddleware from '../middlewares/socket.auth.middleware';
+import InternalGameController from '../controllers/internal.game.controller';
 
 const container = new Container();
 
@@ -31,5 +34,8 @@ container.bind(GameNotificationService).toSelf().inSingletonScope();
 container.bind(TimerWatcher).toSelf().inSingletonScope();
 container.bind(GameController).toSelf().inSingletonScope();
 container.bind(LeaderboardController).toSelf().inSingletonScope();
+container.bind(InternalGameController).toSelf().inSingletonScope();
+container.bind(AuthMiddleware).toSelf().inSingletonScope();
+container.bind(SocketAuthMiddleware).toSelf().inSingletonScope();
 
 export default container;

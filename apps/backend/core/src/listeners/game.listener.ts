@@ -19,7 +19,7 @@ const gameListener = (io: Server, socket: Socket) => {
         let fen = await gameService.getFen(request.gameId);
         try {
             fen = await gameService.move(
-                socket.handshake.auth.userId,
+                socket.data.user!.id,
                 request.gameId,
                 request.from,
                 request.to,

@@ -1,3 +1,12 @@
+export type PaginationQueryParams = {
+    limit: number | undefined;
+    offset: number | undefined;
+};
+
+export type InternalGetActiveGameQueryParams = {
+    userId: string;
+};
+
 export type CreateGameRequest = {
     players: string[];
 };

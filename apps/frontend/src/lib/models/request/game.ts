@@ -36,7 +36,6 @@ export type PlayerTimes = {
 };
 
 export type GetGameHistoryParams = {
-    userId: string;
     limit: number | null;
     offset: number | null;
 };

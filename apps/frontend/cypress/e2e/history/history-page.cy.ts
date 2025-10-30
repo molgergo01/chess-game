@@ -17,6 +17,7 @@ describe('/games/history Page', () => {
         });
 
         it('Should load history page with valid token', () => {
+            cy.createTestUserForToken();
             cy.applyToken();
             cy.visit('http://localhost:3000/games/history');
 
@@ -26,13 +27,8 @@ describe('/games/history Page', () => {
 
     describe('Empty State', () => {
         beforeEach(() => {
+            cy.createTestUserForToken();
             cy.applyToken();
-            cy.createUser({
-                userId: testUserId,
-                name: 'Test User',
-                email: 'test@example.com',
-                elo: 1500
-            });
         });
 
         it('Should display table with no games when user has no history', () => {
@@ -57,14 +53,8 @@ describe('/games/history Page', () => {
 
     describe('Game List Display', () => {
         beforeEach(() => {
+            cy.createTestUserForToken();
             cy.applyToken();
-
-            cy.createUser({
-                userId: testUserId,
-                name: 'Test User',
-                email: 'test@example.com',
-                elo: 1500
-            });
 
             cy.createUser({
                 userId: testUser2Id,
@@ -160,14 +150,8 @@ describe('/games/history Page', () => {
 
     describe('Pagination', () => {
         beforeEach(() => {
+            cy.createTestUserForToken();
             cy.applyToken();
-
-            cy.createUser({
-                userId: testUserId,
-                name: 'Test User',
-                email: 'test@example.com',
-                elo: 1500
-            });
 
             cy.createUser({
                 userId: testUser2Id,
@@ -241,14 +225,8 @@ describe('/games/history Page', () => {
     describe('Game Links', () => {
         const gameId = uuid();
         beforeEach(() => {
+            cy.createTestUserForToken();
             cy.applyToken();
-
-            cy.createUser({
-                userId: testUserId,
-                name: 'Test User',
-                email: 'test@example.com',
-                elo: 1500
-            });
 
             cy.createUser({
                 userId: testUser2Id,
@@ -278,6 +256,7 @@ describe('/games/history Page', () => {
 
     describe('Error Handling', () => {
         beforeEach(() => {
+            cy.createTestUserForToken();
             cy.applyToken();
         });
 

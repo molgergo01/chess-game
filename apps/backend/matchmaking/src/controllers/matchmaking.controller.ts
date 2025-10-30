@@ -1,18 +1,14 @@
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Response } from 'express';
 import { inject, injectable } from 'inversify';
 import MatchmakingService from '../services/matchmaking.service';
 import {
-    CreatePrivateQueueRequest,
     CreatePrivateQueueResponse,
     GetQueueStatusResponse,
     JoinPrivateQueueParams,
-    JoinPrivateQueueRequest,
-    JoinQueueRequest,
-    LeavePrivateQueueParams,
-    LeavePrivateQueueRequest,
-    LeaveQueueRequest
+    LeavePrivateQueueParams
 } from '../models/matchmaking';
 import MatchmakingScheduler from '../scheduler/matchmaking.scheduler';
+import { AuthenticatedRequest } from 'chess-game-backend-common/types/authenticated.request';
 
 @injectable()
 class MatchmakingController {
@@ -23,9 +19,9 @@ class MatchmakingController {
         public readonly matchmakingScheduler: MatchmakingScheduler
     ) {}
 
-    async joinQueue(req: Request<unknown, unknown, JoinQueueRequest>, res: Response, next: NextFunction) {
+    async joinQueue(req: AuthenticatedRequest<unknown, unknown, unknown>, res: Response, next: NextFunction) {
         try {
-            await this.matchmakingService.joinQueue(req.body.userId);
+            await this.matchmakingService.joinQueue(req.user.id, req.user.elo);
             this.matchmakingScheduler.start();
             res.status(200).send();
         } catch (error) {
@@ -33,13 +29,9 @@ class MatchmakingController {
         }
     }
 
-    async createPrivateQueue(
-        req: Request<unknown, unknown, CreatePrivateQueueRequest>,
-        res: Response,
-        next: NextFunction
-    ) {
+    async createPrivateQueue(req: AuthenticatedRequest<unknown, unknown, unknown>, res: Response, next: NextFunction) {
         try {
-            const queueId = await this.matchmakingService.createPrivateQueue(req.body.userId);
+            const queueId = await this.matchmakingService.createPrivateQueue(req.user.id, req.user.elo);
             const response: CreatePrivateQueueResponse = {
                 queueId: queueId
             };
@@ -50,21 +42,21 @@ class MatchmakingController {
     }
 
     async joinPrivateQueue(
-        req: Request<JoinPrivateQueueParams, unknown, JoinPrivateQueueRequest>,
+        req: AuthenticatedRequest<JoinPrivateQueueParams, unknown, unknown>,
         res: Response,
         next: NextFunction
     ) {
         try {
-            await this.matchmakingService.joinPrivateQueue(req.body.userId, req.params.queueId);
+            await this.matchmakingService.joinPrivateQueue(req.user.id, req.user.elo, req.params.queueId);
             res.status(200).send();
         } catch (error) {
             next(error);
         }
     }
 
-    async leaveQueue(req: Request<unknown, unknown, LeaveQueueRequest>, res: Response, next: NextFunction) {
+    async leaveQueue(req: AuthenticatedRequest<unknown, unknown, unknown>, res: Response, next: NextFunction) {
         try {
-            await this.matchmakingService.leaveQueue(req.body.userId, null);
+            await this.matchmakingService.leaveQueue(req.user.id, null);
             res.status(200).send();
         } catch (error) {
             next(error);
@@ -72,28 +64,21 @@ class MatchmakingController {
     }
 
     async leavePrivateQueue(
-        req: Request<LeavePrivateQueueParams, unknown, LeavePrivateQueueRequest>,
+        req: AuthenticatedRequest<LeavePrivateQueueParams, unknown, unknown>,
         res: Response,
         next: NextFunction
     ) {
         try {
-            await this.matchmakingService.leaveQueue(req.body.userId, req.params.queueId);
+            await this.matchmakingService.leaveQueue(req.user.id, req.params.queueId);
             res.status(200).send();
         } catch (error) {
             next(error);
         }
     }
 
-    async getQueueStatus(req: Request, res: Response, next: NextFunction) {
+    async getQueueStatus(req: AuthenticatedRequest<unknown, unknown, unknown>, res: Response, next: NextFunction) {
         try {
-            const userId = req.query.userId;
-
-            if (!userId || typeof userId !== 'string') {
-                res.status(400).json({ message: 'userId query parameter is required' });
-                return;
-            }
-
-            const status = await this.matchmakingService.getQueueStatus(userId);
+            const status = await this.matchmakingService.getQueueStatus(req.user.id);
             const response: GetQueueStatusResponse = {
                 isQueued: status.isQueued,
                 queueId: status.queueId,

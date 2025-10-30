@@ -11,19 +11,15 @@ import {
 import { GetGameHistoryParams, GetLeaderboardParams } from '@/lib/models/request/game';
 import { PlayerLeaderboard } from '@/lib/models/leaderboard/playerLeaderboard';
 
-export async function getGameHistory(
-    userId: string,
-    limit: number | null,
-    offset: number | null
-): Promise<GameHistory> {
+export async function getGameHistory(limit: number | null, offset: number | null): Promise<GameHistory> {
     try {
         const params: GetGameHistoryParams = {
-            userId: userId,
             limit: limit,
             offset: offset
         };
         const response: AxiosResponse<GetGameHistoryResponse> = await axios.get(`${env.REST_URLS.CORE}/api/games`, {
-            params: params
+            params: params,
+            withCredentials: true
         });
         return {
             games: response.data.games.map((game: GameDto) => ({
@@ -56,9 +52,14 @@ export async function getGameHistory(
     }
 }
 
-export async function getGame(gameId: string): Promise<GameWithMoves> {
+export async function getGame(gameId: string, cookieHeader?: string): Promise<GameWithMoves> {
     try {
-        const response: AxiosResponse<GetGameResponse> = await axios.get(`${env.REST_URLS.CORE}/api/games/${gameId}`);
+        const response: AxiosResponse<GetGameResponse> = await axios.get(`${env.REST_URLS.CORE}/api/games/${gameId}`, {
+            withCredentials: true,
+            headers: {
+                Cookie: cookieHeader
+            }
+        });
         return {
             gameId: response.data.gameId,
             whitePlayer: {
@@ -108,7 +109,8 @@ export async function getPlayerLeaderboard(limit: number | null, offset: number 
         const response: AxiosResponse<GetLeaderboardResponse> = await axios.get(
             `${env.REST_URLS.CORE}/api/leaderboard`,
             {
-                params: params
+                params: params,
+                withCredentials: true
             }
         );
 
@@ -135,18 +137,22 @@ export async function getPlayerLeaderboard(limit: number | null, offset: number 
     }
 }
 
-export async function getActiveGame(userId: string): Promise<GetActiveGameResponse> {
+export async function getActiveGame(): Promise<GetActiveGameResponse> {
     try {
         const response: AxiosResponse<GetActiveGameResponse> = await axios.get(
             `${env.REST_URLS.CORE}/api/games/active`,
             {
-                params: { userId }
+                withCredentials: true
             }
         );
         return response.data;
     } catch (error) {
         if (error instanceof AxiosError && error.response) {
-            throw new Error(error.response.data.message || 'Failed to get active game');
+            const errorWithStatus = new Error(error.response.data.message || 'Failed to get active game') as Error & {
+                status?: number;
+            };
+            errorWithStatus.status = error.response.status;
+            throw errorWithStatus;
         } else if (error instanceof AxiosError && error.request) {
             throw new Error('Network error: Unable to connect to core service');
         } else {

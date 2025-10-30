@@ -13,12 +13,14 @@ describe('<History />', () => {
                 whitePlayer: {
                     userId: mockUserId,
                     name: 'Test User',
-                    elo: 1500
+                    elo: 1500,
+                    avatarUrl: 'avatar.jpg'
                 },
                 blackPlayer: {
                     userId: 'opponent-1',
                     name: 'Opponent 1',
-                    elo: 1600
+                    elo: 1600,
+                    avatarUrl: 'avatar.jpg'
                 },
                 startedAt: new Date('2025-01-15T10:00:00Z'),
                 winner: Winner.WHITE
@@ -28,12 +30,14 @@ describe('<History />', () => {
                 whitePlayer: {
                     userId: 'opponent-2',
                     name: 'Opponent 2',
-                    elo: 1400
+                    elo: 1400,
+                    avatarUrl: 'avatar.jpg'
                 },
                 blackPlayer: {
                     userId: mockUserId,
                     name: 'Test User',
-                    elo: 1500
+                    elo: 1500,
+                    avatarUrl: 'avatar.jpg'
                 },
                 startedAt: new Date('2025-01-14T15:30:00Z'),
                 winner: Winner.BLACK
@@ -56,7 +60,15 @@ describe('<History />', () => {
 
         cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
             statusCode: 200,
-            body: { id: mockUserId, name: 'Test User' }
+            body: {
+                user: {
+                    id: mockUserId,
+                    name: 'Test User',
+                    email: 'white@example.com',
+                    elo: 1500,
+                    avatarUrl: null
+                }
+            }
         });
     });
 
@@ -153,12 +165,14 @@ describe('<History />', () => {
                 whitePlayer: {
                     userId: mockUserId,
                     name: 'Test User',
-                    elo: 1500
+                    elo: 1500,
+                    avatarUrl: 'avatar.jpg'
                 },
                 blackPlayer: {
                     userId: `opponent-${i}`,
                     name: `Opponent ${i}`,
-                    elo: 1600
+                    elo: 1600,
+                    avatarUrl: 'avatar.jpg'
                 },
                 startedAt: new Date('2025-01-15T10:00:00Z'),
                 winner: Winner.WHITE

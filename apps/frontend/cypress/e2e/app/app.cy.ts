@@ -1,5 +1,6 @@
 describe('Main Page', () => {
     beforeEach(() => {
+        cy.createTestUserForToken();
         cy.applyToken();
         cy.visit('http://localhost:3000/');
     });

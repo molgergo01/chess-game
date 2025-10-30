@@ -1,23 +1,13 @@
-jest.mock('@/lib/clients/auth.rest.client');
-
+import { AuthUser } from '@/lib/models/response/auth';
 import React, { ReactNode } from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
-import { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { AuthProvider, useAuth } from '@/hooks/auth/useAuth';
 import { getUser } from '@/lib/clients/auth.rest.client';
 
+jest.mock('@/lib/clients/auth.rest.client');
+
 describe('useAuth', () => {
     const mockGetUser = getUser as jest.MockedFunction<typeof getUser>;
-
-    const createMockAxiosResponse = <T,>(data: T, status: number = 200): AxiosResponse<T> => ({
-        data,
-        status,
-        statusText: status === 200 ? 'OK' : 'Unauthorized',
-        headers: {},
-        config: {
-            headers: {}
-        } as InternalAxiosRequestConfig
-    });
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -25,8 +15,14 @@ describe('useAuth', () => {
 
     describe('AuthProvider', () => {
         it('should fetch user data on mount', async () => {
-            const mockResponse = createMockAxiosResponse({ id: 'user123', name: 'Test User' }, 200);
-            mockGetUser.mockResolvedValue(mockResponse);
+            const authUser: AuthUser = {
+                id: 'user123',
+                name: 'Test User',
+                email: 'test@user.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            };
+            mockGetUser.mockResolvedValue(authUser);
 
             const wrapper = ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>;
 
@@ -39,9 +35,8 @@ describe('useAuth', () => {
             expect(mockGetUser).toHaveBeenCalledTimes(1);
         });
 
-        it('should set userId to null when response status is not 200', async () => {
-            const mockResponse = createMockAxiosResponse(null, 401);
-            mockGetUser.mockResolvedValue(mockResponse);
+        it('should set userId to null when get user throws', async () => {
+            mockGetUser.mockRejectedValue(new Error());
 
             const wrapper = ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>;
 
@@ -70,10 +65,23 @@ describe('useAuth', () => {
         });
 
         it('should refetch user data when refetch is called', async () => {
-            const mockResponse1 = createMockAxiosResponse({ id: 'user123', name: 'Test User' }, 200);
-            const mockResponse2 = createMockAxiosResponse({ id: 'user456', name: 'Updated User' }, 200);
+            const authUser: AuthUser = {
+                id: 'user123',
+                name: 'Test User',
+                email: 'test@user.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            };
 
-            mockGetUser.mockResolvedValueOnce(mockResponse1).mockResolvedValueOnce(mockResponse2);
+            const updatedUser: AuthUser = {
+                id: 'user456',
+                name: 'Updated User',
+                email: 'test@user.com',
+                elo: 1500,
+                avatarUrl: 'avatar.jpg'
+            };
+
+            mockGetUser.mockResolvedValueOnce(authUser).mockResolvedValueOnce(updatedUser);
 
             const wrapper = ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>;
 

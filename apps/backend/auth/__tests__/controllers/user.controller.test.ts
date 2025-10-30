@@ -1,18 +1,12 @@
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Response } from 'express';
 import UserController from '../../src/controllers/user.controller';
-import AuthService from '../../src/services/auth.service';
-
-jest.mock('../../src/services/auth.service');
+import { AuthenticatedRequest } from 'chess-game-backend-common/types/authenticated.request';
 
 describe('User controller', () => {
     let userController: UserController;
-    let mockAuthService: jest.Mocked<AuthService>;
 
     beforeEach(() => {
-        mockAuthService = new AuthService(null as never) as jest.Mocked<AuthService>;
-        mockAuthService.getUserFromToken = jest.fn();
-
-        userController = new UserController(mockAuthService);
+        userController = new UserController();
     });
 
     afterEach(() => {
@@ -24,34 +18,38 @@ describe('User controller', () => {
 
     describe('Get me', () => {
         const req = {
-            cookies: {
-                token: 'token'
+            user: {
+                id: '1234',
+                name: 'Test User',
+                email: 'test@example.com',
+                elo: 1200,
+                avatarUrl: 'avatar.jpg'
             }
-        } as Partial<Request>;
-        it('should return the user with status 200', () => {
+        } as Partial<AuthenticatedRequest>;
+        it('should return the user with status 200', async () => {
             const res: Partial<jest.Mocked<Response>> = {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn()
             };
 
-            const user = 'user';
-            mockAuthService.getUserFromToken.mockReturnValue(user);
-
-            userController.getMe(req as Request, res as Response, next);
+            await userController.getMe(req as AuthenticatedRequest, res as Response, next);
 
             expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.json).toHaveBeenCalledWith(user);
+            expect(res.json).toHaveBeenCalledWith({ user: req.user });
         });
 
-        it('should call next function with error when error is thrown', () => {
-            const res: Partial<jest.Mocked<Response>> = {};
+        it('should call next function with error when error is thrown', async () => {
+            const res: Partial<jest.Mocked<Response>> = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            };
 
             const expectedError = Error('Error');
-            mockAuthService.getUserFromToken.mockImplementation(() => {
+            res.status = jest.fn().mockImplementation(() => {
                 throw expectedError;
             });
 
-            userController.getMe(req as Request, res as Response, next);
+            await userController.getMe(req as AuthenticatedRequest, res as Response, next);
 
             expect(next).toHaveBeenCalledWith(expectedError);
         });

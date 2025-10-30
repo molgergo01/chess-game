@@ -28,7 +28,7 @@ class MatchmakingService {
         return this.socketIdRepository.setSocketIdForUser(userId, socketId);
     }
 
-    async joinQueue(userId: string) {
+    async joinQueue(userId: string, elo: number) {
         if ((await this.queuedPlayerRepository.getQueueId(userId)) !== null) {
             throw new ConflictError(`User with id ${userId} is already in queue`);
         }
@@ -37,10 +37,10 @@ class MatchmakingService {
         }
         const queueTimeStamp = Date.now();
         await this.queueRepository.pushToQueue(userId, null, queueTimeStamp);
-        await this.queuedPlayerRepository.save(userId, queueTimeStamp, 400, null); // TODO ACtual elo
+        await this.queuedPlayerRepository.save(userId, queueTimeStamp, elo, null);
     }
 
-    async createPrivateQueue(userId: string): Promise<string> {
+    async createPrivateQueue(userId: string, elo: number): Promise<string> {
         if ((await this.queuedPlayerRepository.getQueueId(userId)) !== null) {
             throw new ConflictError(`User with id ${userId} is already in queue`);
         }
@@ -52,11 +52,11 @@ class MatchmakingService {
 
         const queueTimeStamp = Date.now();
         await this.queueRepository.pushToQueue(userId, queueId, Date.now());
-        await this.queuedPlayerRepository.save(userId, queueTimeStamp, 400, queueId); // TODO actual elo
+        await this.queuedPlayerRepository.save(userId, queueTimeStamp, elo, queueId);
         return queueId;
     }
 
-    async joinPrivateQueue(userId: string, queueId: string) {
+    async joinPrivateQueue(userId: string, elo: number, queueId: string) {
         if ((await this.queuedPlayerRepository.getQueueId(userId)) !== null) {
             throw new ConflictError(`User with id ${userId} is already in queue`);
         }
@@ -73,7 +73,7 @@ class MatchmakingService {
 
         const queueTimeStamp = Date.now();
         await this.queueRepository.pushToQueue(userId, queueId, Date.now());
-        await this.queuedPlayerRepository.save(userId, queueTimeStamp, 400, null); // TODO actual elo
+        await this.queuedPlayerRepository.save(userId, queueTimeStamp, elo, null);
         if (queueCount == 1) {
             await this.matchMake(queueId);
         }

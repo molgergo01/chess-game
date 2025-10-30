@@ -21,7 +21,6 @@ describe('core.rest.client', () => {
 
     describe('getGameHistory', () => {
         it('should call axios.get with correct URL and params and return mapped GameHistory', async () => {
-            const userId = 'user123';
             const limit = 10;
             const offset = 0;
             const mockResponse = {
@@ -41,10 +40,11 @@ describe('core.rest.client', () => {
 
             (axios.get as jest.Mock).mockResolvedValue(mockResponse);
 
-            const result = await getGameHistory(userId, limit, offset);
+            const result = await getGameHistory(limit, offset);
 
             expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/games', {
-                params: { userId, limit, offset }
+                params: { limit, offset },
+                withCredentials: true
             });
             expect(result).toEqual({
                 games: [
@@ -61,7 +61,6 @@ describe('core.rest.client', () => {
         });
 
         it('should throw error with message from response when AxiosError has response', async () => {
-            const userId = 'user123';
             const axiosError = new AxiosError('Request failed');
             axiosError.response = {
                 data: { message: 'User not found' },
@@ -73,11 +72,10 @@ describe('core.rest.client', () => {
 
             (axios.get as jest.Mock).mockRejectedValue(axiosError);
 
-            await expect(getGameHistory(userId, null, null)).rejects.toThrow('User not found');
+            await expect(getGameHistory(null, null)).rejects.toThrow('User not found');
         });
 
         it('should throw default error message when AxiosError has response without message', async () => {
-            const userId = 'user123';
             const axiosError = new AxiosError('Request failed');
             axiosError.response = {
                 data: {},
@@ -89,27 +87,24 @@ describe('core.rest.client', () => {
 
             (axios.get as jest.Mock).mockRejectedValue(axiosError);
 
-            await expect(getGameHistory(userId, null, null)).rejects.toThrow('Failed to get game history');
+            await expect(getGameHistory(null, null)).rejects.toThrow('Failed to get game history');
         });
 
         it('should throw network error when AxiosError has request but no response', async () => {
-            const userId = 'user123';
             const axiosError = new AxiosError('Network Error');
             axiosError.request = {};
 
             (axios.get as jest.Mock).mockRejectedValue(axiosError);
 
-            await expect(getGameHistory(userId, null, null)).rejects.toThrow(
+            await expect(getGameHistory(null, null)).rejects.toThrow(
                 'Network error: Unable to connect to core service'
             );
         });
 
         it('should throw generic error for non-AxiosError', async () => {
-            const userId = 'user123';
-
             (axios.get as jest.Mock).mockRejectedValue(new Error('Unknown error'));
 
-            await expect(getGameHistory(userId, null, null)).rejects.toThrow('Failed to get game history');
+            await expect(getGameHistory(null, null)).rejects.toThrow('Failed to get game history');
         });
     });
 
@@ -138,9 +133,14 @@ describe('core.rest.client', () => {
 
             (axios.get as jest.Mock).mockResolvedValue(mockResponse);
 
-            const result = await getGame(gameId);
+            const result = await getGame(gameId, 'token');
 
-            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/games/game123');
+            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/games/game123', {
+                headers: {
+                    Cookie: 'token'
+                },
+                withCredentials: true
+            });
             expect(result).toEqual({
                 gameId: 'game123',
                 whitePlayer: { userId: 'user1', name: 'Player 1', elo: 1500 },
@@ -256,7 +256,8 @@ describe('core.rest.client', () => {
             const result = await getPlayerLeaderboard(limit, offset);
 
             expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/leaderboard', {
-                params: { limit, offset }
+                params: { limit, offset },
+                withCredentials: true
             });
             expect(result).toEqual({
                 users: [
@@ -329,7 +330,6 @@ describe('core.rest.client', () => {
 
     describe('getActiveGame', () => {
         it('should call axios.get with correct URL and params and return GetActiveGameResponse', async () => {
-            const userId = 'user123';
             const mockResponse = {
                 data: {
                     gameId: 'game456',
@@ -339,10 +339,10 @@ describe('core.rest.client', () => {
 
             (axios.get as jest.Mock).mockResolvedValue(mockResponse);
 
-            const result = await getActiveGame(userId);
+            const result = await getActiveGame();
 
             expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/games/active', {
-                params: { userId }
+                withCredentials: true
             });
             expect(result).toEqual({
                 gameId: 'game456',
@@ -351,7 +351,6 @@ describe('core.rest.client', () => {
         });
 
         it('should throw error with message from response when AxiosError has response', async () => {
-            const userId = 'user123';
             const axiosError = new AxiosError('Request failed');
             axiosError.response = {
                 data: { message: 'User not found' },
@@ -363,11 +362,10 @@ describe('core.rest.client', () => {
 
             (axios.get as jest.Mock).mockRejectedValue(axiosError);
 
-            await expect(getActiveGame(userId)).rejects.toThrow('User not found');
+            await expect(getActiveGame()).rejects.toThrow('User not found');
         });
 
         it('should throw default error message when AxiosError has response without message', async () => {
-            const userId = 'user123';
             const axiosError = new AxiosError('Request failed');
             axiosError.response = {
                 data: {},
@@ -379,25 +377,22 @@ describe('core.rest.client', () => {
 
             (axios.get as jest.Mock).mockRejectedValue(axiosError);
 
-            await expect(getActiveGame(userId)).rejects.toThrow('Failed to get active game');
+            await expect(getActiveGame()).rejects.toThrow('Failed to get active game');
         });
 
         it('should throw network error when AxiosError has request but no response', async () => {
-            const userId = 'user123';
             const axiosError = new AxiosError('Network Error');
             axiosError.request = {};
 
             (axios.get as jest.Mock).mockRejectedValue(axiosError);
 
-            await expect(getActiveGame(userId)).rejects.toThrow('Network error: Unable to connect to core service');
+            await expect(getActiveGame()).rejects.toThrow('Network error: Unable to connect to core service');
         });
 
         it('should throw generic error for non-AxiosError', async () => {
-            const userId = 'user123';
-
             (axios.get as jest.Mock).mockRejectedValue(new Error('Unknown error'));
 
-            await expect(getActiveGame(userId)).rejects.toThrow('Failed to get active game');
+            await expect(getActiveGame()).rejects.toThrow('Failed to get active game');
         });
     });
 });

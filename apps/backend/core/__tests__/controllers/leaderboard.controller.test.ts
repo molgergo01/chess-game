@@ -1,8 +1,10 @@
 import LeaderboardController from '../../src/controllers/leaderboard.controller';
 import UserService from '../../src/services/user.service';
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Response } from 'express';
 import { UserResult } from '../../src/models/user';
 import { GetLeaderboardResponse } from '../../src/models/responses';
+import { AuthenticatedRequest } from 'chess-game-backend-common/types/authenticated.request';
+import { PaginationQueryParams } from '../../src/models/requests';
 
 jest.mock('../../src/services/user.service');
 
@@ -27,11 +29,18 @@ describe('Leaderboard Controller', () => {
     describe('Get Leaderboard', () => {
         it('should get leaderboard with limit and offset query parameters and return status 200', async () => {
             const req = {
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1600,
+                    avatarUrl: 'avatar1.com'
+                },
                 query: {
-                    limit: '10',
-                    offset: '5'
+                    limit: 10,
+                    offset: 5
                 }
-            } as Partial<Request>;
+            } as Partial<AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>>;
             const res = {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn().mockReturnThis()
@@ -79,7 +88,11 @@ describe('Leaderboard Controller', () => {
 
             mockUserService.getUsers.mockResolvedValue(userResult);
 
-            await leaderboardController.getLeaderboard(req as Request, res as Response, next);
+            await leaderboardController.getLeaderboard(
+                req as AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>,
+                res as Response,
+                next
+            );
 
             expect(mockUserService.getUsers).toHaveBeenCalledWith(10, 5);
             expect(res.status).toHaveBeenCalledWith(200);
@@ -88,10 +101,17 @@ describe('Leaderboard Controller', () => {
 
         it('should get leaderboard with only limit and return status 200', async () => {
             const req = {
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1600,
+                    avatarUrl: 'avatar1.com'
+                },
                 query: {
-                    limit: '10'
+                    limit: 10
                 }
-            } as Partial<Request>;
+            } as Partial<AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>>;
             const res = {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn().mockReturnThis()
@@ -112,18 +132,29 @@ describe('Leaderboard Controller', () => {
 
             mockUserService.getUsers.mockResolvedValue(userResult);
 
-            await leaderboardController.getLeaderboard(req as Request, res as Response, next);
+            await leaderboardController.getLeaderboard(
+                req as AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>,
+                res as Response,
+                next
+            );
 
-            expect(mockUserService.getUsers).toHaveBeenCalledWith(10, null);
+            expect(mockUserService.getUsers).toHaveBeenCalledWith(10, undefined);
             expect(res.status).toHaveBeenCalledWith(200);
         });
 
         it('should get leaderboard with only offset and return status 200', async () => {
             const req = {
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1600,
+                    avatarUrl: 'avatar1.com'
+                },
                 query: {
-                    offset: '5'
+                    offset: 5
                 }
-            } as Partial<Request>;
+            } as Partial<AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>>;
             const res = {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn().mockReturnThis()
@@ -144,16 +175,27 @@ describe('Leaderboard Controller', () => {
 
             mockUserService.getUsers.mockResolvedValue(userResult);
 
-            await leaderboardController.getLeaderboard(req as Request, res as Response, next);
+            await leaderboardController.getLeaderboard(
+                req as AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>,
+                res as Response,
+                next
+            );
 
-            expect(mockUserService.getUsers).toHaveBeenCalledWith(null, 5);
+            expect(mockUserService.getUsers).toHaveBeenCalledWith(undefined, 5);
             expect(res.status).toHaveBeenCalledWith(200);
         });
 
         it('should get leaderboard with no query parameters and return status 200', async () => {
             const req = {
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1600,
+                    avatarUrl: 'avatar1.com'
+                },
                 query: {}
-            } as Partial<Request>;
+            } as Partial<AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>>;
             const res = {
                 status: jest.fn().mockReturnThis(),
                 json: jest.fn().mockReturnThis()
@@ -201,26 +243,41 @@ describe('Leaderboard Controller', () => {
 
             mockUserService.getUsers.mockResolvedValue(userResult);
 
-            await leaderboardController.getLeaderboard(req as Request, res as Response, next);
+            await leaderboardController.getLeaderboard(
+                req as AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>,
+                res as Response,
+                next
+            );
 
-            expect(mockUserService.getUsers).toHaveBeenCalledWith(null, null);
+            expect(mockUserService.getUsers).toHaveBeenCalledWith(undefined, undefined);
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith(expectedResponse);
         });
 
         it('should call next function with error when error is thrown', async () => {
             const req = {
+                user: {
+                    id: 'user1',
+                    name: 'Player One',
+                    email: 'player1@example.com',
+                    elo: 1600,
+                    avatarUrl: 'avatar1.com'
+                },
                 query: {
-                    limit: '10',
-                    offset: '5'
+                    limit: 10,
+                    offset: 5
                 }
-            } as Partial<Request>;
+            } as Partial<AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>>;
             const res = {} as Partial<Response>;
             const expectedError = new Error('error');
 
             mockUserService.getUsers.mockRejectedValue(expectedError);
 
-            await leaderboardController.getLeaderboard(req as Request, res as Response, next);
+            await leaderboardController.getLeaderboard(
+                req as AuthenticatedRequest<unknown, unknown, unknown, PaginationQueryParams>,
+                res as Response,
+                next
+            );
 
             expect(mockUserService.getUsers).toHaveBeenCalledWith(10, 5);
             expect(next).toHaveBeenCalledWith(expectedError);

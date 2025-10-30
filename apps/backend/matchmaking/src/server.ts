@@ -5,8 +5,10 @@ import { Server, Socket } from 'socket.io';
 import corsConfig from 'chess-game-backend-common/config/cors';
 import MatchmakingService from './services/matchmaking.service';
 import container from './config/container';
+import SocketAuthMiddleware from './middlewares/socket.auth.middleware';
 
 const matchmakingService = container.get(MatchmakingService);
+const socketAuthMiddleware = container.get(SocketAuthMiddleware);
 
 const PORT = env.PORTS.MATCHMAKING || 8082;
 const server = createServer(app);
@@ -17,8 +19,10 @@ export const io = new Server(server, {
 
 container.bind('SocketIO').toConstantValue(io);
 
+io.use(socketAuthMiddleware.authenticate.bind(socketAuthMiddleware));
+
 export const onConnection = async (socket: Socket) => {
-    await matchmakingService.setSocketIdForUser(socket.handshake.auth.userId, socket.id);
+    await matchmakingService.setSocketIdForUser(socket.data.user!.id, socket.id);
 };
 
 io.on('connection', onConnection);

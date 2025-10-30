@@ -1,6 +1,6 @@
 jest.mock('socket.io-client');
 
-import { initializeCoreSocket } from '@/lib/sockets/core.socket';
+import { disconnectCoreSocket, initializeCoreSocket } from '@/lib/sockets/core.socket';
 import { io, Socket } from 'socket.io-client';
 import env from '@/lib/config/env';
 
@@ -15,7 +15,8 @@ describe('initializeCoreSocket', () => {
             connected: false,
             on: jest.fn(),
             emit: jest.fn(),
-            off: jest.fn()
+            off: jest.fn(),
+            disconnect: jest.fn()
         };
 
         (io as jest.Mock).mockReturnValue(mockSocket);
@@ -31,23 +32,19 @@ describe('initializeCoreSocket', () => {
     });
 
     it('should return a socket client', () => {
-        const userId = 'user123';
-
-        const result = initializeCoreSocket(userId);
+        const result = initializeCoreSocket();
 
         expect(result).toBe(mockSocket);
-    });
-
-    it('should call io with correct URL and auth parameters', () => {
-        const userId = 'user123';
-
-        initializeCoreSocket(userId);
-
         expect(io).toHaveBeenCalledWith('ws://localhost:8080', {
             reconnectionDelayMax: 10000,
-            auth: {
-                userId: userId
-            }
+            withCredentials: true
         });
+    });
+
+    it('should disconnect socket', () => {
+        initializeCoreSocket();
+        disconnectCoreSocket();
+
+        expect(mockSocket.disconnect).toHaveBeenCalled();
     });
 });

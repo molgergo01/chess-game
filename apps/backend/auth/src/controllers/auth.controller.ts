@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
 import env from 'chess-game-backend-common/config/env';
 import AuthService from '../services/auth.service';
+import { AuthenticatedRequest } from 'chess-game-backend-common/types/authenticated.request';
 
 @injectable()
 class AuthController {
@@ -10,7 +11,7 @@ class AuthController {
         private readonly authService: AuthService
     ) {}
 
-    async loginUser(req: Request, res: Response, next: NextFunction) {
+    async loginUser(req: Request<unknown, unknown, unknown>, res: Response, next: NextFunction) {
         try {
             const token = await this.authService.login(req.user);
 
@@ -27,7 +28,7 @@ class AuthController {
         }
     }
 
-    logoutUser(req: Request, res: Response, next: NextFunction) {
+    logoutUser(req: AuthenticatedRequest<unknown, unknown, unknown>, res: Response, next: NextFunction) {
         try {
             res.status(200)
                 .clearCookie('token', {
@@ -42,10 +43,10 @@ class AuthController {
         }
     }
 
-    verifyToken(req: Request, res: Response, next: NextFunction) {
+    async verifyToken(req: Request<unknown, unknown, unknown>, res: Response, next: NextFunction) {
         try {
             const token = req.cookies.token as string | undefined;
-            this.authService.getUserFromToken(token);
+            await this.authService.getUserFromToken(token);
 
             res.status(200).json({
                 message: 'Authenticated'

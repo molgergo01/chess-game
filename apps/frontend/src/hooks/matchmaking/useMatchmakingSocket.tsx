@@ -3,7 +3,7 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Socket } from 'socket.io-client';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { initializeMatchmakingSocket } from '@/lib/sockets/matchmaking.socket';
+import { disconnectMatchmakingSocket, initializeMatchmakingSocket } from '@/lib/sockets/matchmaking.socket';
 
 interface MatchmakingSocketContextType {
     socket: Socket | null;
@@ -22,16 +22,16 @@ export function MatchmakingSocketProvider({ children }: MatchmakingSocketProvide
     useEffect(() => {
         if (!userId) return;
 
-        const socketInstance = initializeMatchmakingSocket(userId);
+        const socketInstance = initializeMatchmakingSocket();
         setSocket(socketInstance);
 
         return () => {
             try {
-                if (socketInstance && !socketInstance.disconnected) {
-                    socketInstance.disconnect();
-                }
+                disconnectMatchmakingSocket();
+                setSocket(null);
             } catch (error) {
                 console.warn('Socket disconnect error:', error);
+                setSocket(null);
             }
         };
     }, [userId]);

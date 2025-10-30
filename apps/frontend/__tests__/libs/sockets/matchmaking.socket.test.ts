@@ -1,6 +1,6 @@
 jest.mock('socket.io-client');
 
-import { initializeMatchmakingSocket } from '@/lib/sockets/matchmaking.socket';
+import { disconnectMatchmakingSocket, initializeMatchmakingSocket } from '@/lib/sockets/matchmaking.socket';
 import { io, Socket } from 'socket.io-client';
 import env from '@/lib/config/env';
 
@@ -15,7 +15,8 @@ describe('initializeMatchmakingSocket', () => {
             connected: false,
             on: jest.fn(),
             emit: jest.fn(),
-            off: jest.fn()
+            off: jest.fn(),
+            disconnect: jest.fn()
         };
 
         (io as jest.Mock).mockReturnValue(mockSocket);
@@ -31,23 +32,19 @@ describe('initializeMatchmakingSocket', () => {
     });
 
     it('should return a socket client', () => {
-        const userId = 'user456';
-
-        const result = initializeMatchmakingSocket(userId);
+        const result = initializeMatchmakingSocket();
 
         expect(result).toBe(mockSocket);
-    });
-
-    it('should call io with correct URL and auth parameters', () => {
-        const userId = 'user456';
-
-        initializeMatchmakingSocket(userId);
-
         expect(io).toHaveBeenCalledWith('ws://localhost:8081', {
             reconnectionDelayMax: 10000,
-            auth: {
-                userId: userId
-            }
+            withCredentials: true
         });
+    });
+
+    it('should disconnect socket client', () => {
+        initializeMatchmakingSocket();
+        disconnectMatchmakingSocket();
+
+        expect(mockSocket.disconnect).toHaveBeenCalled();
     });
 });

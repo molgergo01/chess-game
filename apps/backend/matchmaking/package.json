@@ -12,15 +12,17 @@
     },
     "devDependencies": {
         "@types/jest": "^30.0.0",
+        "@types/nock": "^11.1.0",
         "@types/socket.io": "^3.0.2",
         "jest": "^30.2.0",
+        "nock": "^14.0.10",
         "ts-jest": "^29.4.4"
     },
     "scripts": {
         "build": "tsc",
         "start": "node dist/server.js",
         "dev": "ts-node-dev --respawn --transpile-only --require tsconfig-paths/register src/server.ts",
-        "test:jest": "jest --passWithNoTests",
+        "test:jest": "jest --runInBand",
         "lint:type-check": "tsc --noEmit"
     }
 }

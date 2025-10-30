@@ -5,7 +5,7 @@ import db from 'chess-game-backend-common/config/db';
 
 @injectable()
 class UsersRepository {
-    async findAll(limit: number | null, offset: number | null): Promise<Array<LeaderboardUser>> {
+    async findAll(limit: number | undefined, offset: number | undefined): Promise<Array<LeaderboardUser>> {
         let sql = `
             SELECT *
             FROM (
@@ -19,12 +19,12 @@ class UsersRepository {
 
         const params: (string | number)[] = [];
 
-        if (limit !== null) {
+        if (limit) {
             params.push(limit);
             sql += ` LIMIT $${params.length}`;
         }
 
-        if (offset !== null) {
+        if (offset) {
             params.push(offset);
             sql += ` OFFSET $${params.length}`;
         }

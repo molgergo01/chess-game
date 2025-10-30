@@ -3,6 +3,7 @@ import type { Config } from 'jest';
 const config: Config = {
     preset: 'ts-jest',
     verbose: true,
+    testPathIgnorePatterns: ['<rootDir>/__tests__/fixtures/'],
     collectCoverage: true,
     collectCoverageFrom: [
         'src/**/*.{js,ts}',
@@ -32,7 +33,9 @@ const config: Config = {
     moduleNameMapper: {
         '^chess-game-backend-common/src/(.*)$': '<rootDir>/../common/src/$1',
         '^chess-game-backend-common/(.*)$': '<rootDir>/../common/src/$1'
-    }
+    },
+    maxWorkers: 1,
+    forceExit: true
 };
 
 export default config;

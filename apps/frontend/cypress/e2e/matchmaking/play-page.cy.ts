@@ -2,6 +2,7 @@
 
 describe('/play Page', () => {
     beforeEach(function () {
+        cy.createTestUserForToken();
         cy.applyToken();
         if (
             !this.currentTest?.title.includes('Should join private queue') &&

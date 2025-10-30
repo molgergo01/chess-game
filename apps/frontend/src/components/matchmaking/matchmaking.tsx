@@ -5,7 +5,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import MatchmakingButton from '@/components/matchmaking/machmaking-button';
 import { getQueueStatus, joinPrivateQueue, leavePrivateQueue, leaveQueue } from '@/lib/clients/matchmaking.rest.client';
 import LeaveMatchmakingButton from '@/components/matchmaking/leave-matchmaking-button';
-import { useAuth } from '@/hooks/auth/useAuth';
 import { useMatchmakingSocket } from '@/hooks/matchmaking/useMatchmakingSocket';
 import CreateLinkButton from '@/components/matchmaking/create-link-button';
 import CancelInviteButton from '@/components/matchmaking/cancel-invite-button';
@@ -19,7 +18,6 @@ function Matchmaking() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const searchParamQueueId = searchParams.get('id');
-    const { userId } = useAuth();
     const [isQueued, setIsQueued] = useState<boolean | null>(null);
     const [queueId, setQueueId] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -29,9 +27,8 @@ function Matchmaking() {
 
     const checkQueueStatus = useCallback(
         async (markAsNew = false) => {
-            if (!userId) return;
             try {
-                const queueStatus = await getQueueStatus(userId);
+                const queueStatus = await getQueueStatus();
 
                 if (queueStatus.hasActiveGame) {
                     router.push('/game');
@@ -53,7 +50,7 @@ function Matchmaking() {
                 }
             }
         },
-        [userId, router]
+        [router]
     );
 
     const handleError = useCallback((error: Error) => {
@@ -63,12 +60,12 @@ function Matchmaking() {
 
     useEffect(() => {
         const handleBeforeUnload = async () => {
-            if (!isQueued || !userId) return;
+            if (!isQueued) return;
 
             if (!queueId) {
-                await leaveQueue(userId);
+                await leaveQueue();
             } else {
-                await leavePrivateQueue(userId, queueId);
+                await leavePrivateQueue(queueId);
             }
         };
 
@@ -77,7 +74,7 @@ function Matchmaking() {
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
-    }, [isQueued, queueId, userId]);
+    }, [isQueued, queueId]);
 
     useEffect(() => {
         if (!socket) return;
@@ -106,9 +103,9 @@ function Matchmaking() {
     }, [isNewQueue]);
 
     useEffect(() => {
-        if (isQueued || !userId || !searchParamQueueId || hasAttemptedJoin) return;
+        if (isQueued || !searchParamQueueId || hasAttemptedJoin) return;
         setHasAttemptedJoin(true);
-        joinPrivateQueue(userId, searchParamQueueId)
+        joinPrivateQueue(searchParamQueueId)
             .then(() => {
                 checkQueueStatus();
             })
@@ -118,17 +115,7 @@ function Matchmaking() {
                 }
             });
         router.replace(pathname);
-    }, [
-        checkQueueStatus,
-        handleError,
-        hasAttemptedJoin,
-        isQueued,
-        pathname,
-        router,
-        searchParamQueueId,
-        searchParams,
-        userId
-    ]);
+    }, [checkQueueStatus, handleError, hasAttemptedJoin, isQueued, pathname, router, searchParamQueueId, searchParams]);
 
     function getLink() {
         return `${window.location.origin}${pathname}?id=${queueId}`;
