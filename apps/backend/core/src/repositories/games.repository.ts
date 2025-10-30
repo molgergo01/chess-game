@@ -281,7 +281,28 @@ class GamesRepository {
     }
 
     async countAllByUserId(userId: string): Promise<number> {
-        const sql = `SELECT COUNT(*) FROM chess_game.games WHERE (black_player_id = $1 OR white_player_id = $1) AND ended_at IS NOT NULL`;
+        const sql = `
+            SELECT COUNT(*)
+            FROM chess_game.games
+            WHERE
+                (black_player_id = $1 OR white_player_id = $1) AND
+                ended_at IS NOT NULL
+        `;
+
+        const result = await db.query(sql, [userId]);
+        return Number(result[0].count);
+    }
+
+    async countAllNonDrawsByUserId(userId: string): Promise<number> {
+        const sql = `
+            SELECT COUNT(*)
+            FROM chess_game.games
+            WHERE 
+                (black_player_id = $1 OR white_player_id = $1) AND
+                ended_at IS NOT NULL AND
+                winner != 'd'
+        `;
+
         const result = await db.query(sql, [userId]);
         return Number(result[0].count);
     }

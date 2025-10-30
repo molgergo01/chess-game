@@ -22,7 +22,7 @@ describe('Matchmaking Service', () => {
     beforeEach(() => {
         mockQueueRepository = new QueueRepository() as jest.Mocked<QueueRepository>;
         mockQueueRepository.getQueueId = jest.fn();
-        mockQueueRepository.pushToQueueEnd = jest.fn();
+        mockQueueRepository.pushToQueue = jest.fn();
         mockQueueRepository.removeFromQueue = jest.fn();
         mockQueueRepository.getQueueCount = jest.fn();
         mockQueueRepository.popQueue = jest.fn();
@@ -75,7 +75,7 @@ describe('Matchmaking Service', () => {
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
-            expect(mockQueueRepository.pushToQueueEnd).toHaveBeenCalledWith(userId, null);
+            expect(mockQueueRepository.pushToQueue).toHaveBeenCalledWith(userId, null);
         });
 
         it('should throw ConflictError if user is already in queue', async () => {
@@ -87,7 +87,7 @@ describe('Matchmaking Service', () => {
             );
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
-            expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
+            expect(mockQueueRepository.pushToQueue).not.toHaveBeenCalled();
         });
 
         it('should throw ConflictError if user is already in an active game', async () => {
@@ -101,7 +101,7 @@ describe('Matchmaking Service', () => {
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
-            expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
+            expect(mockQueueRepository.pushToQueue).not.toHaveBeenCalled();
         });
     });
 
@@ -367,7 +367,7 @@ describe('Matchmaking Service', () => {
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
-            expect(mockQueueRepository.pushToQueueEnd).toHaveBeenCalledWith(userId, result);
+            expect(mockQueueRepository.pushToQueue).toHaveBeenCalledWith(userId, result);
             expect(result).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
         });
 
@@ -380,7 +380,7 @@ describe('Matchmaking Service', () => {
             );
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
-            expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
+            expect(mockQueueRepository.pushToQueue).not.toHaveBeenCalled();
         });
 
         it('should throw ConflictError if user is already in an active game', async () => {
@@ -394,7 +394,7 @@ describe('Matchmaking Service', () => {
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
-            expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
+            expect(mockQueueRepository.pushToQueue).not.toHaveBeenCalled();
         });
     });
 
@@ -411,7 +411,7 @@ describe('Matchmaking Service', () => {
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.getQueueCount).toHaveBeenCalledWith(queueId);
-            expect(mockQueueRepository.pushToQueueEnd).toHaveBeenCalledWith(userId, queueId);
+            expect(mockQueueRepository.pushToQueue).toHaveBeenCalledWith(userId, queueId);
         });
 
         it('should trigger matchMake when 2nd player joins', async () => {
@@ -448,7 +448,7 @@ describe('Matchmaking Service', () => {
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.getQueueCount).toHaveBeenCalledWith(queueId);
-            expect(mockQueueRepository.pushToQueueEnd).toHaveBeenCalledWith(userId, queueId);
+            expect(mockQueueRepository.pushToQueue).toHaveBeenCalledWith(userId, queueId);
             expect(mockQueueRepository.popQueue).toHaveBeenCalledWith(queueId);
             expect(mockCoreRestClient.createGame).toHaveBeenCalledWith(playerIds);
         });
@@ -463,7 +463,7 @@ describe('Matchmaking Service', () => {
             );
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
-            expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
+            expect(mockQueueRepository.pushToQueue).not.toHaveBeenCalled();
         });
 
         it('should throw NotFoundError if private queue does not exist', async () => {
@@ -478,7 +478,7 @@ describe('Matchmaking Service', () => {
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.getQueueCount).toHaveBeenCalledWith(queueId);
-            expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
+            expect(mockQueueRepository.pushToQueue).not.toHaveBeenCalled();
         });
 
         it('should throw ConflictError if private queue is full', async () => {
@@ -493,7 +493,7 @@ describe('Matchmaking Service', () => {
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockQueueRepository.getQueueCount).toHaveBeenCalledWith(queueId);
-            expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
+            expect(mockQueueRepository.pushToQueue).not.toHaveBeenCalled();
         });
 
         it('should throw ConflictError if user is already in an active game', async () => {
@@ -508,7 +508,7 @@ describe('Matchmaking Service', () => {
 
             expect(mockQueueRepository.getQueueId).toHaveBeenCalledWith(userId);
             expect(mockCoreRestClient.checkActiveGame).toHaveBeenCalledWith(userId);
-            expect(mockQueueRepository.pushToQueueEnd).not.toHaveBeenCalled();
+            expect(mockQueueRepository.pushToQueue).not.toHaveBeenCalled();
         });
     });
 });

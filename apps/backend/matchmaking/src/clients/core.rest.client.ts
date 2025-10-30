@@ -21,7 +21,6 @@ class CoreRestClient {
             return true;
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
-                console.log(error);
                 return false;
             }
             throw error;

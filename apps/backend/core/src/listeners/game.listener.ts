@@ -4,6 +4,7 @@ import container from '../config/container';
 import GameNotificationService from '../services/game.notification.service';
 import { GetGameIdCallback, GetTimesCallback, MoveCallback, PositionCallback } from '../models/callbacks';
 import { GetTimesRequest, JoinGameRequest, MoveRequest, PositionRequest } from '../models/requests';
+import { RatingChange } from '../models/game';
 
 const gameService = container.get(GameService);
 const gameNotificationService = container.get(GameNotificationService);
@@ -50,10 +51,18 @@ const gameListener = (io: Server, socket: Socket) => {
         const isGameOver = await gameService.isGameOver(request.gameId);
         const winner = await gameService.getWinner(request.gameId);
         const playerTimes = await gameService.getTimes(request.gameId);
+        let ratingChange: RatingChange | null = null;
         if (isGameOver) {
-            await gameService.reset(request.gameId);
+            ratingChange = await gameService.reset(request.gameId);
         }
-        gameNotificationService.sendPositionUpdateNotification(request.gameId, fen, isGameOver, winner, playerTimes);
+        gameNotificationService.sendPositionUpdateNotification(
+            request.gameId,
+            fen,
+            isGameOver,
+            winner,
+            playerTimes,
+            ratingChange
+        );
     };
 
     const getPosition = async function (request: PositionRequest, callback: PositionCallback) {

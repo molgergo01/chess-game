@@ -11,6 +11,7 @@ import MovesRepository from '../repositories/moves.repository';
 import UsersRepository from '../repositories/users.repository';
 import UserService from '../services/user.service';
 import LeaderboardController from '../controllers/leaderboard.controller';
+import RatingService from '../services/rating.service';
 
 const container = new Container();
 
@@ -23,6 +24,7 @@ container.bind(GameIdRepository).toSelf().inSingletonScope();
 container.bind(GamesRepository).toSelf().inSingletonScope();
 container.bind(MovesRepository).toSelf().inSingletonScope();
 container.bind(UsersRepository).toSelf().inSingletonScope();
+container.bind(RatingService).toSelf().inSingletonScope();
 container.bind(GameService).toSelf().inSingletonScope();
 container.bind(UserService).toSelf().inSingletonScope();
 container.bind(GameNotificationService).toSelf().inSingletonScope();

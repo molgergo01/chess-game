@@ -5,7 +5,7 @@ import { getTurnColor, isPromotion, updatePosition } from '@/lib/utils/fen.utils
 import { joinGame, movePiece } from '@/lib/clients/core.socket.client';
 import { UserDto, Winner } from '@/lib/models/response/game';
 import { PieceDropHandlerArgs } from 'react-chessboard';
-import { GameUpdateMessage, PlayerTimes, TimeExpiredMessage } from '@/lib/models/request/game';
+import { GameUpdateMessage, PlayerTimes, RatingChange, TimeExpiredMessage } from '@/lib/models/request/game';
 import { getCurrentUserColor } from '@/lib/utils/game.utils';
 import { MatchmakingColor } from '@/lib/models/request/matchmaking';
 import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
@@ -23,6 +23,7 @@ function useChessGame() {
     const [timesRemaining, setTimesRemaining] = useState<PlayerTimes | undefined>(undefined);
     const [whitePlayer, setWhitePlayer] = useState<UserDto | undefined>(undefined);
     const [blackPlayer, setBlackPlayer] = useState<UserDto | undefined>(undefined);
+    const [ratingChange, setRatingChange] = useState<RatingChange | null>(null);
     const { socket } = useCoreSocket();
     const { userId } = useAuth();
 
@@ -34,6 +35,7 @@ function useChessGame() {
             if (request.isGameOver) {
                 setGameOver(true);
                 setWinner(request.winner);
+                setRatingChange(request.ratingChange);
             }
         };
         const handleTimeExpired = (request: TimeExpiredMessage) => {
@@ -43,6 +45,7 @@ function useChessGame() {
                 blackTimeRemaining: 0,
                 whiteTimeRemaining: 0
             });
+            setRatingChange(request.ratingChange);
         };
         socket.on('update-position', handleUpdatePosition);
         socket.on('time-expired', handleTimeExpired);
@@ -124,7 +127,8 @@ function useChessGame() {
         winner,
         onDrop,
         whitePlayer,
-        blackPlayer
+        blackPlayer,
+        ratingChange
     };
 }
 
