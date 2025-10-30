@@ -17,8 +17,8 @@ export const io = new Server(server, {
 
 container.bind('SocketIO').toConstantValue(io);
 
-export const onConnection = (socket: Socket) => {
-    matchmakingService.setSocketIdForUser(socket.handshake.auth.userId, socket.id);
+export const onConnection = async (socket: Socket) => {
+    await matchmakingService.setSocketIdForUser(socket.handshake.auth.userId, socket.id);
 };
 
 io.on('connection', onConnection);

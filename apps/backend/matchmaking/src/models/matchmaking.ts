@@ -41,6 +41,18 @@ export type GetQueueStatusResponse = {
     hasActiveGame: boolean;
 };
 
+export type QueuedPlayer = {
+    playerId: string;
+    queueTimestamp: number;
+    elo: number;
+    queueId: string;
+};
+
+export type EloRange = {
+    minElo: number;
+    maxElo: number;
+};
+
 export enum Color {
     BLACK = 'b',
     WHITE = 'w'

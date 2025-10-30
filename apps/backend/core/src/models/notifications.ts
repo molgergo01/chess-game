@@ -1,8 +1,9 @@
-import { Winner } from './game';
+import { RatingChange, Winner } from './game';
 import { PlayerTimes } from './player';
 
 export type TimeExpiredNotification = {
     winner: Winner;
+    ratingChange: RatingChange;
 };
 
 export interface PositionUpdateNotification {
@@ -10,4 +11,5 @@ export interface PositionUpdateNotification {
     isGameOver: boolean;
     winner: Winner | null;
     playerTimes: PlayerTimes;
+    ratingChange: RatingChange | null;
 }

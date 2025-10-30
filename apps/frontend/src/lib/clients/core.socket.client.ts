@@ -1,5 +1,5 @@
-import { GetGameIdResponse, MoveResponse, PositionResponse } from '@/lib/models/response/game';
-import { JoinGameRequest, MoveRequest, PositionRequest } from '@/lib/models/request/game';
+import { GetGameIdResponse, MoveResponse } from '@/lib/models/response/game';
+import { JoinGameRequest, MoveRequest } from '@/lib/models/request/game';
 import { Socket } from 'socket.io-client';
 
 export function getGameId(socket: Socket): Promise<GetGameIdResponse> {
@@ -28,12 +28,4 @@ export async function movePiece(
     };
 
     return socket.emitWithAck('movePiece', requestBody);
-}
-
-export function getPosition(socket: Socket, gameId: string): Promise<PositionResponse> {
-    const requestBody: PositionRequest = {
-        gameId: gameId
-    };
-
-    return socket.emitWithAck('getPosition', requestBody);
 }
