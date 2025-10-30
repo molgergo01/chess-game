@@ -13,6 +13,7 @@ import Fen from 'chess-fen';
 import GamesRepository from '../../src/repositories/games.repository';
 import MovesRepository from '../../src/repositories/moves.repository';
 import ConflictError from 'chess-game-backend-common/errors/conflict.error';
+import RatingService from '../../src/services/rating.service';
 
 const mockGame = {
     fen: jest.fn(),
@@ -39,6 +40,7 @@ jest.mock('../../src/repositories/gameState.repository');
 jest.mock('../../src/repositories/gameId.repository');
 jest.mock('../../src/repositories/games.repository');
 jest.mock('../../src/repositories/moves.repository');
+jest.mock('../../src/services/rating.service');
 
 describe('Game Service', () => {
     const NOW = 10000000;
@@ -47,6 +49,7 @@ describe('Game Service', () => {
     let mockGameIdRepository: jest.Mocked<GameIdRepository>;
     let mockGamesRepository: jest.Mocked<GamesRepository>;
     let mockMovesRepository: jest.Mocked<MovesRepository>;
+    let mockRatingService: jest.Mocked<RatingService>;
     let gameService: GameService;
 
     let mockUuid = jest.fn();
@@ -82,11 +85,15 @@ describe('Game Service', () => {
         mockMovesRepository = new MovesRepository() as jest.Mocked<MovesRepository>;
         mockMovesRepository.save = jest.fn();
 
+        mockRatingService = new RatingService(null as never, null as never) as jest.Mocked<RatingService>;
+        mockRatingService.adjustRatings = jest.fn();
+
         gameService = new GameService(
             mockGameStateRepository,
             mockGameIdRepository,
             mockGamesRepository,
-            mockMovesRepository
+            mockMovesRepository,
+            mockRatingService
         );
     });
 
@@ -617,6 +624,34 @@ describe('Game Service', () => {
             const result = await gameService.getWinner('0000');
 
             expect(result).toEqual(Winner.BLACK);
+        });
+
+        it('should return draw if timer expired and no move made', async () => {
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 2000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: 0,
+                startedAt: NOW
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            const result = await gameService.getWinner('0000');
+
+            expect(result).toEqual(Winner.DRAW);
         });
 
         it('should return null if game is ongoing', async () => {

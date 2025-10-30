@@ -2,27 +2,14 @@ import GameService from '../services/game.service';
 import { Server, Socket } from 'socket.io';
 import container from '../config/container';
 import GameNotificationService from '../services/game.notification.service';
-import { GetGameIdCallback, GetTimesCallback, MoveCallback, PositionCallback } from '../models/callbacks';
-import { GetTimesRequest, JoinGameRequest, MoveRequest, PositionRequest } from '../models/requests';
+import { MoveCallback } from '../models/callbacks';
+import { JoinGameRequest, MoveRequest } from '../models/requests';
+import { RatingChange } from '../models/game';
 
 const gameService = container.get(GameService);
 const gameNotificationService = container.get(GameNotificationService);
 
 const gameListener = (io: Server, socket: Socket) => {
-    const getGameId = async function (callback: GetGameIdCallback) {
-        const gameId = await gameService.getGameId(socket.handshake.auth.userId);
-        callback({ gameId: gameId });
-    };
-
-    const getTimes = async function (request: GetTimesRequest, callback: GetTimesCallback) {
-        const requestTimestamp = Date.now();
-        const playerTimes = await gameService.getTimes(request.gameId, requestTimestamp);
-
-        callback({
-            playerTimes: playerTimes
-        });
-    };
-
     const joinGame = function (request: JoinGameRequest) {
         socket.join(request.gameId);
     };
@@ -50,32 +37,23 @@ const gameListener = (io: Server, socket: Socket) => {
         const isGameOver = await gameService.isGameOver(request.gameId);
         const winner = await gameService.getWinner(request.gameId);
         const playerTimes = await gameService.getTimes(request.gameId);
+        let ratingChange: RatingChange | null = null;
         if (isGameOver) {
-            await gameService.reset(request.gameId);
+            ratingChange = await gameService.reset(request.gameId);
         }
-        gameNotificationService.sendPositionUpdateNotification(request.gameId, fen, isGameOver, winner, playerTimes);
-    };
-
-    const getPosition = async function (request: PositionRequest, callback: PositionCallback) {
-        const fen = await gameService.getFen(request.gameId);
-        const isGameOver = await gameService.isGameOver(request.gameId);
-        const callbackBody = {
-            position: fen,
-            winner: await gameService.getWinner(request.gameId),
-            gameOver: isGameOver
-        };
-        if (isGameOver) {
-            await gameService.reset(request.gameId);
-        }
-        callback(callbackBody);
+        gameNotificationService.sendPositionUpdateNotification(
+            request.gameId,
+            fen,
+            isGameOver,
+            winner,
+            playerTimes,
+            ratingChange
+        );
     };
 
     return {
-        getGameId,
-        getTimes,
         joinGame,
-        movePiece,
-        getPosition
+        movePiece
     };
 };
 

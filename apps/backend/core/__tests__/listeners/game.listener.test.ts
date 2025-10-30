@@ -26,8 +26,8 @@ import { type AddressInfo } from 'node:net';
 import { io as ioc, type Socket as ClientSocket } from 'socket.io-client';
 import { Server, type Socket as ServerSocket } from 'socket.io';
 import gameListener from '../../src/listeners/game.listener';
-import { Winner } from '../../src/models/game';
-import { MoveCallback, PositionCallback } from '../../src/models/callbacks';
+import { RatingChange, Winner } from '../../src/models/game';
+import { MoveCallback } from '../../src/models/callbacks';
 
 jest.mock('chess-game-backend-common/config/passport', () => ({
     initialize: jest.fn(() => (req: Request, res: Response, next: NextFunction) => next())
@@ -60,17 +60,13 @@ describe('Game Listener', () => {
         io = new Server(httpServer);
         httpServer.listen(() => {
             const port = (httpServer.address() as AddressInfo).port;
-            clientSocket = ioc(`http://localhost:${port}`, {
-                auth: { userId }
-            });
+            clientSocket = ioc(`http://localhost:${port}`);
             io.on('connection', (socket: ServerSocket) => {
-                const { getGameId, getTimes, joinGame, movePiece, getPosition } = gameListener(io, socket);
+                socket.data.user = { id: userId };
+                const { joinGame, movePiece } = gameListener(io, socket);
 
-                socket.on('getGameId', getGameId);
-                socket.on('getTimes', getTimes);
                 socket.on('joinGame', joinGame);
                 socket.on('movePiece', movePiece);
-                socket.on('getPosition', getPosition);
             });
             clientSocket.on('connect', done);
         });
@@ -84,41 +80,6 @@ describe('Game Listener', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
-    });
-
-    describe('getGameId', () => {
-        it('should return gameId from service', async () => {
-            mockGameService.getGameId.mockResolvedValue(gameId);
-
-            const result: { gameId: string | null } = await clientSocket.emitWithAck('getGameId');
-
-            expect(result).toEqual({ gameId });
-            expect(mockGameService.getGameId).toHaveBeenCalledWith(userId);
-        });
-
-        it('should return null if no game exists', async () => {
-            mockGameService.getGameId.mockResolvedValue(null);
-
-            const result: { gameId: string | null } = await clientSocket.emitWithAck('getGameId');
-
-            expect(result).toEqual({ gameId: null });
-            expect(mockGameService.getGameId).toHaveBeenCalledWith(userId);
-        });
-    });
-
-    describe('getTimes', () => {
-        it('should return player times', async () => {
-            const playerTimes = {
-                whiteTimeRemaining: 600000,
-                blackTimeRemaining: 550000
-            };
-            mockGameService.getTimes.mockResolvedValue(playerTimes);
-
-            const result: { playerTimes: typeof playerTimes } = await clientSocket.emitWithAck('getTimes', { gameId });
-
-            expect(result).toEqual({ playerTimes });
-            expect(mockGameService.getTimes).toHaveBeenCalledWith(gameId, expect.any(Number));
-        });
     });
 
     describe('joinGame', () => {
@@ -168,7 +129,8 @@ describe('Game Listener', () => {
                 newFen,
                 false,
                 null,
-                playerTimes
+                playerTimes,
+                null
             );
         });
 
@@ -198,13 +160,19 @@ describe('Game Listener', () => {
                 whiteTimeRemaining: 0,
                 blackTimeRemaining: 600000
             };
+            const ratingChange: RatingChange = {
+                whiteRatingChange: 0,
+                whiteNewRating: 400,
+                blackRatingChange: 0,
+                blackNewRating: 400
+            };
 
             mockGameService.getFen.mockResolvedValue('fen');
             mockGameService.move.mockResolvedValue(finalFen);
             mockGameService.isGameOver.mockResolvedValue(true);
             mockGameService.getWinner.mockResolvedValue(Winner.BLACK);
             mockGameService.getTimes.mockResolvedValue(playerTimes);
-            mockGameService.reset.mockResolvedValue(undefined);
+            mockGameService.reset.mockResolvedValue(ratingChange);
 
             clientSocket.emit('movePiece', {
                 gameId,
@@ -222,44 +190,9 @@ describe('Game Listener', () => {
                 finalFen,
                 true,
                 Winner.BLACK,
-                playerTimes
+                playerTimes,
+                ratingChange
             );
-        });
-    });
-
-    describe('getPosition', () => {
-        it('should return current position', async () => {
-            const currentFen = 'current_position_fen';
-            mockGameService.getFen.mockResolvedValue(currentFen);
-            mockGameService.isGameOver.mockResolvedValue(false);
-            mockGameService.getWinner.mockResolvedValue(null);
-
-            const result: PositionCallback = await clientSocket.emitWithAck('getPosition', { gameId });
-
-            expect(result).toEqual({
-                position: currentFen,
-                gameOver: false,
-                winner: null
-            });
-            expect(mockGameService.getFen).toHaveBeenCalledWith(gameId);
-            expect(mockGameService.isGameOver).toHaveBeenCalledWith(gameId);
-        });
-
-        it('should reset game when game is over', async () => {
-            const finalFen = 'final_position_fen';
-            mockGameService.getFen.mockResolvedValue(finalFen);
-            mockGameService.isGameOver.mockResolvedValue(true);
-            mockGameService.getWinner.mockResolvedValue(Winner.WHITE);
-            mockGameService.reset.mockResolvedValue(undefined);
-
-            const result: PositionCallback = await clientSocket.emitWithAck('getPosition', { gameId });
-
-            expect(result).toEqual({
-                position: finalFen,
-                gameOver: true,
-                winner: Winner.WHITE
-            });
-            expect(mockGameService.reset).toHaveBeenCalledWith(gameId);
         });
     });
 });

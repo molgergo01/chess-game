@@ -20,13 +20,10 @@ export const io = new Server(server, {
 container.bind('SocketIO').toConstantValue(io);
 
 export const onConnection = (socket: Socket) => {
-    const { getGameId, getTimes, joinGame, movePiece, getPosition } = gameListener(io, socket);
+    const { joinGame, movePiece } = gameListener(io, socket);
 
-    socket.on('getGameId', getGameId);
-    socket.on('getTimes', getTimes);
     socket.on('joinGame', joinGame);
     socket.on('movePiece', movePiece);
-    socket.on('getPosition', getPosition);
 };
 
 io.on('connection', onConnection);

@@ -22,8 +22,18 @@ import LoadingScreen from '@/components/ui/loading-screen';
 
 function Game({ className, ...props }: React.ComponentProps<'div'>) {
     const router = useRouter();
-    const { color, boardPosition, turnColor, timesRemaining, gameOver, winner, onDrop, whitePlayer, blackPlayer } =
-        useChessGame();
+    const {
+        color,
+        boardPosition,
+        turnColor,
+        timesRemaining,
+        gameOver,
+        winner,
+        onDrop,
+        whitePlayer,
+        blackPlayer,
+        ratingChange
+    } = useChessGame();
 
     const whiteTimerRef = useRef<TimerRef>(null);
     const blackTimerRef = useRef<TimerRef>(null);
@@ -73,6 +83,18 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
         return <LoadingScreen />;
     }
 
+    const playerRatingChange =
+        color === MatchmakingColor.WHITE ? ratingChange?.whiteRatingChange : ratingChange?.blackRatingChange;
+    const playerNewRating =
+        color === MatchmakingColor.WHITE ? ratingChange?.whiteNewRating : ratingChange?.blackNewRating;
+
+    const getRatingChangeColor = (change: number | undefined) => {
+        if (!change) return 'text-gray-500';
+        if (change > 0) return 'text-green-500';
+        if (change < 0) return 'text-red-500';
+        return 'text-gray-500';
+    };
+
     return (
         <div className={`flex flex-col flex-1 min-h-0 ${className}`} data-cy="game-container" {...props}>
             <Timer ref={whiteTimerRef} defaultTime={timesRemaining.whiteTimeRemaining} onTick={handleWhiteTimerTick} />
@@ -105,11 +127,20 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
             <Dialog open={gameOver} data-cy="game-over-dialog">
                 <DialogContent hideClose>
                     <DialogHeader>
-                        <DialogTitle>Game Over</DialogTitle>
-                        <DialogDescription data-cy="game-over-message">
-                            {winner === Winner.WHITE && 'White wins'}
-                            {winner === Winner.BLACK && 'Black wins'}
-                            {winner === Winner.DRAW && 'Draw'}
+                        <DialogTitle className="text-center">Game Over</DialogTitle>
+                        <DialogDescription data-cy="game-over-message" className="flex flex-col items-center gap-2">
+                            <span className="text-xl font-semibold text-foreground">
+                                {winner === Winner.WHITE && 'White wins'}
+                                {winner === Winner.BLACK && 'Black wins'}
+                                {winner === Winner.DRAW && 'Draw'}
+                            </span>
+                            <span className="flex items-center gap-2">
+                                <span className="text-base" data-cy="new-rating">New rating: {playerNewRating}</span>
+                                <span className={`text-sm ${getRatingChangeColor(playerRatingChange)}`} data-cy="rating-change">
+                                    {playerRatingChange !== undefined && playerRatingChange >= 0 ? '+' : ''}
+                                    {playerRatingChange}
+                                </span>
+                            </span>
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

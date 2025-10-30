@@ -49,6 +49,13 @@ export type GameHistoryResult = {
     totalCount: number;
 };
 
+export type RatingChange = {
+    whiteRatingChange: number;
+    whiteNewRating: number;
+    blackRatingChange: number;
+    blackNewRating: number;
+};
+
 export enum Color {
     BLACK = 'b',
     WHITE = 'w'

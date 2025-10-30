@@ -22,6 +22,7 @@ describe('Matchmaking Controller', () => {
             null as never,
             null as never,
             null as never,
+            null as never,
             null as never
         ) as jest.Mocked<MatchmakingService>;
         mockMatchmakingService.joinQueue = jest.fn();

@@ -2,7 +2,7 @@ import TimerWatcher from '../../src/services/timer.watcher';
 import GameStateRepository from '../../src/repositories/gameState.repository';
 import GameService from '../../src/services/game.service';
 import GameNotificationService from '../../src/services/game.notification.service';
-import { Color, GameState, Winner } from '../../src/models/game';
+import { Color, GameState, RatingChange, Winner } from '../../src/models/game';
 import { Chess } from 'chess.js';
 import { Player } from '../../src/models/player';
 import { Timer } from '../../src/models/timer';
@@ -34,10 +34,11 @@ describe('Timer Watcher', () => {
             null as never,
             null as never,
             null as never,
+            null as never,
             null as never
         ) as jest.Mocked<GameService>;
         mockGameService.getGameState = jest.fn();
-        mockGameService.getGameState = jest.fn();
+        mockGameService.reset = jest.fn();
 
         mockGameNotificationService = new GameNotificationService(
             null as never
@@ -118,11 +119,23 @@ describe('Timer Watcher', () => {
             mockGameService.getGameState.mockResolvedValue(gameState);
             mockGame.turn.mockReturnValue(Color.WHITE);
 
+            const ratingChange: RatingChange = {
+                whiteRatingChange: 0,
+                whiteNewRating: 400,
+                blackRatingChange: 0,
+                blackNewRating: 400
+            };
+            mockGameService.reset.mockResolvedValue(ratingChange);
+
             timerWatcher.start();
             await jest.runAllTimersAsync();
 
             expect(mockGameService.reset).toHaveBeenCalledWith(gameId);
-            expect(mockGameNotificationService.sendTimerExpiredNotification).toHaveBeenCalledWith(gameId, Winner.BLACK);
+            expect(mockGameNotificationService.sendTimerExpiredNotification).toHaveBeenCalledWith(
+                gameId,
+                Winner.BLACK,
+                ratingChange
+            );
             expect(clearInterval).toHaveBeenCalled();
         });
 
@@ -154,11 +167,23 @@ describe('Timer Watcher', () => {
 
             mockGameService.getGameState.mockResolvedValue(gameState);
 
+            const ratingChange: RatingChange = {
+                whiteRatingChange: 0,
+                whiteNewRating: 400,
+                blackRatingChange: 0,
+                blackNewRating: 400
+            };
+            mockGameService.reset.mockResolvedValue(ratingChange);
+
             timerWatcher.start();
             await jest.runAllTimersAsync();
 
             expect(mockGameService.reset).toHaveBeenCalledWith(gameId);
-            expect(mockGameNotificationService.sendTimerExpiredNotification).toHaveBeenCalledWith(gameId, Winner.DRAW);
+            expect(mockGameNotificationService.sendTimerExpiredNotification).toHaveBeenCalledWith(
+                gameId,
+                Winner.DRAW,
+                ratingChange
+            );
             expect(clearInterval).toHaveBeenCalled();
         });
 

@@ -3,50 +3,24 @@ import redis from 'chess-game-backend-common/config/redis';
 
 @injectable()
 class QueueRepository {
-    pushToQueueEnd(userId: string, queueId: string | null) {
+    async pushToQueue(userId: string, queueId: string | null, score: number) {
         const queueKey = this.getQueueKey(queueId);
-        redis.lPush(queueKey, userId);
+        return redis.zAdd(queueKey, { value: userId, score: score });
     }
 
-    pushToQueueFront(userId: string, queueId: string | null) {
+    async removeFromQueue(userId: string, queueId: string | null) {
         const queueKey = this.getQueueKey(queueId);
-        redis.rPush(queueKey, userId);
-    }
-
-    removeFromQueue(userId: string, queueId: string | null) {
-        const queueKey = this.getQueueKey(queueId);
-        redis.lRem(queueKey, 1, userId);
+        return redis.zRem(queueKey, userId);
     }
 
     async getQueueCount(queueId: string | null): Promise<number> {
         const queueKey = this.getQueueKey(queueId);
-        return redis.lLen(queueKey);
+        return redis.zCard(queueKey);
     }
 
-    async popQueue(queueId: string | null) {
+    async popQueue(queueId: string | null, count: number) {
         const queueKey = this.getQueueKey(queueId);
-        return redis.rPopCount(queueKey, 2);
-    }
-
-    // TODO Improvement: Store each player's queueId as redis hash for performance.
-    async getQueueId(userId: string) {
-        let cursor = '0';
-        do {
-            const result = await redis.scan(cursor, {
-                MATCH: 'matchmaking-queue*',
-                COUNT: 100
-            });
-            cursor = result.cursor;
-
-            for (const key of result.keys) {
-                const position = await redis.lPos(key, userId);
-                if (position !== null) {
-                    return key == 'matchmaking-queue' ? '' : key.split(':')[1];
-                }
-            }
-        } while (cursor !== '0');
-
-        return null;
+        return redis.zPopMinCount(queueKey, count);
     }
 
     private getQueueKey(queueId: string | null) {

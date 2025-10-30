@@ -11,10 +11,12 @@ export interface GameUpdateMessage {
     isGameOver: boolean;
     winner: Winner | null;
     playerTimes: PlayerTimes;
+    ratingChange: RatingChange | null;
 }
 
 export interface TimeExpiredMessage {
     winner: Winner;
+    ratingChange: RatingChange;
 }
 
 export interface MoveRequest {
@@ -42,6 +44,13 @@ export type GetGameHistoryParams = {
 export type GetLeaderboardParams = {
     limit: number | null;
     offset: number | null;
+};
+
+export type RatingChange = {
+    whiteRatingChange: number;
+    whiteNewRating: number;
+    blackRatingChange: number;
+    blackNewRating: number;
 };
 
 export enum Winner {
