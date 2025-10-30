@@ -15,6 +15,7 @@ describe('Matchmaking Scheduler', () => {
             null as never,
             null as never,
             null as never,
+            null as never,
             null as never
         ) as jest.Mocked<MatchmakingService>;
         mockMatchmakingService.matchMake = jest.fn();

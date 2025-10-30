@@ -1,4 +1,13 @@
-import { Color, Game, GameCreated, GameHistoryResult, GameState, GameWithMoves, Winner } from '../models/game';
+import {
+    Color,
+    Game,
+    GameCreated,
+    GameHistoryResult,
+    GameState,
+    GameWithMoves,
+    RatingChange,
+    Winner
+} from '../models/game';
 import { Chess } from 'chess.js';
 import { v4 as uuidv4, validate as validateUuid } from 'uuid';
 import { inject, injectable } from 'inversify';
@@ -11,10 +20,10 @@ import NotFoundError from 'chess-game-backend-common/errors/not.found.error';
 import ForbiddenError from 'chess-game-backend-common/errors/forbidden.error';
 import InternalServerError from 'chess-game-backend-common/errors/internal.server.error';
 import GamesRepository from '../repositories/games.repository';
-import { DEFAULT_START_TIMEOUT_IN_MINUTES } from '../config/constants';
 import MovesRepository from '../repositories/moves.repository';
 import { Move } from '../models/move';
 import ConflictError from 'chess-game-backend-common/errors/conflict.error';
+import RatingService from './rating.service';
 
 @injectable()
 class GameService {
@@ -28,7 +37,9 @@ class GameService {
         @inject(GamesRepository)
         private readonly gamesRepository: GamesRepository,
         @inject(MovesRepository)
-        private readonly movesRepository: MovesRepository
+        private readonly movesRepository: MovesRepository,
+        @inject(RatingService)
+        private readonly ratingService: RatingService
     ) {
         this.games = new Map();
     }
@@ -79,7 +90,7 @@ class GameService {
         };
         await this.gamesRepository.save(gameEntity);
 
-        this.gameStateRepository.save(id, game.fen(), players, 0, startedAt);
+        await this.gameStateRepository.save(id, game.fen(), players, 0, startedAt);
         playerIds.forEach((player) => {
             this.gameIdRepository.save(player, id);
         });
@@ -128,7 +139,13 @@ class GameService {
         const move = game.move({ from: from, to: to, promotion: promotionPiece });
         this.refreshPlayerTimes(gameState, currentPlayer, requestTimestamp);
         gameState.lastMoveEpoch = requestTimestamp;
-        this.gameStateRepository.save(gameId, game.fen(), gameState.players, requestTimestamp, gameState.startedAt);
+        await this.gameStateRepository.save(
+            gameId,
+            game.fen(),
+            gameState.players,
+            requestTimestamp,
+            gameState.startedAt
+        );
 
         const moveId = uuidv4();
         const whitePlayerTime = gameState.players.find((player) => player.color === Color.WHITE)?.timer.remainingMs;
@@ -167,6 +184,10 @@ class GameService {
         const gameState = await this.getGameState(gameId);
         const game = gameState.game;
 
+        if (gameState.lastMoveEpoch === 0) {
+            return Winner.DRAW;
+        }
+
         const timeSinceLastMove = Date.now() - gameState.lastMoveEpoch;
         const currentPlayer = gameState.players.find((player) => player.color === gameState.game.turn());
         const currentPlayerRemainingTime = currentPlayer!.timer.remainingMs - timeSinceLastMove;
@@ -186,23 +207,25 @@ class GameService {
             return game.turn() === 'w' ? Winner.BLACK : Winner.WHITE;
         }
 
-        const now = Date.now();
-        const timedOut = now - gameState.startedAt > DEFAULT_START_TIMEOUT_IN_MINUTES * 60 * 1000;
-        if (timedOut) return Winner.DRAW;
-
         return null;
     }
 
-    async reset(gameId: string): Promise<void> {
+    async reset(gameId: string): Promise<RatingChange> {
         const game = await this.gamesRepository.findById(gameId);
         if (!game) throw new Error('Game not found');
         game.endedAt = new Date();
         game.winner = await this.getWinner(gameId);
+        if (!game.winner) {
+            // should not happen
+            throw new Error('Game was not finished properly');
+        }
         await this.gamesRepository.update(game);
 
         await this.gameStateRepository.remove(gameId);
         await this.gameIdRepository.remove(gameId);
         this.games.delete(gameId);
+
+        return await this.ratingService.adjustRatings(game.whitePlayerId, game.blackPlayerId, game.winner);
     }
 
     async getGameState(gameId: string): Promise<GameState> {

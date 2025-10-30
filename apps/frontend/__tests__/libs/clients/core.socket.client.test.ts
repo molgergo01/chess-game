@@ -1,4 +1,4 @@
-import { getGameId, joinGame, movePiece, getPosition } from '@/lib/clients/core.socket.client';
+import { joinGame, movePiece } from '@/lib/clients/core.socket.client';
 import { Socket } from 'socket.io-client';
 
 describe('core.socket.client', () => {
@@ -13,18 +13,6 @@ describe('core.socket.client', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
-    });
-
-    describe('getGameId', () => {
-        it('should call socket.emitWithAck with correct event name', async () => {
-            const mockResponse = { gameId: 'game123' };
-            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(mockResponse);
-
-            const result = await getGameId(mockSocket as Socket);
-
-            expect(mockSocket.emitWithAck).toHaveBeenCalledWith('getGameId');
-            expect(result).toBe(mockResponse);
-        });
     });
 
     describe('joinGame', () => {
@@ -76,26 +64,6 @@ describe('core.socket.client', () => {
                 from: sourceSquare,
                 to: targetSquare,
                 promotionPiece: promotionPiece
-            });
-            expect(result).toBe(mockResponse);
-        });
-    });
-
-    describe('getPosition', () => {
-        it('should call socket.emitWithAck with correct event name and request body', async () => {
-            const gameId = 'game123';
-            const mockResponse = {
-                position: 'fen_string',
-                gameOver: false,
-                winner: null
-            };
-
-            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(mockResponse);
-
-            const result = await getPosition(mockSocket as Socket, gameId);
-
-            expect(mockSocket.emitWithAck).toHaveBeenCalledWith('getPosition', {
-                gameId: gameId
             });
             expect(result).toBe(mockResponse);
         });

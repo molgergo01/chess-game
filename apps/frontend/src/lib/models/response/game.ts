@@ -2,10 +2,6 @@ export type GetGameIdResponse = {
     gameId: string | null;
 };
 
-export type GetTimesResponse = {
-    playerTimes: PlayerTimes;
-};
-
 export interface PositionResponse {
     position: string;
     gameOver: boolean;

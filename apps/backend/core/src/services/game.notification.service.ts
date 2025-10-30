@@ -1,6 +1,6 @@
 import { Container, inject, injectable } from 'inversify';
 import { Server } from 'socket.io';
-import { Winner } from '../models/game';
+import { RatingChange, Winner } from '../models/game';
 import { PositionUpdateNotification, TimeExpiredNotification } from '../models/notifications';
 import { PlayerTimes } from '../models/player';
 
@@ -15,9 +15,10 @@ class GameNotificationService {
         return this.container.get<Server>('SocketIO');
     }
 
-    sendTimerExpiredNotification(gameId: string, winner: Winner) {
+    sendTimerExpiredNotification(gameId: string, winner: Winner, ratingChange: RatingChange) {
         const message: TimeExpiredNotification = {
-            winner: winner
+            winner: winner,
+            ratingChange: ratingChange
         };
         this.io.to(gameId).emit('time-expired', message);
     }
@@ -27,13 +28,15 @@ class GameNotificationService {
         fen: string,
         isGameOver: boolean,
         winner: Winner | null,
-        playerTimes: PlayerTimes
+        playerTimes: PlayerTimes,
+        ratingChange: RatingChange | null
     ) {
         const message: PositionUpdateNotification = {
             position: fen,
             isGameOver: isGameOver,
             winner: winner,
-            playerTimes: playerTimes
+            playerTimes: playerTimes,
+            ratingChange: ratingChange
         };
         this.io.to(gameId).emit('update-position', message);
     }

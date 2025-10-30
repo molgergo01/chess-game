@@ -1,6 +1,5 @@
 import { Container, inject, injectable } from 'inversify';
 import { Server } from 'socket.io';
-import { MatchmakeMessage } from '../models/matchmaking';
 
 @injectable()
 class MatchmakingNotificationService {
@@ -13,11 +12,8 @@ class MatchmakingNotificationService {
         return this.container.get<Server>('SocketIO');
     }
 
-    sendMatchmakeNotification(socketId: string, gameId: string) {
-        const matchmakeMessage: MatchmakeMessage = {
-            gameId: gameId
-        };
-        this.io.to(socketId).emit('matchmake', matchmakeMessage);
+    sendMatchmakeNotification(socketId: string) {
+        this.io.to(socketId).emit('matchmake');
     }
 }
 

@@ -10,7 +10,7 @@ class GameStateRepository {
         private readonly redis: typeof Redis
     ) {}
 
-    save(gameId: string, fen: string, players: Array<Player>, lastMoveEpoch: number, startedAt: number) {
+    async save(gameId: string, fen: string, players: Array<Player>, lastMoveEpoch: number, startedAt: number) {
         this.redis.hSet(`game-state:${gameId}`, {
             players: JSON.stringify(players),
             position: fen,

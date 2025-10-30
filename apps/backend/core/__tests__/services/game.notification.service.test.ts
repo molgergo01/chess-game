@@ -1,7 +1,7 @@
 import GameNotificationService from '../../src/services/game.notification.service';
 import { Server } from 'socket.io';
 import { Container } from 'inversify';
-import { Winner } from '../../src/models/game';
+import { RatingChange, Winner } from '../../src/models/game';
 import { PositionUpdateNotification, TimeExpiredNotification } from '../../src/models/notifications';
 import { PlayerTimes } from '../../src/models/player';
 
@@ -33,12 +33,19 @@ describe('Game Notification Service', () => {
         it('should send notification', () => {
             const gameId = '0000';
             const winner = Winner.WHITE;
-
-            const expectedMessage: TimeExpiredNotification = {
-                winner: winner
+            const ratingChange: RatingChange = {
+                whiteRatingChange: 0,
+                whiteNewRating: 400,
+                blackRatingChange: 0,
+                blackNewRating: 400
             };
 
-            gameNotificationService.sendTimerExpiredNotification(gameId, winner);
+            const expectedMessage: TimeExpiredNotification = {
+                winner: winner,
+                ratingChange: ratingChange
+            };
+
+            gameNotificationService.sendTimerExpiredNotification(gameId, winner, ratingChange);
 
             expect(mockIo.to).toHaveBeenCalledWith(gameId);
             expect(mockIo.emit).toHaveBeenCalledWith(timeExpiredEvent, expectedMessage);
@@ -56,15 +63,29 @@ describe('Game Notification Service', () => {
                 whiteTimeRemaining: 1,
                 blackTimeRemaining: 1
             };
+            const ratingChange: RatingChange = {
+                whiteRatingChange: 0,
+                whiteNewRating: 400,
+                blackRatingChange: 0,
+                blackNewRating: 400
+            };
 
             const expectedMessage: PositionUpdateNotification = {
                 position: fen,
                 isGameOver: isGameOver,
                 winner: winner,
-                playerTimes: playerTimes
+                playerTimes: playerTimes,
+                ratingChange: ratingChange
             };
 
-            gameNotificationService.sendPositionUpdateNotification(gameId, fen, isGameOver, winner, playerTimes);
+            gameNotificationService.sendPositionUpdateNotification(
+                gameId,
+                fen,
+                isGameOver,
+                winner,
+                playerTimes,
+                ratingChange
+            );
 
             expect(mockIo.to).toHaveBeenCalledWith(gameId);
             expect(mockIo.emit).toHaveBeenCalledWith(updatePositionEvent, expectedMessage);

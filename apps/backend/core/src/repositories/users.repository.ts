@@ -47,6 +47,23 @@ class UsersRepository {
         const result = await db.query(sql);
         return Number(result[0].count);
     }
+
+    async findEloById(id: string): Promise<number> {
+        const sql = `SELECT elo FROM chess_game.users WHERE id = $1 LIMIT 1`;
+        const result = await db.query(sql, [id]);
+
+        return Number(result[0].elo);
+    }
+
+    async updateEloById(id: string, elo: number) {
+        const sql = `
+            UPDATE chess_game.users
+            SET elo = $2
+            WHERE id = $1
+        `;
+
+        return db.none(sql, [id, elo]);
+    }
 }
 
 export default UsersRepository;

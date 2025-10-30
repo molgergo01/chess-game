@@ -31,17 +31,20 @@ export type LeavePrivateQueueRequest = {
     userId: string;
 };
 
-export type MatchmakeMessage = {
-    gameId: string;
-};
-
 export type GetQueueStatusResponse = {
     isQueued: boolean;
     queueId: string | null;
     hasActiveGame: boolean;
 };
 
-export enum Color {
-    BLACK = 'b',
-    WHITE = 'w'
-}
+export type QueuedPlayer = {
+    playerId: string;
+    queueTimestamp: number;
+    elo: number;
+    queueId: string;
+};
+
+export type EloRange = {
+    minElo: number;
+    maxElo: number;
+};
