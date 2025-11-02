@@ -1,5 +1,6 @@
 import { Player } from './player';
-import { Color, Winner } from './game';
+import { Color, DrawOffer, Winner } from './game';
+import { ChatMessage } from './chat';
 
 export type CreateGameResponse = {
     players: Array<Player>;
@@ -62,4 +63,10 @@ export type GetActiveGameResponse = {
     blackTimeRemaining: number;
     gameOver: boolean;
     winner: Winner | null;
+    drawOffer: DrawOffer | undefined;
+    timeUntilAbandoned: number | null;
+};
+
+export type GetChatMessagesResponse = {
+    messages: ChatMessage[];
 };

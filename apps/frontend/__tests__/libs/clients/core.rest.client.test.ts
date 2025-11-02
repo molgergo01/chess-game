@@ -1,6 +1,12 @@
 jest.mock('axios');
 
-import { getActiveGame, getGame, getGameHistory, getPlayerLeaderboard } from '@/lib/clients/core.rest.client';
+import {
+    getActiveGame,
+    getChatMessages,
+    getGame,
+    getGameHistory,
+    getPlayerLeaderboard
+} from '@/lib/clients/core.rest.client';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import env from '@/lib/config/env';
 
@@ -333,7 +339,18 @@ describe('core.rest.client', () => {
             const mockResponse = {
                 data: {
                     gameId: 'game456',
-                    isActive: true
+                    whitePlayer: { userId: 'user1', name: 'Player 1', elo: 1500, avatarUrl: 'avatar1.png' },
+                    blackPlayer: { userId: 'user2', name: 'Player 2', elo: 1600, avatarUrl: 'avatar2.png' },
+                    position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                    whiteTimeRemaining: 600000,
+                    blackTimeRemaining: 600000,
+                    gameOver: false,
+                    winner: null,
+                    drawOffer: {
+                        offeredBy: 'white',
+                        expiresAt: '2024-01-15T10:35:00Z'
+                    },
+                    timeUntilAbandoned: null
                 }
             };
 
@@ -346,7 +363,18 @@ describe('core.rest.client', () => {
             });
             expect(result).toEqual({
                 gameId: 'game456',
-                isActive: true
+                whitePlayer: { userId: 'user1', name: 'Player 1', elo: 1500, avatarUrl: 'avatar1.png' },
+                blackPlayer: { userId: 'user2', name: 'Player 2', elo: 1600, avatarUrl: 'avatar2.png' },
+                position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                whiteTimeRemaining: 600000,
+                blackTimeRemaining: 600000,
+                gameOver: false,
+                winner: null,
+                drawOffer: {
+                    offeredBy: 'white',
+                    expiresAt: new Date('2024-01-15T10:35:00Z')
+                },
+                timeUntilAbandoned: null
             });
         });
 
@@ -393,6 +421,116 @@ describe('core.rest.client', () => {
             (axios.get as jest.Mock).mockRejectedValue(new Error('Unknown error'));
 
             await expect(getActiveGame()).rejects.toThrow('Failed to get active game');
+        });
+    });
+
+    describe('getChatMessages', () => {
+        it('should call axios.get with correct URL and return ChatMessage array with timestamp conversion', async () => {
+            const chatId = 'chat123';
+            const mockResponse = {
+                data: {
+                    messages: [
+                        {
+                            messageId: 'msg1',
+                            userId: 'user1',
+                            message: 'Hello',
+                            timestamp: '2024-01-15T10:30:00Z'
+                        },
+                        {
+                            messageId: 'msg2',
+                            userId: 'user2',
+                            message: 'Hi there',
+                            timestamp: '2024-01-15T10:31:00Z'
+                        }
+                    ]
+                }
+            };
+
+            (axios.get as jest.Mock).mockResolvedValue(mockResponse);
+
+            const result = await getChatMessages(chatId);
+
+            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/chat/chat123/messages', {
+                withCredentials: true
+            });
+            expect(result).toEqual([
+                {
+                    messageId: 'msg1',
+                    userId: 'user1',
+                    message: 'Hello',
+                    timestamp: new Date('2024-01-15T10:30:00Z')
+                },
+                {
+                    messageId: 'msg2',
+                    userId: 'user2',
+                    message: 'Hi there',
+                    timestamp: new Date('2024-01-15T10:31:00Z')
+                }
+            ]);
+        });
+
+        it('should throw error with message and status from response when AxiosError has response', async () => {
+            const chatId = 'chat123';
+            const axiosError = new AxiosError('Request failed');
+            axiosError.response = {
+                data: { message: 'Chat not found' },
+                status: 404,
+                statusText: 'Not Found',
+                headers: {},
+                config: {} as InternalAxiosRequestConfig
+            };
+
+            (axios.get as jest.Mock).mockRejectedValue(axiosError);
+
+            try {
+                await getChatMessages(chatId);
+                fail('Expected error to be thrown');
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error);
+                expect((error as Error).message).toBe('Chat not found');
+                expect((error as Error & { status?: number }).status).toBe(404);
+            }
+        });
+
+        it('should throw default error message with status when AxiosError has response without message', async () => {
+            const chatId = 'chat123';
+            const axiosError = new AxiosError('Request failed');
+            axiosError.response = {
+                data: {},
+                status: 500,
+                statusText: 'Internal Server Error',
+                headers: {},
+                config: {} as InternalAxiosRequestConfig
+            };
+
+            (axios.get as jest.Mock).mockRejectedValue(axiosError);
+
+            try {
+                await getChatMessages(chatId);
+                fail('Expected error to be thrown');
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error);
+                expect((error as Error).message).toBe('Failed to get chat messages');
+                expect((error as Error & { status?: number }).status).toBe(500);
+            }
+        });
+
+        it('should throw network error when AxiosError has request but no response', async () => {
+            const chatId = 'chat123';
+            const axiosError = new AxiosError('Network Error');
+            axiosError.request = {};
+
+            (axios.get as jest.Mock).mockRejectedValue(axiosError);
+
+            await expect(getChatMessages(chatId)).rejects.toThrow('Network error: Unable to connect to core service');
+        });
+
+        it('should throw generic error for non-AxiosError', async () => {
+            const chatId = 'chat123';
+
+            (axios.get as jest.Mock).mockRejectedValue(new Error('Unknown error'));
+
+            await expect(getChatMessages(chatId)).rejects.toThrow('Failed to get chat messages');
         });
     });
 });

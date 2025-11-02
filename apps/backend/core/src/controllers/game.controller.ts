@@ -115,7 +115,9 @@ class GameController {
                 whiteTimeRemaining: result.whiteTimeRemaining,
                 blackTimeRemaining: result.blackTimeRemaining,
                 gameOver: result.gameOver,
-                winner: result.winner
+                winner: result.winner,
+                drawOffer: result.drawOffer,
+                timeUntilAbandoned: result.timeUntilAbandoned
             };
 
             res.status(200).json(response);

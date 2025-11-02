@@ -3,11 +3,22 @@ import { Server, Socket } from 'socket.io';
 import container from '../config/container';
 import GameNotificationService from '../services/game.notification.service';
 import { MoveCallback } from '../models/callbacks';
-import { JoinGameRequest, MoveRequest } from '../models/requests';
-import { RatingChange } from '../models/game';
+import {
+    JoinGameRequest,
+    MoveRequest,
+    OfferDrawRequest,
+    ResignRequest,
+    RespondDrawOfferRequest
+} from '../models/requests';
+import { RatingChange, Winner } from '../models/game';
+import ChatService from '../services/chat.service';
+import ChatNotificationService from '../services/chat.notification.service';
+import { getColorString } from '../utils/color.utils';
 
 const gameService = container.get(GameService);
 const gameNotificationService = container.get(GameNotificationService);
+const chatService = container.get(ChatService);
+const chatNotificationService = container.get(ChatNotificationService);
 
 const gameListener = (io: Server, socket: Socket) => {
     const joinGame = function (request: JoinGameRequest) {
@@ -51,9 +62,51 @@ const gameListener = (io: Server, socket: Socket) => {
         );
     };
 
+    const resign = async function (request: ResignRequest) {
+        const playercolor = await gameService.getPlayerColor(request.gameId, socket.data.user!.id);
+        const message = `${getColorString(playercolor)} resigned`;
+        await logInChatMessage(request.gameId, message, socket.data.user!.id);
+
+        const result = await gameService.resign(socket.data.user!.id, request.gameId);
+
+        gameNotificationService.sendGameOverNotification(request.gameId, result.winner, result.ratingChange);
+    };
+
+    const offerDraw = async function (request: OfferDrawRequest) {
+        const playercolor = await gameService.getPlayerColor(request.gameId, socket.data.user!.id);
+        const message = `${getColorString(playercolor)} offered a draw`;
+        await logInChatMessage(request.gameId, message, socket.data.user!.id);
+
+        const drawOffer = await gameService.offerDraw(request.gameId, socket.data.user!.id);
+
+        gameNotificationService.sendDrawOfferedNotification(request.gameId, drawOffer.offeredBy, drawOffer.expiresAt);
+    };
+
+    const respondDrawOffer = async function (request: RespondDrawOfferRequest) {
+        const playercolor = await gameService.getPlayerColor(request.gameId, socket.data.user!.id);
+        const message = `${getColorString(playercolor)} ${request.accepted ? 'accepted' : 'declined'} the draw request`;
+        await logInChatMessage(request.gameId, message, socket.data.user!.id);
+
+        const ratingChange = await gameService.respondDrawOffer(request.gameId, socket.data.user!.id, request.accepted);
+        if (ratingChange) {
+            gameNotificationService.sendGameOverNotification(request.gameId, Winner.DRAW, ratingChange);
+        } else {
+            gameNotificationService.sendDrawOfferRejectedNotification(request.gameId);
+        }
+    };
+
+    const logInChatMessage = async function (gameId: string, message: string, userId: string) {
+        await chatService.createSystemChatMessage(gameId, message);
+        const messages = await chatService.getChatMessages(gameId, userId);
+        chatNotificationService.sendChatMessagesUpdatedNotification(gameId, messages);
+    };
+
     return {
         joinGame,
-        movePiece
+        movePiece,
+        resign,
+        offerDraw,
+        respondDrawOffer
     };
 };
 

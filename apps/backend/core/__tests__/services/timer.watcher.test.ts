@@ -35,6 +35,7 @@ describe('Timer Watcher', () => {
             null as never,
             null as never,
             null as never,
+            null as never,
             null as never
         ) as jest.Mocked<GameService>;
         mockGameService.getGameState = jest.fn();
@@ -43,7 +44,7 @@ describe('Timer Watcher', () => {
         mockGameNotificationService = new GameNotificationService(
             null as never
         ) as jest.Mocked<GameNotificationService>;
-        mockGameNotificationService.sendTimerExpiredNotification = jest.fn();
+        mockGameNotificationService.sendGameOverNotification = jest.fn();
 
         timerWatcher = new TimerWatcher(mockGameStateRepository, mockGameService, mockGameNotificationService);
     });
@@ -113,7 +114,8 @@ describe('Timer Watcher', () => {
                 game: mockGame,
                 players: [player1, player2],
                 lastMoveEpoch: NOW - 100,
-                startedAt: NOW - 200
+                startedAt: NOW - 200,
+                drawOffer: undefined
             };
 
             mockGameService.getGameState.mockResolvedValue(gameState);
@@ -131,7 +133,7 @@ describe('Timer Watcher', () => {
             await jest.runAllTimersAsync();
 
             expect(mockGameService.reset).toHaveBeenCalledWith(gameId);
-            expect(mockGameNotificationService.sendTimerExpiredNotification).toHaveBeenCalledWith(
+            expect(mockGameNotificationService.sendGameOverNotification).toHaveBeenCalledWith(
                 gameId,
                 Winner.BLACK,
                 ratingChange
@@ -162,7 +164,8 @@ describe('Timer Watcher', () => {
                 game: mockGame,
                 players: [player1, player2],
                 lastMoveEpoch: 0,
-                startedAt: NOW - (DEFAULT_START_TIMEOUT_IN_MINUTES * 60 * 1000 + 1)
+                startedAt: NOW - (DEFAULT_START_TIMEOUT_IN_MINUTES * 60 * 1000 + 1),
+                drawOffer: undefined
             };
 
             mockGameService.getGameState.mockResolvedValue(gameState);
@@ -179,7 +182,7 @@ describe('Timer Watcher', () => {
             await jest.runAllTimersAsync();
 
             expect(mockGameService.reset).toHaveBeenCalledWith(gameId);
-            expect(mockGameNotificationService.sendTimerExpiredNotification).toHaveBeenCalledWith(
+            expect(mockGameNotificationService.sendGameOverNotification).toHaveBeenCalledWith(
                 gameId,
                 Winner.DRAW,
                 ratingChange
@@ -211,7 +214,8 @@ describe('Timer Watcher', () => {
                 game: mockGame,
                 players: [player1, player2],
                 lastMoveEpoch: NOW - 100,
-                startedAt: NOW - 200
+                startedAt: NOW - 200,
+                drawOffer: undefined
             };
 
             mockGameService.getGameState.mockResolvedValue(gameState);
@@ -221,7 +225,7 @@ describe('Timer Watcher', () => {
             await jest.runAllTimersAsync();
 
             expect(mockGameService.reset).not.toHaveBeenCalled();
-            expect(mockGameNotificationService.sendTimerExpiredNotification).not.toHaveBeenCalled();
+            expect(mockGameNotificationService.sendGameOverNotification).not.toHaveBeenCalled();
         });
     });
 });

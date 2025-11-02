@@ -67,7 +67,8 @@ class TimerWatcher {
 
     private async handleTimeExpired(gameId: string, winner: Winner) {
         const ratingChange = await this.gameService.reset(gameId);
-        this.gameNotificationService.sendTimerExpiredNotification(gameId, winner, ratingChange);
+
+        this.gameNotificationService.sendGameOverNotification(gameId, winner, ratingChange);
     }
 
     private async stop() {

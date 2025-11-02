@@ -1,7 +1,7 @@
 import { Container, inject, injectable } from 'inversify';
 import { Server } from 'socket.io';
-import { RatingChange, Winner } from '../models/game';
-import { PositionUpdateNotification, TimeExpiredNotification } from '../models/notifications';
+import { Color, RatingChange, Winner } from '../models/game';
+import { DrawOfferedNotification, GameOverNotification, PositionUpdateNotification } from '../models/notifications';
 import { PlayerTimes } from '../models/player';
 
 @injectable()
@@ -15,12 +15,12 @@ class GameNotificationService {
         return this.container.get<Server>('SocketIO');
     }
 
-    sendTimerExpiredNotification(gameId: string, winner: Winner, ratingChange: RatingChange) {
-        const message: TimeExpiredNotification = {
+    sendGameOverNotification(gameId: string, winner: Winner, ratingChange: RatingChange) {
+        const message: GameOverNotification = {
             winner: winner,
             ratingChange: ratingChange
         };
-        this.io.to(gameId).emit('time-expired', message);
+        this.io.to(gameId).emit('game-over', message);
     }
 
     sendPositionUpdateNotification(
@@ -39,6 +39,19 @@ class GameNotificationService {
             ratingChange: ratingChange
         };
         this.io.to(gameId).emit('update-position', message);
+    }
+
+    sendDrawOfferedNotification(gameId: string, offeredBy: Color, expiresAt: Date) {
+        const message: DrawOfferedNotification = {
+            offeredBy: offeredBy,
+            expiresAt: expiresAt
+        };
+
+        this.io.to(gameId).emit('draw-offered', message);
+    }
+
+    sendDrawOfferRejectedNotification(gameId: string) {
+        this.io.to(gameId).emit('draw-offer-rejected', gameId);
     }
 }
 

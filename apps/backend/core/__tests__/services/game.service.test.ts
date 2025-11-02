@@ -14,6 +14,7 @@ import GamesRepository from '../../src/repositories/games.repository';
 import MovesRepository from '../../src/repositories/moves.repository';
 import ConflictError from 'chess-game-backend-common/errors/conflict.error';
 import RatingService from '../../src/services/rating.service';
+import ChatService from '../../src/services/chat.service';
 
 const mockGame = {
     fen: jest.fn(),
@@ -41,6 +42,7 @@ jest.mock('../../src/repositories/gameId.repository');
 jest.mock('../../src/repositories/games.repository');
 jest.mock('../../src/repositories/moves.repository');
 jest.mock('../../src/services/rating.service');
+jest.mock('../../src/services/chat.service');
 
 describe('Game Service', () => {
     const NOW = 10000000;
@@ -50,6 +52,7 @@ describe('Game Service', () => {
     let mockGamesRepository: jest.Mocked<GamesRepository>;
     let mockMovesRepository: jest.Mocked<MovesRepository>;
     let mockRatingService: jest.Mocked<RatingService>;
+    let mockChatService: jest.Mocked<ChatService>;
     let gameService: GameService;
 
     let mockUuid = jest.fn();
@@ -88,12 +91,16 @@ describe('Game Service', () => {
         mockRatingService = new RatingService(null as never, null as never) as jest.Mocked<RatingService>;
         mockRatingService.adjustRatings = jest.fn();
 
+        mockChatService = new ChatService(null as never, null as never) as jest.Mocked<ChatService>;
+        mockChatService.deleteChat = jest.fn();
+
         gameService = new GameService(
             mockGameStateRepository,
             mockGameIdRepository,
             mockGamesRepository,
             mockMovesRepository,
-            mockRatingService
+            mockRatingService,
+            mockChatService
         );
     });
 
@@ -140,7 +147,8 @@ describe('Game Service', () => {
                 Fen.startingPosition,
                 [player1, player2],
                 0,
-                NOW
+                NOW,
+                undefined
             );
             expect(mockGameIdRepository.save).toHaveBeenCalledWith(player1.id, gameId);
             expect(mockGameIdRepository.save).toHaveBeenCalledWith(player2.id, gameId);
@@ -209,7 +217,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -241,7 +250,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -280,7 +290,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -318,7 +329,8 @@ describe('Game Service', () => {
                 expected,
                 [expectedUpdatedPlayer1, expectedUpdatedPlayer2],
                 NOW,
-                NOW
+                NOW,
+                undefined
             );
         });
 
@@ -342,7 +354,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -369,7 +382,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
             mockGame.turn.mockReturnValue(Color.BLACK);
@@ -406,7 +420,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: expected,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
             mockGame.fen.mockReturnValue(expected);
@@ -446,7 +461,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -479,7 +495,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -512,7 +529,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -553,7 +571,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -584,7 +603,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -617,7 +637,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -645,7 +666,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: 0,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -674,7 +696,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - elapsedTime,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -725,7 +748,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -742,6 +766,7 @@ describe('Game Service', () => {
             });
             expect(mockGameStateRepository.remove).toHaveBeenCalledWith(gameId);
             expect(mockGameIdRepository.remove).toHaveBeenCalledWith(gameId);
+            expect(mockChatService.deleteChat).toHaveBeenCalledWith(gameId);
         });
 
         it('should throw error if game not found', async () => {
@@ -779,7 +804,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: fen,
                 lastMoveEpoch: NOW,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -798,7 +824,8 @@ describe('Game Service', () => {
                 ],
                 game: new Chess(fen),
                 lastMoveEpoch: NOW,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
 
             const gameId = '0000';
@@ -836,7 +863,8 @@ describe('Game Service', () => {
                 game: new Chess(fen),
                 players: [player1, player2],
                 lastMoveEpoch: 0,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
 
             await gameService.create(playerIds);
@@ -1128,7 +1156,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - 5000,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -1191,7 +1220,8 @@ describe('Game Service', () => {
                 players: [player1, player2],
                 position: Fen.startingPosition,
                 lastMoveEpoch: NOW - 5000,
-                startedAt: NOW
+                startedAt: NOW,
+                drawOffer: undefined
             };
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
 
@@ -1214,6 +1244,863 @@ describe('Game Service', () => {
 
             await expect(gameService.getActiveGame(userId)).rejects.toThrow(NotFoundError);
             await expect(gameService.getActiveGame(userId)).rejects.toThrow('No active game found for user');
+        });
+
+        it('should return drawOffer when present in game state', async () => {
+            const userId = '1234';
+            const gameId = '0000';
+            const mockGameWithPlayers = {
+                id: gameId,
+                whitePlayer: {
+                    id: userId,
+                    name: 'White Player',
+                    email: 'white@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
+                },
+                blackPlayer: {
+                    id: '5678',
+                    name: 'Black Player',
+                    email: 'black@example.com',
+                    elo: 1600,
+                    avatarUrl: 'avatar_url.com'
+                },
+                startedAt: new Date(NOW),
+                endedAt: null,
+                winner: null
+            };
+
+            mockGamesRepository.findActiveGameByUserId.mockResolvedValue(mockGameWithPlayers);
+
+            const drawOffer = {
+                offeredBy: Color.WHITE,
+                expiresAt: new Date(NOW + 30000)
+            };
+
+            const player1: StoredPlayer = {
+                id: userId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: drawOffer
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.fen.mockReturnValue(Fen.startingPosition);
+            mockGame.turn.mockReturnValue(Color.WHITE);
+            mockGame.isGameOver.mockReturnValue(false);
+
+            const result = await gameService.getActiveGame(userId);
+
+            expect(result.drawOffer).toEqual(drawOffer);
+        });
+
+        it('should return timeUntilAbandoned for games with no moves', async () => {
+            const userId = '1234';
+            const gameId = '0000';
+            const mockGameWithPlayers = {
+                id: gameId,
+                whitePlayer: {
+                    id: userId,
+                    name: 'White Player',
+                    email: 'white@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
+                },
+                blackPlayer: {
+                    id: '5678',
+                    name: 'Black Player',
+                    email: 'black@example.com',
+                    elo: 1600,
+                    avatarUrl: 'avatar_url.com'
+                },
+                startedAt: new Date(NOW),
+                endedAt: null,
+                winner: null
+            };
+
+            mockGamesRepository.findActiveGameByUserId.mockResolvedValue(mockGameWithPlayers);
+
+            const player1: StoredPlayer = {
+                id: userId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: 0,
+                startedAt: NOW - 30000,
+                drawOffer: undefined
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.fen.mockReturnValue(Fen.startingPosition);
+            mockGame.turn.mockReturnValue(Color.WHITE);
+            mockGame.isGameOver.mockReturnValue(false);
+
+            const result = await gameService.getActiveGame(userId);
+
+            expect(result.timeUntilAbandoned).toBe(30000);
+        });
+
+        it('should return timeUntilAbandoned as null for games with moves already made', async () => {
+            const userId = '1234';
+            const gameId = '0000';
+            const mockGameWithPlayers = {
+                id: gameId,
+                whitePlayer: {
+                    id: userId,
+                    name: 'White Player',
+                    email: 'white@example.com',
+                    elo: 1500,
+                    avatarUrl: 'avatar_url.com'
+                },
+                blackPlayer: {
+                    id: '5678',
+                    name: 'Black Player',
+                    email: 'black@example.com',
+                    elo: 1600,
+                    avatarUrl: 'avatar_url.com'
+                },
+                startedAt: new Date(NOW),
+                endedAt: null,
+                winner: null
+            };
+
+            mockGamesRepository.findActiveGameByUserId.mockResolvedValue(mockGameWithPlayers);
+
+            const player1: StoredPlayer = {
+                id: userId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: undefined
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            mockGame.fen.mockReturnValue(Fen.startingPosition);
+            mockGame.turn.mockReturnValue(Color.WHITE);
+            mockGame.isGameOver.mockReturnValue(false);
+
+            const result = await gameService.getActiveGame(userId);
+
+            expect(result.timeUntilAbandoned).toBe(null);
+        });
+    });
+
+    describe('Resign', () => {
+        it('should allow white player to resign and black wins', async () => {
+            const gameId = '0000';
+            const whitePlayerId = '1234';
+            const blackPlayerId = '5678';
+
+            const player1: StoredPlayer = {
+                id: whitePlayerId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: blackPlayerId,
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: undefined
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            const gameEntity = {
+                id: gameId,
+                blackPlayerId: blackPlayerId,
+                whitePlayerId: whitePlayerId,
+                startedAt: new Date(NOW),
+                endedAt: null,
+                winner: null
+            };
+            mockGamesRepository.findById.mockResolvedValue(gameEntity);
+
+            mockGame.isDraw.mockReturnValue(false);
+            mockGame.isCheckmate.mockReturnValue(false);
+
+            const mockRatingChange = {
+                whiteRatingChange: -10,
+                whiteNewRating: 1490,
+                blackRatingChange: 10,
+                blackNewRating: 1610
+            };
+            mockRatingService.adjustRatings.mockResolvedValue(mockRatingChange);
+
+            const result = await gameService.resign(whitePlayerId, gameId);
+
+            expect(result.winner).toBe(Winner.BLACK);
+            expect(result.ratingChange).toEqual(mockRatingChange);
+            expect(mockRatingService.adjustRatings).toHaveBeenCalledWith(whitePlayerId, blackPlayerId, Winner.BLACK);
+        });
+
+        it('should allow black player to resign and white wins', async () => {
+            const gameId = '0000';
+            const whitePlayerId = '1234';
+            const blackPlayerId = '5678';
+
+            const player1: StoredPlayer = {
+                id: whitePlayerId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: blackPlayerId,
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: undefined
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            const gameEntity = {
+                id: gameId,
+                blackPlayerId: blackPlayerId,
+                whitePlayerId: whitePlayerId,
+                startedAt: new Date(NOW),
+                endedAt: null,
+                winner: null
+            };
+            mockGamesRepository.findById.mockResolvedValue(gameEntity);
+
+            mockGame.isDraw.mockReturnValue(false);
+            mockGame.isCheckmate.mockReturnValue(false);
+
+            const mockRatingChange = {
+                whiteRatingChange: 10,
+                whiteNewRating: 1510,
+                blackRatingChange: -10,
+                blackNewRating: 1590
+            };
+            mockRatingService.adjustRatings.mockResolvedValue(mockRatingChange);
+
+            const result = await gameService.resign(blackPlayerId, gameId);
+
+            expect(result.winner).toBe(Winner.WHITE);
+            expect(result.ratingChange).toEqual(mockRatingChange);
+            expect(mockRatingService.adjustRatings).toHaveBeenCalledWith(whitePlayerId, blackPlayerId, Winner.WHITE);
+        });
+
+        it('should throw ForbiddenError when non-participant tries to resign', async () => {
+            const gameId = '0000';
+            const nonParticipantId = '9999';
+
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: undefined
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            await expect(gameService.resign(nonParticipantId, gameId)).rejects.toThrow(ForbiddenError);
+            await expect(gameService.resign(nonParticipantId, gameId)).rejects.toThrow(
+                `User ${nonParticipantId} is not part of game ${gameId}`
+            );
+        });
+
+        it('should throw NotFoundError when game not found', async () => {
+            const gameId = 'nonexistent';
+            const userId = '1234';
+
+            mockGameStateRepository.get.mockResolvedValue(null);
+
+            await expect(gameService.resign(userId, gameId)).rejects.toThrow(NotFoundError);
+        });
+    });
+
+    describe('Offer Draw', () => {
+        it('should create draw offer with 30-second expiration', async () => {
+            const gameId = '0000';
+            const userId = '1234';
+
+            const player1: StoredPlayer = {
+                id: userId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: undefined
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+            mockGame.fen.mockReturnValue(Fen.startingPosition);
+
+            const result = await gameService.offerDraw(gameId, userId);
+
+            expect(result.offeredBy).toBe(Color.WHITE);
+            expect(result.expiresAt.getTime()).toBe(NOW + 30000);
+        });
+
+        it('should persist draw offer to game state repository', async () => {
+            const gameId = '0000';
+            const userId = '1234';
+
+            const player1: StoredPlayer = {
+                id: userId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: undefined
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+            mockGame.fen.mockReturnValue(Fen.startingPosition);
+
+            await gameService.offerDraw(gameId, userId);
+
+            expect(mockGameStateRepository.save).toHaveBeenCalledWith(
+                gameId,
+                Fen.startingPosition,
+                expect.any(Array),
+                NOW - 5000,
+                NOW,
+                expect.objectContaining({
+                    offeredBy: Color.WHITE,
+                    expiresAt: expect.any(Date)
+                })
+            );
+        });
+
+        it('should throw ConflictError when draw offer already pending', async () => {
+            const gameId = '0000';
+            const userId = '1234';
+
+            const existingDrawOffer = {
+                offeredBy: Color.BLACK,
+                expiresAt: new Date(NOW + 20000)
+            };
+
+            const player1: StoredPlayer = {
+                id: userId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: existingDrawOffer
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            await expect(gameService.offerDraw(gameId, userId)).rejects.toThrow(ConflictError);
+            await expect(gameService.offerDraw(gameId, userId)).rejects.toThrow('Draw offer is already in progress');
+        });
+
+        it('should throw ForbiddenError when non-participant tries to offer draw', async () => {
+            const gameId = '0000';
+            const nonParticipantId = '9999';
+
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: undefined
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            await expect(gameService.offerDraw(gameId, nonParticipantId)).rejects.toThrow(ForbiddenError);
+            await expect(gameService.offerDraw(gameId, nonParticipantId)).rejects.toThrow(
+                `User ${nonParticipantId} is not part of game ${gameId}`
+            );
+        });
+
+        it('should throw NotFoundError when game not found', async () => {
+            const gameId = 'nonexistent';
+            const userId = '1234';
+
+            mockGameStateRepository.get.mockResolvedValue(null);
+
+            await expect(gameService.offerDraw(gameId, userId)).rejects.toThrow(NotFoundError);
+        });
+    });
+
+    describe('Respond Draw Offer', () => {
+        it('should accept draw and end game with DRAW winner', async () => {
+            const gameId = '0000';
+            const userId = '1234';
+            const whitePlayerId = '5678';
+            const blackPlayerId = userId;
+
+            const player1: StoredPlayer = {
+                id: whitePlayerId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: blackPlayerId,
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const drawOffer = {
+                offeredBy: Color.WHITE,
+                expiresAt: new Date(NOW + 20000)
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: drawOffer
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+            mockGame.fen.mockReturnValue(Fen.startingPosition);
+
+            const gameEntity = {
+                id: gameId,
+                blackPlayerId: blackPlayerId,
+                whitePlayerId: whitePlayerId,
+                startedAt: new Date(NOW),
+                endedAt: null,
+                winner: null
+            };
+            mockGamesRepository.findById.mockResolvedValue(gameEntity);
+
+            mockGame.isDraw.mockReturnValue(false);
+            mockGame.isCheckmate.mockReturnValue(false);
+
+            const mockRatingChange = {
+                whiteRatingChange: 0,
+                whiteNewRating: 1500,
+                blackRatingChange: 0,
+                blackNewRating: 1600
+            };
+            mockRatingService.adjustRatings.mockResolvedValue(mockRatingChange);
+
+            const result = await gameService.respondDrawOffer(gameId, userId, true);
+
+            expect(result).toEqual(mockRatingChange);
+            expect(mockRatingService.adjustRatings).toHaveBeenCalledWith(whitePlayerId, blackPlayerId, Winner.DRAW);
+        });
+
+        it('should decline draw and return null', async () => {
+            const gameId = '0000';
+            const userId = '1234';
+
+            const player1: StoredPlayer = {
+                id: userId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const drawOffer = {
+                offeredBy: Color.BLACK,
+                expiresAt: new Date(NOW + 20000)
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: drawOffer
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+            mockGame.fen.mockReturnValue(Fen.startingPosition);
+
+            const result = await gameService.respondDrawOffer(gameId, userId, false);
+
+            expect(result).toBeNull();
+        });
+
+        it('should clear draw offer from state after acceptance', async () => {
+            const gameId = '0000';
+            const userId = '1234';
+            const whitePlayerId = '5678';
+            const blackPlayerId = userId;
+
+            const player1: StoredPlayer = {
+                id: whitePlayerId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: blackPlayerId,
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const drawOffer = {
+                offeredBy: Color.WHITE,
+                expiresAt: new Date(NOW + 20000)
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: drawOffer
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+            mockGame.fen.mockReturnValue(Fen.startingPosition);
+
+            const gameEntity = {
+                id: gameId,
+                blackPlayerId: blackPlayerId,
+                whitePlayerId: whitePlayerId,
+                startedAt: new Date(NOW),
+                endedAt: null,
+                winner: null
+            };
+            mockGamesRepository.findById.mockResolvedValue(gameEntity);
+
+            mockGame.isDraw.mockReturnValue(false);
+            mockGame.isCheckmate.mockReturnValue(false);
+
+            const mockRatingChange = {
+                whiteRatingChange: 0,
+                whiteNewRating: 1500,
+                blackRatingChange: 0,
+                blackNewRating: 1600
+            };
+            mockRatingService.adjustRatings.mockResolvedValue(mockRatingChange);
+
+            await gameService.respondDrawOffer(gameId, userId, true);
+
+            expect(mockGameStateRepository.save).toHaveBeenCalledWith(
+                gameId,
+                Fen.startingPosition,
+                expect.any(Array),
+                NOW - 5000,
+                NOW,
+                undefined
+            );
+        });
+
+        it('should clear draw offer from state after decline', async () => {
+            const gameId = '0000';
+            const userId = '1234';
+
+            const player1: StoredPlayer = {
+                id: userId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const drawOffer = {
+                offeredBy: Color.BLACK,
+                expiresAt: new Date(NOW + 20000)
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: drawOffer
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+            mockGame.fen.mockReturnValue(Fen.startingPosition);
+
+            await gameService.respondDrawOffer(gameId, userId, false);
+
+            expect(mockGameStateRepository.save).toHaveBeenCalledWith(
+                gameId,
+                Fen.startingPosition,
+                expect.any(Array),
+                NOW - 5000,
+                NOW,
+                undefined
+            );
+        });
+
+        it('should throw ForbiddenError when non-participant tries to respond', async () => {
+            const gameId = '0000';
+            const nonParticipantId = '9999';
+
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const drawOffer = {
+                offeredBy: Color.BLACK,
+                expiresAt: new Date(NOW + 20000)
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: drawOffer
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            await expect(gameService.respondDrawOffer(gameId, nonParticipantId, true)).rejects.toThrow(ForbiddenError);
+            await expect(gameService.respondDrawOffer(gameId, nonParticipantId, true)).rejects.toThrow(
+                `User ${nonParticipantId} is not part of game ${gameId}`
+            );
+        });
+
+        it('should throw NotFoundError when game not found', async () => {
+            const gameId = 'nonexistent';
+            const userId = '1234';
+
+            mockGameStateRepository.get.mockResolvedValue(null);
+
+            await expect(gameService.respondDrawOffer(gameId, userId, true)).rejects.toThrow(NotFoundError);
+        });
+    });
+
+    describe('Get Player Color', () => {
+        it('should return WHITE for white player', async () => {
+            const gameId = '0000';
+            const whitePlayerId = '1234';
+
+            const player1: StoredPlayer = {
+                id: whitePlayerId,
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: undefined
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            const result = await gameService.getPlayerColor(gameId, whitePlayerId);
+
+            expect(result).toBe(Color.WHITE);
+        });
+
+        it('should return BLACK for black player', async () => {
+            const gameId = '0000';
+            const blackPlayerId = '5678';
+
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: blackPlayerId,
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: undefined
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            const result = await gameService.getPlayerColor(gameId, blackPlayerId);
+
+            expect(result).toBe(Color.BLACK);
+        });
+
+        it('should throw ForbiddenError when non-participant requests color', async () => {
+            const gameId = '0000';
+            const nonParticipantId = '9999';
+
+            const player1: StoredPlayer = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: {
+                    remainingMs: 100000
+                }
+            };
+            const player2: StoredPlayer = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: {
+                    remainingMs: 200000
+                }
+            };
+            const storedGameState: StoredGameState = {
+                players: [player1, player2],
+                position: Fen.startingPosition,
+                lastMoveEpoch: NOW - 5000,
+                startedAt: NOW,
+                drawOffer: undefined
+            };
+            mockGameStateRepository.get.mockResolvedValue(storedGameState);
+
+            await expect(gameService.getPlayerColor(gameId, nonParticipantId)).rejects.toThrow(ForbiddenError);
+            await expect(gameService.getPlayerColor(gameId, nonParticipantId)).rejects.toThrow(
+                `User ${nonParticipantId} is not part of game ${gameId}`
+            );
+        });
+
+        it('should throw NotFoundError when game not found', async () => {
+            const gameId = 'nonexistent';
+            const userId = '1234';
+
+            mockGameStateRepository.get.mockResolvedValue(null);
+
+            await expect(gameService.getPlayerColor(gameId, userId)).rejects.toThrow(NotFoundError);
         });
     });
 });

@@ -13,6 +13,7 @@ export type StoredGameState = {
     position: string;
     lastMoveEpoch: number;
     startedAt: number;
+    drawOffer: DrawOffer | undefined;
 };
 
 export type GameState = {
@@ -20,6 +21,7 @@ export type GameState = {
     players: Array<Player>;
     lastMoveEpoch: number;
     startedAt: number;
+    drawOffer: DrawOffer | undefined;
 };
 
 export type Game = {
@@ -31,6 +33,21 @@ export type Game = {
     winner: Winner | null;
 };
 
+export type ActiveGame = {
+    game: GameWithPlayers;
+    position: string;
+    whiteTimeRemaining: number;
+    blackTimeRemaining: number;
+    gameOver: boolean;
+    winner: Winner | null;
+    drawOffer: DrawOffer | undefined;
+    timeUntilAbandoned: number | null;
+};
+
+export type DrawOffer = {
+    offeredBy: Color;
+    expiresAt: Date;
+};
 export type GameWithPlayers = {
     id: string;
     whitePlayer: User;
@@ -54,6 +71,11 @@ export type RatingChange = {
     whiteNewRating: number;
     blackRatingChange: number;
     blackNewRating: number;
+};
+
+export type GameOverResult = {
+    winner: Winner;
+    ratingChange: RatingChange;
 };
 
 export enum Color {

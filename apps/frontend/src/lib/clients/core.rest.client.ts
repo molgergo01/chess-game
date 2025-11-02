@@ -2,6 +2,7 @@ import { GameHistory, GameWithMoves } from '@/lib/models/history/history';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import env from '@/lib/config/env';
 import {
+    ActiveGame,
     GameDto,
     GetActiveGameResponse,
     GetGameHistoryResponse,
@@ -10,6 +11,7 @@ import {
 } from '@/lib/models/response/game';
 import { GetGameHistoryParams, GetLeaderboardParams } from '@/lib/models/request/game';
 import { PlayerLeaderboard } from '@/lib/models/leaderboard/playerLeaderboard';
+import { ChatMessage, GetChatMessagesResponse } from '@/lib/models/chat/chat';
 
 export async function getGameHistory(limit: number | null, offset: number | null): Promise<GameHistory> {
     try {
@@ -137,7 +139,7 @@ export async function getPlayerLeaderboard(limit: number | null, offset: number 
     }
 }
 
-export async function getActiveGame(): Promise<GetActiveGameResponse> {
+export async function getActiveGame(): Promise<ActiveGame> {
     try {
         const response: AxiosResponse<GetActiveGameResponse> = await axios.get(
             `${env.REST_URLS.CORE}/api/games/active`,
@@ -145,7 +147,23 @@ export async function getActiveGame(): Promise<GetActiveGameResponse> {
                 withCredentials: true
             }
         );
-        return response.data;
+        return {
+            blackPlayer: response.data.blackPlayer,
+            blackTimeRemaining: response.data.blackTimeRemaining,
+            drawOffer: response.data.drawOffer
+                ? {
+                      offeredBy: response.data.drawOffer.offeredBy,
+                      expiresAt: new Date(response.data.drawOffer.expiresAt)
+                  }
+                : undefined,
+            gameId: response.data.gameId,
+            gameOver: response.data.gameOver,
+            position: response.data.position,
+            whitePlayer: response.data.whitePlayer,
+            whiteTimeRemaining: response.data.whiteTimeRemaining,
+            winner: response.data.winner,
+            timeUntilAbandoned: response.data.timeUntilAbandoned
+        };
     } catch (error) {
         if (error instanceof AxiosError && error.response) {
             const errorWithStatus = new Error(error.response.data.message || 'Failed to get active game') as Error & {
@@ -157,6 +175,35 @@ export async function getActiveGame(): Promise<GetActiveGameResponse> {
             throw new Error('Network error: Unable to connect to core service');
         } else {
             throw new Error('Failed to get active game');
+        }
+    }
+}
+
+export async function getChatMessages(chatId: string): Promise<ChatMessage[]> {
+    try {
+        const response: AxiosResponse<GetChatMessagesResponse> = await axios.get(
+            `${env.REST_URLS.CORE}/api/chat/${chatId}/messages`,
+            {
+                withCredentials: true
+            }
+        );
+
+        const messages = response.data.messages;
+        return messages.map((message) => {
+            message.timestamp = new Date(message.timestamp);
+            return message;
+        });
+    } catch (error) {
+        if (error instanceof AxiosError && error.response) {
+            const errorWithStatus = new Error(error.response.data.message || 'Failed to get chat messages') as Error & {
+                status?: number;
+            };
+            errorWithStatus.status = error.response.status;
+            throw errorWithStatus;
+        } else if (error instanceof AxiosError && error.request) {
+            throw new Error('Network error: Unable to connect to core service');
+        } else {
+            throw new Error('Failed to get chat messages');
         }
     }
 }

@@ -1,8 +1,11 @@
 import {
+    ActiveGame,
     Color,
+    DrawOffer,
     Game,
     GameCreated,
     GameHistoryResult,
+    GameOverResult,
     GameState,
     GameWithMoves,
     RatingChange,
@@ -24,6 +27,8 @@ import MovesRepository from '../repositories/moves.repository';
 import { Move } from '../models/move';
 import ConflictError from 'chess-game-backend-common/errors/conflict.error';
 import RatingService from './rating.service';
+import ChatService from './chat.service';
+import { DEFAULT_START_TIMEOUT_IN_MINUTES } from '../config/constants';
 
 @injectable()
 class GameService {
@@ -39,7 +44,9 @@ class GameService {
         @inject(MovesRepository)
         private readonly movesRepository: MovesRepository,
         @inject(RatingService)
-        private readonly ratingService: RatingService
+        private readonly ratingService: RatingService,
+        @inject(ChatService)
+        private readonly chatService: ChatService
     ) {
         this.games = new Map();
     }
@@ -90,7 +97,7 @@ class GameService {
         };
         await this.gamesRepository.save(gameEntity);
 
-        await this.gameStateRepository.save(id, game.fen(), players, 0, startedAt);
+        await this.gameStateRepository.save(id, game.fen(), players, 0, startedAt, undefined);
         playerIds.forEach((player) => {
             this.gameIdRepository.save(player, id);
         });
@@ -99,7 +106,8 @@ class GameService {
             players: players,
             game: game,
             lastMoveEpoch: 0,
-            startedAt: startedAt
+            startedAt: startedAt,
+            drawOffer: undefined
         };
         this.games.set(id, gameState);
         return {
@@ -144,7 +152,8 @@ class GameService {
             game.fen(),
             gameState.players,
             requestTimestamp,
-            gameState.startedAt
+            gameState.startedAt,
+            gameState.drawOffer
         );
 
         const moveId = uuidv4();
@@ -210,22 +219,27 @@ class GameService {
         return null;
     }
 
-    async reset(gameId: string): Promise<RatingChange> {
+    async reset(gameId: string, winner?: Winner): Promise<RatingChange> {
         const game = await this.gamesRepository.findById(gameId);
         if (!game) throw new Error('Game not found');
         game.endedAt = new Date();
-        game.winner = await this.getWinner(gameId);
-        if (!game.winner) {
+        const gameWinner = await this.getWinner(gameId);
+        const actualWinner = gameWinner ? gameWinner : winner;
+        if (!actualWinner) {
             // should not happen
             throw new Error('Game was not finished properly');
         }
+        game.winner = actualWinner;
+
         await this.gamesRepository.update(game);
 
         await this.gameStateRepository.remove(gameId);
         await this.gameIdRepository.remove(gameId);
         this.games.delete(gameId);
 
-        return await this.ratingService.adjustRatings(game.whitePlayerId, game.blackPlayerId, game.winner);
+        await this.chatService.deleteChat(gameId);
+
+        return await this.ratingService.adjustRatings(game.whitePlayerId, game.blackPlayerId, actualWinner);
     }
 
     async getGameState(gameId: string): Promise<GameState> {
@@ -245,7 +259,8 @@ class GameService {
             }),
             game: new Chess(storedGameState.position),
             lastMoveEpoch: storedGameState.lastMoveEpoch,
-            startedAt: storedGameState.startedAt
+            startedAt: storedGameState.startedAt,
+            drawOffer: storedGameState.drawOffer
         };
         this.games.set(gameId, gameState);
         return gameState;
@@ -287,7 +302,7 @@ class GameService {
         return game;
     }
 
-    async getActiveGame(userId: string) {
+    async getActiveGame(userId: string): Promise<ActiveGame> {
         const game = await this.gamesRepository.findActiveGameByUserId(userId);
         if (!game) {
             throw new NotFoundError('No active game found for user');
@@ -299,14 +314,97 @@ class GameService {
         const isGameOver = await this.isGameOver(game.id);
         const winner = isGameOver ? await this.getWinner(game.id) : null;
 
+        const timeSinceStarted = Date.now() - gameState.startedAt;
+        const timeUntilAbandoned =
+            gameState.lastMoveEpoch === 0 ? DEFAULT_START_TIMEOUT_IN_MINUTES * 60 * 1000 - timeSinceStarted : null;
+
         return {
-            game,
-            position,
+            game: game,
+            position: position,
             whiteTimeRemaining: times.whiteTimeRemaining,
             blackTimeRemaining: times.blackTimeRemaining,
             gameOver: isGameOver,
-            winner
+            winner: winner,
+            drawOffer: gameState.drawOffer,
+            timeUntilAbandoned: timeUntilAbandoned
         };
+    }
+
+    async resign(userId: string, gameId: string): Promise<GameOverResult> {
+        const gameState = await this.getGameState(gameId);
+
+        const currentPlayer = gameState.players.find((player) => player.id === userId);
+        if (!currentPlayer) throw new ForbiddenError(`User ${userId} is not part of game ${gameId}`);
+
+        const selectedWinner = currentPlayer.color === Color.BLACK ? Winner.WHITE : Winner.BLACK;
+        const gameWinner = await this.getWinner(gameId);
+        const actualWinner = gameWinner ? gameWinner : selectedWinner;
+        const ratingChange = await this.reset(gameId, actualWinner);
+
+        return {
+            winner: actualWinner,
+            ratingChange: ratingChange
+        };
+    }
+
+    async offerDraw(gameId: string, userId: string): Promise<DrawOffer> {
+        const requestTime = Date.now();
+
+        const gameState = await this.getGameState(gameId);
+        const game = gameState.game;
+
+        const currentPlayer = gameState.players.find((player) => player.id === userId);
+        if (!currentPlayer) throw new ForbiddenError(`User ${userId} is not part of game ${gameId}`);
+
+        if (gameState.drawOffer && gameState.drawOffer.expiresAt.getTime() >= requestTime) {
+            throw new ConflictError('Draw offer is already in progress');
+        }
+
+        const drawOffer: DrawOffer = {
+            offeredBy: currentPlayer.color,
+            expiresAt: new Date(requestTime + 30000) // 30 sec draw offer
+        };
+
+        gameState.drawOffer = drawOffer;
+        await this.gameStateRepository.save(
+            gameId,
+            game.fen(),
+            gameState.players,
+            gameState.lastMoveEpoch,
+            gameState.startedAt,
+            drawOffer
+        );
+
+        return drawOffer;
+    }
+
+    async respondDrawOffer(gameId: string, userId: string, accepted: boolean): Promise<RatingChange | null> {
+        const gameState = await this.getGameState(gameId);
+        const game = gameState.game;
+
+        const currentPlayer = gameState.players.find((player) => player.id === userId);
+        if (!currentPlayer) throw new ForbiddenError(`User ${userId} is not part of game ${gameId}`);
+
+        gameState.drawOffer = undefined;
+        await this.gameStateRepository.save(
+            gameId,
+            game.fen(),
+            gameState.players,
+            gameState.lastMoveEpoch,
+            gameState.startedAt,
+            undefined
+        );
+
+        return accepted ? await this.reset(gameId, Winner.DRAW) : null;
+    }
+
+    async getPlayerColor(gameId: string, userId: string): Promise<Color> {
+        const gameState = await this.getGameState(gameId);
+
+        const currentPlayer = gameState.players.find((player) => player.id === userId);
+        if (!currentPlayer) throw new ForbiddenError(`User ${userId} is not part of game ${gameId}`);
+
+        return currentPlayer.color;
     }
 
     private refreshPlayerTimes(gameState: GameState, currentPlayer: Player, requestTimestamp: number) {

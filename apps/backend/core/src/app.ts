@@ -7,6 +7,7 @@ import gameRoutes from './routes/game.routes';
 import { errorHandler } from 'chess-game-backend-common/middlewares/error.handler';
 import leaderboardRoutes from './routes/leaderboard.routes';
 import internalGameRoutes from './routes/internal.game.routes';
+import chatRoutes from './routes/chat.routes';
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(passport.initialize());
 // Routes
 app.use('/api/games', gameRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Internal Routes
 app.use('/internal/games', internalGameRoutes);

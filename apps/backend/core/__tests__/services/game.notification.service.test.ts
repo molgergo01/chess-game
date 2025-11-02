@@ -1,8 +1,12 @@
 import GameNotificationService from '../../src/services/game.notification.service';
 import { Server } from 'socket.io';
 import { Container } from 'inversify';
-import { RatingChange, Winner } from '../../src/models/game';
-import { PositionUpdateNotification, TimeExpiredNotification } from '../../src/models/notifications';
+import { Color, RatingChange, Winner } from '../../src/models/game';
+import {
+    DrawOfferedNotification,
+    GameOverNotification,
+    PositionUpdateNotification
+} from '../../src/models/notifications';
 import { PlayerTimes } from '../../src/models/player';
 
 jest.mock('socket.io');
@@ -28,8 +32,8 @@ describe('Game Notification Service', () => {
         jest.resetAllMocks();
     });
 
-    describe('Send Timer Expired Notification', () => {
-        const timeExpiredEvent = 'time-expired';
+    describe('Send Game Over Notification', () => {
+        const timeExpiredEvent = 'game-over';
         it('should send notification', () => {
             const gameId = '0000';
             const winner = Winner.WHITE;
@@ -40,12 +44,12 @@ describe('Game Notification Service', () => {
                 blackNewRating: 400
             };
 
-            const expectedMessage: TimeExpiredNotification = {
+            const expectedMessage: GameOverNotification = {
                 winner: winner,
                 ratingChange: ratingChange
             };
 
-            gameNotificationService.sendTimerExpiredNotification(gameId, winner, ratingChange);
+            gameNotificationService.sendGameOverNotification(gameId, winner, ratingChange);
 
             expect(mockIo.to).toHaveBeenCalledWith(gameId);
             expect(mockIo.emit).toHaveBeenCalledWith(timeExpiredEvent, expectedMessage);
@@ -89,6 +93,37 @@ describe('Game Notification Service', () => {
 
             expect(mockIo.to).toHaveBeenCalledWith(gameId);
             expect(mockIo.emit).toHaveBeenCalledWith(updatePositionEvent, expectedMessage);
+        });
+    });
+
+    describe('Send Draw Offered Notification', () => {
+        const drawOfferedEvent = 'draw-offered';
+        it('should send notification', () => {
+            const gameId = '0000';
+            const offeredBy = Color.WHITE;
+            const expiresAt = new Date('2025-11-02T12:00:00Z');
+
+            const expectedMessage: DrawOfferedNotification = {
+                offeredBy: offeredBy,
+                expiresAt: expiresAt
+            };
+
+            gameNotificationService.sendDrawOfferedNotification(gameId, offeredBy, expiresAt);
+
+            expect(mockIo.to).toHaveBeenCalledWith(gameId);
+            expect(mockIo.emit).toHaveBeenCalledWith(drawOfferedEvent, expectedMessage);
+        });
+    });
+
+    describe('Send Draw Offer Rejected Notification', () => {
+        const drawOfferRejectedEvent = 'draw-offer-rejected';
+        it('should send notification', () => {
+            const gameId = '0000';
+
+            gameNotificationService.sendDrawOfferRejectedNotification(gameId);
+
+            expect(mockIo.to).toHaveBeenCalledWith(gameId);
+            expect(mockIo.emit).toHaveBeenCalledWith(drawOfferRejectedEvent, gameId);
         });
     });
 });

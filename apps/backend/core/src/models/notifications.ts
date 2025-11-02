@@ -1,7 +1,8 @@
-import { RatingChange, Winner } from './game';
+import { Color, RatingChange, Winner } from './game';
 import { PlayerTimes } from './player';
+import { ChatMessage } from './chat';
 
-export type TimeExpiredNotification = {
+export type GameOverNotification = {
     winner: Winner;
     ratingChange: RatingChange;
 };
@@ -12,4 +13,13 @@ export type PositionUpdateNotification = {
     winner: Winner | null;
     playerTimes: PlayerTimes;
     ratingChange: RatingChange | null;
+};
+
+export type DrawOfferedNotification = {
+    offeredBy: Color;
+    expiresAt: Date;
+};
+
+export type ChatMessagesUpdatedNotification = {
+    chatMessages: ChatMessage[];
 };

@@ -5,7 +5,14 @@ import { getTurnColor, isPromotion, updatePosition } from '@/lib/utils/fen.utils
 import { joinGame, movePiece } from '@/lib/clients/core.socket.client';
 import { UserDto, Winner } from '@/lib/models/response/game';
 import { PieceDropHandlerArgs } from 'react-chessboard';
-import { GameUpdateMessage, PlayerTimes, RatingChange, TimeExpiredMessage } from '@/lib/models/request/game';
+import {
+    DrawOffer,
+    DrawOfferedMessage,
+    GameUpdateMessage,
+    PlayerTimes,
+    RatingChange,
+    TimeExpiredMessage
+} from '@/lib/models/request/game';
 import { getCurrentUserColor } from '@/lib/utils/game.utils';
 import { MatchmakingColor } from '@/lib/models/request/matchmaking';
 import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
@@ -24,6 +31,8 @@ function useChessGame() {
     const [whitePlayer, setWhitePlayer] = useState<UserDto | undefined>(undefined);
     const [blackPlayer, setBlackPlayer] = useState<UserDto | undefined>(undefined);
     const [ratingChange, setRatingChange] = useState<RatingChange | null>(null);
+    const [drawOffer, setDrawOffer] = useState<DrawOffer | undefined>(undefined);
+    const [timeUntilAbandoned, setTimeUntilAbandoned] = useState<number | null>(null);
     const { socket } = useCoreSocket();
     const { userId } = useAuth();
 
@@ -32,27 +41,41 @@ function useChessGame() {
         const handleUpdatePosition = (request: GameUpdateMessage) => {
             setBoardPosition(new Fen(request.position));
             setTimesRemaining(request.playerTimes);
+            setTimeUntilAbandoned(null);
             if (request.isGameOver) {
                 setGameOver(true);
                 setWinner(request.winner);
                 setRatingChange(request.ratingChange);
             }
         };
-        const handleTimeExpired = (request: TimeExpiredMessage) => {
+        const handleGameOver = (request: TimeExpiredMessage) => {
             setGameOver(true);
             setWinner(request.winner);
-            setTimesRemaining({
-                blackTimeRemaining: 0,
-                whiteTimeRemaining: 0
-            });
             setRatingChange(request.ratingChange);
         };
+
+        const handleDrawOffered = (request: DrawOfferedMessage) => {
+            const drawOffer: DrawOffer = {
+                offeredBy: request.offeredBy,
+                expiresAt: new Date(request.expiresAt)
+            };
+            setDrawOffer(drawOffer);
+        };
+
+        const handleDrawOfferRejected = () => {
+            setDrawOffer(undefined);
+        };
+
         socket.on('update-position', handleUpdatePosition);
-        socket.on('time-expired', handleTimeExpired);
+        socket.on('game-over', handleGameOver);
+        socket.on('draw-offered', handleDrawOffered);
+        socket.on('draw-offer-rejected', handleDrawOfferRejected);
 
         return () => {
             socket.off('update-position', handleUpdatePosition);
-            socket.off('time-expired', handleTimeExpired);
+            socket.off('game-over', handleGameOver);
+            socket.off('draw-offered', handleDrawOffered);
+            socket.off('draw-offer-rejected', handleDrawOfferRejected);
         };
     }, [socket]);
 
@@ -71,6 +94,8 @@ function useChessGame() {
                 });
                 setGameOver(gameData.gameOver);
                 setWinner(gameData.winner);
+                setDrawOffer(gameData.drawOffer);
+                setTimeUntilAbandoned(gameData.timeUntilAbandoned);
 
                 if (gameData.gameOver) {
                     setGameId(undefined);
@@ -98,6 +123,27 @@ function useChessGame() {
     useEffect(() => {
         setTurnColor(getTurnColor(boardPosition));
     }, [boardPosition]);
+
+    useEffect(() => {
+        if (!drawOffer) return;
+
+        const now = Date.now();
+        const expiresAt = drawOffer.expiresAt.getTime();
+        const timeUntilExpiry = expiresAt - now;
+
+        if (timeUntilExpiry <= 0) {
+            setDrawOffer(undefined);
+            return;
+        }
+
+        const timeoutId = setTimeout(() => {
+            setDrawOffer(undefined);
+        }, timeUntilExpiry);
+
+        return () => {
+            clearTimeout(timeoutId);
+        };
+    }, [drawOffer]);
 
     const onDrop = useCallback(
         ({ sourceSquare, targetSquare, piece }: PieceDropHandlerArgs): boolean => {
@@ -132,7 +178,10 @@ function useChessGame() {
         onDrop,
         whitePlayer,
         blackPlayer,
-        ratingChange
+        ratingChange,
+        gameId,
+        drawOffer,
+        timeUntilAbandoned
     };
 }
 

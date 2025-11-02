@@ -19,6 +19,10 @@ import Timer, { TimerRef } from '@/components/ui/timer';
 import { MatchmakingColor } from '@/lib/models/request/matchmaking';
 import ChessboardWithBanners from '@/components/ui/chessboard-with-banners';
 import LoadingScreen from '@/components/ui/loading-screen';
+import GameControls from '@/components/game/controls/game-controls';
+import useChat from '@/hooks/chat/useChat';
+import { sendChatMessage } from '@/lib/clients/core.socket.client';
+import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
 
 function Game({ className, ...props }: React.ComponentProps<'div'>) {
     const router = useRouter();
@@ -32,8 +36,13 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
         onDrop,
         whitePlayer,
         blackPlayer,
-        ratingChange
+        ratingChange,
+        gameId,
+        drawOffer,
+        timeUntilAbandoned
     } = useChessGame();
+    const { messages } = useChat(gameId);
+    const { socket } = useCoreSocket();
 
     const whiteTimerRef = useRef<TimerRef>(null);
     const blackTimerRef = useRef<TimerRef>(null);
@@ -51,7 +60,16 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
     const gameStarted = boardPosition.toString() !== Fen.startingPosition;
 
     useEffect(() => {
-        if (!gameStarted || gameOver) return;
+        if (gameOver) return;
+
+        if (!gameStarted) {
+            if (timeUntilAbandoned) {
+                whiteTimerRef.current?.setTimeLeft(timeUntilAbandoned);
+                whiteTimerRef.current?.start();
+                blackTimerRef.current?.stop();
+            }
+            return;
+        }
 
         whiteTimerRef.current?.stop();
         blackTimerRef.current?.stop();
@@ -66,7 +84,7 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
         } else if (turnColor === MatchmakingColor.BLACK) {
             blackTimerRef.current?.start();
         }
-    }, [turnColor, gameStarted, gameOver, timesRemaining]);
+    }, [turnColor, gameStarted, gameOver, timesRemaining, timeUntilAbandoned]);
 
     useEffect(() => {
         if (gameOver) {
@@ -79,7 +97,7 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
         router.push('/play');
     };
 
-    if (!color || !turnColor || !timesRemaining || !whitePlayer || !blackPlayer) {
+    if (!color || !turnColor || !timesRemaining || !whitePlayer || !blackPlayer || !gameId || !socket) {
         return <LoadingScreen />;
     }
 
@@ -120,7 +138,23 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                         className="flex-1 min-h-[200px] sm:min-h-0 sm:w-auto sm:min-w-[250px] sm:max-w-[350px] sm:self-stretch"
                         data-cy="game-chatbox"
                     >
-                        <ChatBox className="h-full w-full" />
+                        <div className="flex flex-col h-full w-full gap-2">
+                            <ChatBox
+                                messages={messages}
+                                onSend={async (message: string) => {
+                                    await sendChatMessage(socket, gameId, message);
+                                }}
+                                className="flex-1 min-h-0"
+                            />
+                            <GameControls
+                                gameId={gameId}
+                                color={color}
+                                drawOffer={drawOffer}
+                                gameStarted={gameStarted}
+                                onError={() => {}}
+                                onClickMessage={() => {}}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

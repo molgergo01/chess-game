@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import { Socket } from 'socket.io-client';
 import Fen from 'chess-fen';
 import { MatchmakingColor } from '@/lib/models/request/matchmaking';
-import { GetActiveGameResponse, Winner } from '@/lib/models/response/game';
+import { Color, GetActiveGameResponse, Winner } from '@/lib/models/response/game';
 import type { PieceDropHandlerArgs } from 'react-chessboard';
 
 describe('useChessGame', () => {
@@ -66,6 +66,8 @@ describe('useChessGame', () => {
         blackTimeRemaining: 600000,
         gameOver: false,
         winner: null,
+        drawOffer: undefined,
+        timeUntilAbandoned: null,
         ...overrides
     });
 
@@ -211,19 +213,27 @@ describe('useChessGame', () => {
         expect(result.current.winner).toBe(Winner.WHITE);
     });
 
-    it('should handle time-expired event', async () => {
+    it('should handle game-over event', async () => {
         const gameData = createMockGameData();
         mockGetActiveGame.mockResolvedValue(gameData);
 
         const { result } = renderHook(() => useChessGame());
 
         await waitFor(() => {
-            expect(mockSocket.on).toHaveBeenCalledWith('time-expired', expect.any(Function));
+            expect(mockSocket.on).toHaveBeenCalledWith('game-over', expect.any(Function));
         });
 
+        const ratingChange = {
+            whiteRatingChange: -10,
+            whiteNewRating: 1190,
+            blackRatingChange: 10,
+            blackNewRating: 1310
+        };
+
         act(() => {
-            socketEventHandlers['time-expired']({
-                winner: Winner.BLACK
+            socketEventHandlers['game-over']({
+                winner: Winner.BLACK,
+                ratingChange
             });
         });
 
@@ -232,10 +242,7 @@ describe('useChessGame', () => {
         });
 
         expect(result.current.winner).toBe(Winner.BLACK);
-        expect(result.current.timesRemaining).toEqual({
-            whiteTimeRemaining: 0,
-            blackTimeRemaining: 0
-        });
+        expect(result.current.ratingChange).toEqual(ratingChange);
     });
 
     it('should set user color when userId and players are available', async () => {
@@ -320,6 +327,185 @@ describe('useChessGame', () => {
         expect(mockMovePiece).toHaveBeenCalledWith(mockSocket, 'game123', 'g7', 'g8', 'q');
     });
 
+    it('should handle draw-offered event', async () => {
+        const gameData = createMockGameData();
+        mockGetActiveGame.mockResolvedValue(gameData);
+
+        const { result } = renderHook(() => useChessGame());
+
+        await waitFor(() => {
+            expect(mockSocket.on).toHaveBeenCalledWith('draw-offered', expect.any(Function));
+        });
+
+        const expiresAt = new Date(Date.now() + 30000).toISOString();
+
+        act(() => {
+            socketEventHandlers['draw-offered']({
+                offeredBy: Color.BLACK,
+                expiresAt
+            });
+        });
+
+        await waitFor(() => {
+            expect(result.current.drawOffer).toBeDefined();
+        });
+
+        expect(result.current.drawOffer?.offeredBy).toBe(Color.BLACK);
+        expect(result.current.drawOffer?.expiresAt).toBeInstanceOf(Date);
+    });
+
+    it('should handle draw-offer-rejected event', async () => {
+        const gameData = createMockGameData({
+            drawOffer: {
+                offeredBy: Color.WHITE,
+                expiresAt: new Date(Date.now() + 30000)
+            }
+        });
+        mockGetActiveGame.mockResolvedValue(gameData);
+
+        const { result } = renderHook(() => useChessGame());
+
+        await waitFor(() => {
+            expect(result.current.drawOffer).toBeDefined();
+        });
+
+        act(() => {
+            socketEventHandlers['draw-offer-rejected']();
+        });
+
+        await waitFor(() => {
+            expect(result.current.drawOffer).toBeUndefined();
+        });
+    });
+
+    it('should automatically clear expired draw offers', async () => {
+        jest.useFakeTimers();
+        const gameData = createMockGameData();
+        mockGetActiveGame.mockResolvedValue(gameData);
+
+        const { result } = renderHook(() => useChessGame());
+
+        await waitFor(() => {
+            expect(mockSocket.on).toHaveBeenCalled();
+        });
+
+        const expiresAt = new Date(Date.now() + 1000).toISOString();
+
+        act(() => {
+            socketEventHandlers['draw-offered']({
+                offeredBy: Color.WHITE,
+                expiresAt
+            });
+        });
+
+        await waitFor(() => {
+            expect(result.current.drawOffer).toBeDefined();
+        });
+
+        act(() => {
+            jest.advanceTimersByTime(1000);
+        });
+
+        await waitFor(() => {
+            expect(result.current.drawOffer).toBeUndefined();
+        });
+
+        jest.useRealTimers();
+    });
+
+    it('should initialize draw offer from game data', async () => {
+        const drawOffer = {
+            offeredBy: Color.WHITE,
+            expiresAt: new Date(Date.now() + 30000)
+        };
+        const gameData = createMockGameData({ drawOffer });
+        mockGetActiveGame.mockResolvedValue(gameData);
+
+        const { result } = renderHook(() => useChessGame());
+
+        await waitFor(() => {
+            expect(result.current.drawOffer).toBeDefined();
+        });
+
+        expect(result.current.drawOffer?.offeredBy).toBe(Color.WHITE);
+        expect(result.current.drawOffer?.expiresAt).toBeInstanceOf(Date);
+    });
+
+    it('should initialize timeUntilAbandoned from game data', async () => {
+        const gameData = createMockGameData({ timeUntilAbandoned: 60000 });
+        mockGetActiveGame.mockResolvedValue(gameData);
+
+        const { result } = renderHook(() => useChessGame());
+
+        await waitFor(() => {
+            expect(result.current.timeUntilAbandoned).toBe(60000);
+        });
+    });
+
+    it('should reset timeUntilAbandoned on position update', async () => {
+        const gameData = createMockGameData({ timeUntilAbandoned: 60000 });
+        mockGetActiveGame.mockResolvedValue(gameData);
+
+        const { result } = renderHook(() => useChessGame());
+
+        await waitFor(() => {
+            expect(result.current.timeUntilAbandoned).toBe(60000);
+        });
+
+        act(() => {
+            socketEventHandlers['update-position']({
+                position: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
+                playerTimes: {
+                    whiteTimeRemaining: 590000,
+                    blackTimeRemaining: 600000
+                },
+                isGameOver: false,
+                winner: null
+            });
+        });
+
+        await waitFor(() => {
+            expect(result.current.timeUntilAbandoned).toBeNull();
+        });
+    });
+
+    it('should set ratingChange when game ends via update-position', async () => {
+        const gameData = createMockGameData();
+        mockGetActiveGame.mockResolvedValue(gameData);
+
+        const { result } = renderHook(() => useChessGame());
+
+        await waitFor(() => {
+            expect(mockSocket.on).toHaveBeenCalled();
+        });
+
+        const ratingChange = {
+            whiteRatingChange: 10,
+            whiteNewRating: 1210,
+            blackRatingChange: -10,
+            blackNewRating: 1290
+        };
+
+        act(() => {
+            socketEventHandlers['update-position']({
+                position: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
+                playerTimes: {
+                    whiteTimeRemaining: 590000,
+                    blackTimeRemaining: 600000
+                },
+                isGameOver: true,
+                winner: Winner.WHITE,
+                ratingChange
+            });
+        });
+
+        await waitFor(() => {
+            expect(result.current.gameOver).toBe(true);
+        });
+
+        expect(result.current.ratingChange).toEqual(ratingChange);
+    });
+
     it('should cleanup socket listeners on unmount', async () => {
         const gameData = createMockGameData();
         mockGetActiveGame.mockResolvedValue(gameData);
@@ -333,7 +519,9 @@ describe('useChessGame', () => {
         unmount();
 
         expect(mockSocket.off).toHaveBeenCalledWith('update-position', expect.any(Function));
-        expect(mockSocket.off).toHaveBeenCalledWith('time-expired', expect.any(Function));
+        expect(mockSocket.off).toHaveBeenCalledWith('game-over', expect.any(Function));
+        expect(mockSocket.off).toHaveBeenCalledWith('draw-offered', expect.any(Function));
+        expect(mockSocket.off).toHaveBeenCalledWith('draw-offer-rejected', expect.any(Function));
     });
 
     it('should handle error when fetching game data fails', async () => {

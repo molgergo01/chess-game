@@ -1,7 +1,15 @@
 import GameService from '../../src/services/game.service';
 import GameController from '../../src/controllers/game.controller';
 import { NextFunction, Response } from 'express';
-import { Color, GameHistoryResult, GameWithMoves, GameWithPlayers, Winner } from '../../src/models/game';
+import {
+    ActiveGame,
+    Color,
+    DrawOffer,
+    GameHistoryResult,
+    GameWithMoves,
+    GameWithPlayers,
+    Winner
+} from '../../src/models/game';
 import { GetActiveGameResponse, GetGameHistoryResponse, GetGameResponse } from '../../src/models/responses';
 import { User } from '../../src/models/user';
 import { Move } from '../../src/models/move';
@@ -17,6 +25,7 @@ describe('Game Controller', () => {
 
     beforeEach(() => {
         mockGameService = new GameService(
+            null as never,
             null as never,
             null as never,
             null as never,
@@ -360,13 +369,19 @@ describe('Game Controller', () => {
                 endedAt: null,
                 winner: null
             };
-            const activeGameResult = {
+            const drawOffer: DrawOffer = {
+                offeredBy: Color.BLACK,
+                expiresAt: new Date('2025-12-01')
+            };
+            const activeGameResult: ActiveGame = {
                 game: gameWithPlayers,
                 position: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
                 whiteTimeRemaining: 600000,
                 blackTimeRemaining: 600000,
                 gameOver: false,
-                winner: null
+                winner: null,
+                drawOffer: drawOffer,
+                timeUntilAbandoned: 10000
             };
             const expectedResponse: GetActiveGameResponse = {
                 gameId: 'game1',
@@ -376,7 +391,9 @@ describe('Game Controller', () => {
                 whiteTimeRemaining: 600000,
                 blackTimeRemaining: 600000,
                 gameOver: false,
-                winner: null
+                winner: null,
+                drawOffer: drawOffer,
+                timeUntilAbandoned: 10000
             };
 
             mockGameService.getActiveGame.mockResolvedValue(activeGameResult);
