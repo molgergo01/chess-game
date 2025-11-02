@@ -1,19 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils/utils';
+import { ChatMessage } from '@/lib/models/chat/chat';
+import { useAuth } from '@/hooks/auth/useAuth';
 
-type Message = {
-    id: number;
-    text: string;
-    sender: 'me' | 'other';
-};
+interface ChatBoxProps {
+    messages: ChatMessage[];
+    onSend?: (message: string) => void;
+}
 
-function ChatBox({ className, ...props }: React.ComponentProps<'div'>) {
-    const [messages, setMessages] = useState<Message[]>([
-        { id: 1, text: 'Hello!', sender: 'other' },
-        { id: 2, text: 'Hi there!', sender: 'me' },
-        { id: 3, text: 'How are you?', sender: 'other' }
-    ]);
+function ChatBox({ messages, onSend, className, ...props }: ChatBoxProps & React.ComponentProps<'div'>) {
+    const { userId } = useAuth();
     const [input, setInput] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -27,34 +24,57 @@ function ChatBox({ className, ...props }: React.ComponentProps<'div'>) {
 
     const handleSend = () => {
         if (input.trim()) {
-            setMessages([...messages, { id: Date.now(), text: input, sender: 'me' }]);
+            onSend?.(input);
             setInput('');
         }
     };
 
     return (
-        <div className={cn('flex flex-col rounded-lg border bg-background shadow-md p-2 h-full', className)} {...props}>
-            <div className="flex-1 overflow-y-auto space-y-2 p-2 min-h-0">
-                {messages.map((msg) => (
-                    <div
-                        key={msg.id}
-                        className={`flex w-full ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-                    >
+        <div
+            data-cy="chat-box"
+            className={cn('flex flex-col rounded-lg border bg-background shadow-md p-2 h-full', className)}
+            {...props}
+        >
+            <div data-cy="chat-messages-container" className="flex-1 overflow-y-auto space-y-2 p-2 min-h-0">
+                {messages?.map((msg) => {
+                    const isSystemMessage = msg.userId === 'SYSTEM';
+
+                    if (isSystemMessage) {
+                        return (
+                            <div
+                                key={msg.messageId}
+                                data-cy="chat-message-system"
+                                className="flex w-full justify-center"
+                            >
+                                <span className="text-xs italic text-muted-foreground opacity-70">{msg.message}</span>
+                            </div>
+                        );
+                    }
+
+                    const isUserMessage = msg.userId === userId;
+                    return (
                         <div
-                            className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm break-words shadow flex flex-col
-                ${msg.sender === 'me' ? 'bg-primary text-primary-foreground rounded-br-none items-end' : 'bg-muted text-muted-foreground rounded-bl-none items-start'}`}
+                            key={msg.messageId}
+                            data-cy={isUserMessage ? 'chat-message-user' : 'chat-message-opponent'}
+                            className={`flex w-full ${isUserMessage ? 'justify-end' : 'justify-start'}`}
                         >
-                            <span className="font-semibold text-xs mb-1 opacity-70">
-                                {msg.sender === 'me' ? 'You' : 'Opponent'}
-                            </span>
-                            <span>{msg.text}</span>
+                            <div
+                                className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm break-words shadow flex flex-col
+                ${isUserMessage ? 'bg-primary text-primary-foreground rounded-br-none items-end' : 'bg-muted text-muted-foreground rounded-bl-none items-start'}`}
+                            >
+                                <span className="font-semibold text-xs mb-1 opacity-70">
+                                    {isUserMessage ? 'You' : 'Opponent'}
+                                </span>
+                                <span>{msg.message}</span>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
                 <div ref={messagesEndRef} />
             </div>
             <div className="mt-2 flex-shrink-0">
                 <Textarea
+                    data-cy="chat-input"
                     className="w-full resize-none rounded-lg border"
                     rows={2}
                     value={input}

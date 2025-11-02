@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { StoredGameState } from '../models/game';
+import { DrawOffer, StoredGameState } from '../models/game';
 import { Player, StoredPlayer } from '../models/player';
 import Redis from 'chess-game-backend-common/config/redis';
 
@@ -10,13 +10,28 @@ class GameStateRepository {
         private readonly redis: typeof Redis
     ) {}
 
-    async save(gameId: string, fen: string, players: Array<Player>, lastMoveEpoch: number, startedAt: number) {
-        this.redis.hSet(`game-state:${gameId}`, {
+    async save(
+        gameId: string,
+        fen: string,
+        players: Array<Player>,
+        lastMoveEpoch: number,
+        startedAt: number,
+        drawOffer: DrawOffer | undefined
+    ): Promise<void> {
+        const data: Record<string, string> = {
             players: JSON.stringify(players),
             position: fen,
-            lastMoveEpoch: lastMoveEpoch,
-            startedAt: startedAt
-        });
+            lastMoveEpoch: lastMoveEpoch.toString(),
+            startedAt: startedAt.toString()
+        };
+
+        if (drawOffer) {
+            data.drawOffer = JSON.stringify(drawOffer);
+        } else {
+            await this.redis.hDel(`game-state:${gameId}`, 'drawOffer');
+        }
+
+        await this.redis.hSet(`game-state:${gameId}`, data);
     }
 
     async get(gameId: string): Promise<StoredGameState | null> {
@@ -25,12 +40,17 @@ class GameStateRepository {
             return null;
         }
         try {
-            return {
+            const parsedData = {
                 players: new Array<StoredPlayer>(JSON.parse(data.players)).flat(1),
                 position: data.position,
                 lastMoveEpoch: JSON.parse(data.lastMoveEpoch),
-                startedAt: JSON.parse(data.startedAt)
+                startedAt: JSON.parse(data.startedAt),
+                drawOffer: data.drawOffer ? JSON.parse(data.drawOffer) : undefined
             };
+            if (parsedData.drawOffer) {
+                parsedData.drawOffer.expiresAt = new Date(parsedData.drawOffer.expiresAt);
+            }
+            return parsedData;
         } catch (error) {
             console.error(error);
             return null;

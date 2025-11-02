@@ -7,6 +7,7 @@ import { MatchmakingSocketProvider } from '@/hooks/matchmaking/useMatchmakingSoc
 import { CoreSocketProvider } from '@/hooks/chess/useCoreSocket';
 import React from 'react';
 import { PathnameContext, SearchParamsContext } from 'next/dist/shared/lib/hooks-client-context.shared-runtime';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 Cypress.Commands.add('mount', mount);
 
@@ -45,6 +46,10 @@ export function withCoreSocket(component: React.ReactNode) {
     return <CoreSocketProvider>{component}</CoreSocketProvider>;
 }
 
+export function withTooltipProvider(component: React.ReactNode) {
+    return <TooltipProvider>{component}</TooltipProvider>;
+}
+
 export function withAllProviders(component: React.ReactNode, searchParams?: URLSearchParams, pathname?: string) {
     let wrapped = component;
 
@@ -56,5 +61,5 @@ export function withAllProviders(component: React.ReactNode, searchParams?: URLS
         wrapped = <PathnameContext.Provider value={pathname}>{wrapped}</PathnameContext.Provider>;
     }
 
-    return withAppRouter(withAuth(withCoreSocket(withMatchmakingSocket(wrapped))));
+    return withTooltipProvider(withAppRouter(withAuth(withCoreSocket(withMatchmakingSocket(wrapped)))));
 }

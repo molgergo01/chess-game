@@ -1,34 +1,33 @@
-export interface JoinGameRequest {
-    gameId: string;
-}
+import { Color } from '@/lib/models/response/game';
 
-export type GetTimesRequest = {
+export type JoinGameRequest = {
     gameId: string;
 };
 
-export interface GameUpdateMessage {
+export type GameUpdateMessage = {
     position: string;
     isGameOver: boolean;
     winner: Winner | null;
     playerTimes: PlayerTimes;
     ratingChange: RatingChange | null;
-}
+};
 
-export interface TimeExpiredMessage {
+export type TimeExpiredMessage = {
     winner: Winner;
     ratingChange: RatingChange;
-}
+};
 
-export interface MoveRequest {
+export type DrawOfferedMessage = {
+    offeredBy: Color;
+    expiresAt: Date;
+};
+
+export type MoveRequest = {
     gameId: string;
     from: string;
     to: string;
     promotionPiece: string | undefined;
-}
-
-export interface PositionRequest {
-    gameId: string;
-}
+};
 
 export type PlayerTimes = {
     whiteTimeRemaining: number;
@@ -50,6 +49,29 @@ export type RatingChange = {
     whiteNewRating: number;
     blackRatingChange: number;
     blackNewRating: number;
+};
+
+export type DrawOffer = {
+    offeredBy: Color;
+    expiresAt: Date;
+};
+
+export type ResignRequest = {
+    gameId: string;
+};
+
+export type OfferDrawRequest = {
+    gameId: string;
+};
+
+export type RespondDrawOfferRequest = {
+    gameId: string;
+    accepted: boolean;
+};
+
+export type SendChatMessageRequest = {
+    chatId: string;
+    message: string;
 };
 
 export enum Winner {

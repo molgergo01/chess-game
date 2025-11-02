@@ -15,6 +15,11 @@ import RatingService from '../services/rating.service';
 import AuthMiddleware from '../middlewares/auth.middleware';
 import SocketAuthMiddleware from '../middlewares/socket.auth.middleware';
 import InternalGameController from '../controllers/internal.game.controller';
+import ChatRepository from '../repositories/chat.repository';
+import ChatService from '../services/chat.service';
+import ChatNotificationService from '../services/chat.notification.service';
+import MessageRepository from '../repositories/message.repository';
+import ChatController from '../controllers/chat.controller';
 
 const container = new Container();
 
@@ -27,14 +32,22 @@ container.bind(GameIdRepository).toSelf().inSingletonScope();
 container.bind(GamesRepository).toSelf().inSingletonScope();
 container.bind(MovesRepository).toSelf().inSingletonScope();
 container.bind(UsersRepository).toSelf().inSingletonScope();
+container.bind(ChatRepository).toSelf().inSingletonScope();
+container.bind(MessageRepository).toSelf().inSingletonScope();
+
 container.bind(RatingService).toSelf().inSingletonScope();
 container.bind(GameService).toSelf().inSingletonScope();
 container.bind(UserService).toSelf().inSingletonScope();
 container.bind(GameNotificationService).toSelf().inSingletonScope();
 container.bind(TimerWatcher).toSelf().inSingletonScope();
+container.bind(ChatService).toSelf().inSingletonScope();
+container.bind(ChatNotificationService).toSelf().inSingletonScope();
+
 container.bind(GameController).toSelf().inSingletonScope();
 container.bind(LeaderboardController).toSelf().inSingletonScope();
 container.bind(InternalGameController).toSelf().inSingletonScope();
+container.bind(ChatController).toSelf().inSingletonScope();
+
 container.bind(AuthMiddleware).toSelf().inSingletonScope();
 container.bind(SocketAuthMiddleware).toSelf().inSingletonScope();
 

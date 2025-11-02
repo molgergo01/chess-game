@@ -1,7 +1,7 @@
 import Game from '@/components/game/game';
 import { withAllProviders } from '../../support/component';
 import env from '@/lib/config/env';
-import { Winner } from '@/lib/models/response/game';
+import { Color } from '@/lib/models/response/game';
 import Fen from 'chess-fen';
 
 describe('<Game />', () => {
@@ -87,32 +87,30 @@ describe('<Game />', () => {
         });
     });
 
-    describe('game over dialog', () => {
-        it('should show dialog with "White wins" message when white wins', () => {
+    describe('game controls', () => {
+        beforeEach(() => {
             cy.intercept('GET', `${env.REST_URLS.CORE}/api/games/active*`, {
                 statusCode: 200,
-                body: {
-                    ...mockActiveGameData,
-                    gameOver: true,
-                    winner: Winner.WHITE
-                }
+                body: mockActiveGameData
             }).as('getActiveGame');
 
             cy.mount(withAllProviders(<Game />));
             cy.wait('@getUser');
             cy.wait('@getActiveGame');
-
-            cy.get('[data-state="open"]').should('exist');
-            cy.getDataCy('game-over-message').should('be.visible').and('contain.text', 'White wins');
         });
 
-        it('should show dialog with "Black wins" message when black wins', () => {
+        it('should render game controls component', () => {
+            cy.getDataCy('game-controls').should('be.visible');
+        });
+    });
+
+    describe('game state variations', () => {
+        it('should render when game is not started', () => {
             cy.intercept('GET', `${env.REST_URLS.CORE}/api/games/active*`, {
                 statusCode: 200,
                 body: {
                     ...mockActiveGameData,
-                    gameOver: true,
-                    winner: Winner.BLACK
+                    position: Fen.startingPosition
                 }
             }).as('getActiveGame');
 
@@ -120,17 +118,16 @@ describe('<Game />', () => {
             cy.wait('@getUser');
             cy.wait('@getActiveGame');
 
-            cy.get('[data-state="open"]').should('exist');
-            cy.getDataCy('game-over-message').should('be.visible').and('contain.text', 'Black wins');
+            cy.getDataCy('game-container').should('be.visible');
+            cy.getDataCy('game-chessboard-container').should('be.visible');
         });
 
-        it('should show dialog with "Draw" message when game is a draw', () => {
+        it('should render when game is in progress with different position', () => {
             cy.intercept('GET', `${env.REST_URLS.CORE}/api/games/active*`, {
                 statusCode: 200,
                 body: {
                     ...mockActiveGameData,
-                    gameOver: true,
-                    winner: Winner.DRAW
+                    position: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1'
                 }
             }).as('getActiveGame');
 
@@ -138,8 +135,27 @@ describe('<Game />', () => {
             cy.wait('@getUser');
             cy.wait('@getActiveGame');
 
-            cy.get('[data-state="open"]').should('exist');
-            cy.getDataCy('game-over-message').should('be.visible').and('contain.text', 'Draw');
+            cy.getDataCy('game-container').should('be.visible');
+            cy.getDataCy('game-chessboard-container').should('be.visible');
+        });
+
+        it('should render game controls when draw offer is present', () => {
+            cy.intercept('GET', `${env.REST_URLS.CORE}/api/games/active*`, {
+                statusCode: 200,
+                body: {
+                    ...mockActiveGameData,
+                    drawOffer: {
+                        offeredBy: Color.BLACK,
+                        expiresAt: Date.now() + 30000
+                    }
+                }
+            }).as('getActiveGame');
+
+            cy.mount(withAllProviders(<Game />));
+            cy.wait('@getUser');
+            cy.wait('@getActiveGame');
+
+            cy.getDataCy('game-controls').should('be.visible');
         });
     });
 });

@@ -11,17 +11,47 @@ export type CreateGameRequest = {
     players: string[];
 };
 
-export interface MoveRequest {
+export type MoveRequest = {
     gameId: string;
     from: string;
     to: string;
     promotionPiece: string | undefined;
-}
+};
 
-export interface JoinGameRequest {
+export type JoinGameRequest = {
     gameId: string;
-}
+};
+
+export type ResignRequest = {
+    gameId: string;
+};
+
+export type OfferDrawRequest = {
+    gameId: string;
+};
+
+export type RespondDrawOfferRequest = {
+    gameId: string;
+    accepted: boolean;
+};
+
+export type SendChatMessageRequest = {
+    chatId: string;
+    message: string;
+};
+
+export type JoinChatRoomRequest = {
+    chatId: string;
+};
+
+export type LeaveChatRoomRequest = {
+    chatId: string;
+};
 
 export type GetGameParams = {
     gameId: string;
+};
+
+export type GetChatMessagesParams = {
+    chatId: string;
 };

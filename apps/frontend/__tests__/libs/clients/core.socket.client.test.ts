@@ -1,4 +1,13 @@
-import { joinGame, movePiece } from '@/lib/clients/core.socket.client';
+import {
+    joinGame,
+    movePiece,
+    resign,
+    offerDraw,
+    respondDrawOffer,
+    joinChat,
+    leaveChat,
+    sendChatMessage
+} from '@/lib/clients/core.socket.client';
 import { Socket } from 'socket.io-client';
 
 describe('core.socket.client', () => {
@@ -66,6 +75,94 @@ describe('core.socket.client', () => {
                 promotionPiece: promotionPiece
             });
             expect(result).toBe(mockResponse);
+        });
+    });
+
+    describe('resign', () => {
+        it('should call socket.emit with correct event name and request body', async () => {
+            const gameId = 'game123';
+
+            await resign(mockSocket as Socket, gameId);
+
+            expect(mockSocket.emit).toHaveBeenCalledWith('resign-game', {
+                gameId: gameId
+            });
+        });
+    });
+
+    describe('offerDraw', () => {
+        it('should call socket.emit with correct event name and request body', async () => {
+            const gameId = 'game123';
+
+            await offerDraw(mockSocket as Socket, gameId);
+
+            expect(mockSocket.emit).toHaveBeenCalledWith('offer-draw', {
+                gameId: gameId
+            });
+        });
+    });
+
+    describe('respondDrawOffer', () => {
+        it('should call socket.emit with correct event name and request body when accepting', async () => {
+            const gameId = 'game123';
+            const accepted = true;
+
+            await respondDrawOffer(mockSocket as Socket, gameId, accepted);
+
+            expect(mockSocket.emit).toHaveBeenCalledWith('respond-draw-offer', {
+                gameId: gameId,
+                accepted: accepted
+            });
+        });
+
+        it('should call socket.emit with correct event name and request body when declining', async () => {
+            const gameId = 'game123';
+            const accepted = false;
+
+            await respondDrawOffer(mockSocket as Socket, gameId, accepted);
+
+            expect(mockSocket.emit).toHaveBeenCalledWith('respond-draw-offer', {
+                gameId: gameId,
+                accepted: accepted
+            });
+        });
+    });
+
+    describe('joinChat', () => {
+        it('should call socket.emit with correct event name and request body', () => {
+            const chatId = 'chat123';
+
+            joinChat(mockSocket as Socket, chatId);
+
+            expect(mockSocket.emit).toHaveBeenCalledWith('join-chat', {
+                chatId: chatId
+            });
+        });
+    });
+
+    describe('leaveChat', () => {
+        it('should call socket.emit with correct event name and request body', () => {
+            const chatId = 'chat123';
+
+            leaveChat(mockSocket as Socket, chatId);
+
+            expect(mockSocket.emit).toHaveBeenCalledWith('leave-chat', {
+                chatId: chatId
+            });
+        });
+    });
+
+    describe('sendChatMessage', () => {
+        it('should call socket.emit with correct event name and request body', async () => {
+            const chatId = 'chat123';
+            const message = 'Hello, world!';
+
+            await sendChatMessage(mockSocket as Socket, chatId, message);
+
+            expect(mockSocket.emit).toHaveBeenCalledWith('send-chat-message', {
+                chatId: chatId,
+                message: message
+            });
         });
     });
 });

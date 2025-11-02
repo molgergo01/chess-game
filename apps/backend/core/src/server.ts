@@ -7,6 +7,7 @@ import corsConfig from 'chess-game-backend-common/config/cors';
 import container from './config/container';
 import TimerWatcher from './services/timer.watcher';
 import SocketAuthMiddleware from './middlewares/socket.auth.middleware';
+import chatListener from './listeners/chat.listener';
 
 const timerWatcher = container.get(TimerWatcher);
 const socketAuthMiddleware = container.get(SocketAuthMiddleware);
@@ -24,10 +25,18 @@ container.bind('SocketIO').toConstantValue(io);
 io.use(socketAuthMiddleware.authenticate.bind(socketAuthMiddleware));
 
 export const onConnection = (socket: Socket) => {
-    const { joinGame, movePiece } = gameListener(io, socket);
+    const { joinGame, movePiece, resign, offerDraw, respondDrawOffer } = gameListener(io, socket);
+    const { joinChat, leaveChat, sendChatMessage } = chatListener(io, socket);
 
     socket.on('joinGame', joinGame);
     socket.on('movePiece', movePiece);
+    socket.on('resign-game', resign);
+    socket.on('offer-draw', offerDraw);
+    socket.on('respond-draw-offer', respondDrawOffer);
+
+    socket.on('join-chat', joinChat);
+    socket.on('leave-chat', leaveChat);
+    socket.on('send-chat-message', sendChatMessage);
 };
 
 io.on('connection', onConnection);

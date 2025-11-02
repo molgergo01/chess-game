@@ -1,12 +1,4 @@
-export type GetGameIdResponse = {
-    gameId: string | null;
-};
-
-export interface PositionResponse {
-    position: string;
-    gameOver: boolean;
-    winner: Winner | null;
-}
+import { DrawOffer } from '@/lib/models/request/game';
 
 export interface MoveResponse {
     success: boolean;
@@ -68,6 +60,21 @@ export type GetActiveGameResponse = {
     blackTimeRemaining: number;
     gameOver: boolean;
     winner: Winner | null;
+    drawOffer: DrawOffer | undefined;
+    timeUntilAbandoned: number | null;
+};
+
+export type ActiveGame = {
+    gameId: string;
+    whitePlayer: UserDto;
+    blackPlayer: UserDto;
+    position: string;
+    whiteTimeRemaining: number;
+    blackTimeRemaining: number;
+    gameOver: boolean;
+    winner: Winner | null;
+    drawOffer: DrawOffer | undefined;
+    timeUntilAbandoned: number | null;
 };
 
 export type PlayerTimes = {

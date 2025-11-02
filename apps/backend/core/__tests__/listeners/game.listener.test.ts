@@ -1,33 +1,46 @@
-const mockGameService = {
-    getGameId: jest.fn(),
-    getTimes: jest.fn(),
-    move: jest.fn(),
-    getFen: jest.fn(),
-    isGameOver: jest.fn(),
-    getWinner: jest.fn(),
-    reset: jest.fn()
-};
-
-const mockGameNotificationService = {
-    sendPositionUpdateNotification: jest.fn()
-};
-
-const mockGameController = {
-    createGame: jest.fn()
-};
-
-const mockTimerWatcher = {
-    start: jest.fn()
-};
-
+import { ChatMessage } from '../../src/models/chat';
 import { NextFunction, Request, Response } from 'express';
 import { createServer, Server as NodeServer } from 'node:http';
 import { type AddressInfo } from 'node:net';
 import { io as ioc, type Socket as ClientSocket } from 'socket.io-client';
 import { Server, type Socket as ServerSocket } from 'socket.io';
-import gameListener from '../../src/listeners/game.listener';
-import { RatingChange, Winner } from '../../src/models/game';
+import { Color, RatingChange, Winner } from '../../src/models/game';
 import { MoveCallback } from '../../src/models/callbacks';
+
+const mocks = {
+    gameService: {
+        getGameId: jest.fn(),
+        getTimes: jest.fn(),
+        move: jest.fn(),
+        getFen: jest.fn(),
+        isGameOver: jest.fn(),
+        getWinner: jest.fn(),
+        reset: jest.fn(),
+        resign: jest.fn(),
+        offerDraw: jest.fn(),
+        respondDrawOffer: jest.fn(),
+        getPlayerColor: jest.fn()
+    },
+    gameNotificationService: {
+        sendPositionUpdateNotification: jest.fn(),
+        sendGameOverNotification: jest.fn(),
+        sendDrawOfferedNotification: jest.fn(),
+        sendDrawOfferRejectedNotification: jest.fn()
+    },
+    chatService: {
+        createSystemChatMessage: jest.fn(),
+        getChatMessages: jest.fn()
+    },
+    chatNotificationService: {
+        sendChatMessagesUpdatedNotification: jest.fn()
+    },
+    gameController: {
+        createGame: jest.fn()
+    },
+    timerWatcher: {
+        start: jest.fn()
+    }
+};
 
 jest.mock('chess-game-backend-common/config/passport', () => ({
     initialize: jest.fn(() => (req: Request, res: Response, next: NextFunction) => next())
@@ -35,19 +48,25 @@ jest.mock('chess-game-backend-common/config/passport', () => ({
 
 jest.mock('../../src/services/game.service');
 jest.mock('../../src/services/game.notification.service');
+jest.mock('../../src/services/chat.service');
+jest.mock('../../src/services/chat.notification.service');
 jest.mock('../../src/controllers/game.controller');
 jest.mock('../../src/services/timer.watcher');
 jest.mock('../../src/config/container', () => ({
     get: jest.fn((service) => {
-        if (service.name === 'GameService') return mockGameService;
-        if (service.name === 'GameNotificationService') return mockGameNotificationService;
-        if (service.name === 'GameController') return mockGameController;
-        if (service.name === 'TimerWatcher') return mockTimerWatcher;
+        if (service.name === 'GameService') return mocks.gameService;
+        if (service.name === 'GameNotificationService') return mocks.gameNotificationService;
+        if (service.name === 'ChatService') return mocks.chatService;
+        if (service.name === 'ChatNotificationService') return mocks.chatNotificationService;
+        if (service.name === 'GameController') return mocks.gameController;
+        if (service.name === 'TimerWatcher') return mocks.timerWatcher;
         return null;
     }),
     bind: jest.fn().mockReturnThis(),
     toConstantValue: jest.fn()
 }));
+
+import gameListener from '../../src/listeners/game.listener';
 
 describe('Game Listener', () => {
     let io: Server, clientSocket: ClientSocket;
@@ -63,10 +82,13 @@ describe('Game Listener', () => {
             clientSocket = ioc(`http://localhost:${port}`);
             io.on('connection', (socket: ServerSocket) => {
                 socket.data.user = { id: userId };
-                const { joinGame, movePiece } = gameListener(io, socket);
+                const { joinGame, movePiece, resign, offerDraw, respondDrawOffer } = gameListener(io, socket);
 
                 socket.on('joinGame', joinGame);
                 socket.on('movePiece', movePiece);
+                socket.on('resign', resign);
+                socket.on('offerDraw', offerDraw);
+                socket.on('respondDrawOffer', respondDrawOffer);
             });
             clientSocket.on('connect', done);
         });
@@ -102,11 +124,11 @@ describe('Game Listener', () => {
                 blackTimeRemaining: 600000
             };
 
-            mockGameService.getFen.mockResolvedValue('initial_fen');
-            mockGameService.move.mockResolvedValue(newFen);
-            mockGameService.isGameOver.mockResolvedValue(false);
-            mockGameService.getWinner.mockResolvedValue(null);
-            mockGameService.getTimes.mockResolvedValue(playerTimes);
+            mocks.gameService.getFen.mockResolvedValue('initial_fen');
+            mocks.gameService.move.mockResolvedValue(newFen);
+            mocks.gameService.isGameOver.mockResolvedValue(false);
+            mocks.gameService.getWinner.mockResolvedValue(null);
+            mocks.gameService.getTimes.mockResolvedValue(playerTimes);
 
             clientSocket.emit('movePiece', {
                 gameId,
@@ -117,7 +139,7 @@ describe('Game Listener', () => {
 
             await new Promise((resolve) => setTimeout(resolve, 100));
 
-            expect(mockGameService.move).toHaveBeenCalledWith(
+            expect(mocks.gameService.move).toHaveBeenCalledWith(
                 userId,
                 gameId,
                 'e2',
@@ -125,7 +147,7 @@ describe('Game Listener', () => {
                 undefined,
                 expect.any(Number)
             );
-            expect(mockGameNotificationService.sendPositionUpdateNotification).toHaveBeenCalledWith(
+            expect(mocks.gameNotificationService.sendPositionUpdateNotification).toHaveBeenCalledWith(
                 gameId,
                 newFen,
                 false,
@@ -137,8 +159,8 @@ describe('Game Listener', () => {
 
         it('should return failure response when move is invalid', async () => {
             const currentFen = 'current_fen';
-            mockGameService.getFen.mockResolvedValue(currentFen);
-            mockGameService.move.mockRejectedValue(new Error('Invalid move'));
+            mocks.gameService.getFen.mockResolvedValue(currentFen);
+            mocks.gameService.move.mockRejectedValue(new Error('Invalid move'));
 
             const result: MoveCallback = await clientSocket.emitWithAck('movePiece', {
                 gameId,
@@ -151,8 +173,8 @@ describe('Game Listener', () => {
                 success: false,
                 position: currentFen
             });
-            expect(mockGameService.move).toHaveBeenCalled();
-            expect(mockGameNotificationService.sendPositionUpdateNotification).not.toHaveBeenCalled();
+            expect(mocks.gameService.move).toHaveBeenCalled();
+            expect(mocks.gameNotificationService.sendPositionUpdateNotification).not.toHaveBeenCalled();
         });
 
         it('should reset game when game is over', async () => {
@@ -168,12 +190,12 @@ describe('Game Listener', () => {
                 blackNewRating: 400
             };
 
-            mockGameService.getFen.mockResolvedValue('fen');
-            mockGameService.move.mockResolvedValue(finalFen);
-            mockGameService.isGameOver.mockResolvedValue(true);
-            mockGameService.getWinner.mockResolvedValue(Winner.BLACK);
-            mockGameService.getTimes.mockResolvedValue(playerTimes);
-            mockGameService.reset.mockResolvedValue(ratingChange);
+            mocks.gameService.getFen.mockResolvedValue('fen');
+            mocks.gameService.move.mockResolvedValue(finalFen);
+            mocks.gameService.isGameOver.mockResolvedValue(true);
+            mocks.gameService.getWinner.mockResolvedValue(Winner.BLACK);
+            mocks.gameService.getTimes.mockResolvedValue(playerTimes);
+            mocks.gameService.reset.mockResolvedValue(ratingChange);
 
             clientSocket.emit('movePiece', {
                 gameId,
@@ -184,9 +206,9 @@ describe('Game Listener', () => {
 
             await new Promise((resolve) => setTimeout(resolve, 100));
 
-            expect(mockGameService.isGameOver).toHaveBeenCalledWith(gameId);
-            expect(mockGameService.reset).toHaveBeenCalledWith(gameId);
-            expect(mockGameNotificationService.sendPositionUpdateNotification).toHaveBeenCalledWith(
+            expect(mocks.gameService.isGameOver).toHaveBeenCalledWith(gameId);
+            expect(mocks.gameService.reset).toHaveBeenCalledWith(gameId);
+            expect(mocks.gameNotificationService.sendPositionUpdateNotification).toHaveBeenCalledWith(
                 gameId,
                 finalFen,
                 true,
@@ -194,6 +216,145 @@ describe('Game Listener', () => {
                 playerTimes,
                 ratingChange
             );
+        });
+    });
+
+    describe('resign', () => {
+        it('should log resignation message and send game over notification', async () => {
+            const ratingChange: RatingChange = {
+                whiteRatingChange: -10,
+                whiteNewRating: 390,
+                blackRatingChange: 10,
+                blackNewRating: 410
+            };
+            const chatMessages: ChatMessage[] = [
+                { messageId: '1', userId: 'SYSTEM', message: 'white resigned', timestamp: new Date() }
+            ];
+
+            mocks.gameService.getPlayerColor.mockResolvedValue(Color.WHITE);
+            mocks.chatService.createSystemChatMessage.mockResolvedValue(undefined);
+            mocks.chatService.getChatMessages.mockResolvedValue(chatMessages);
+            mocks.gameService.resign.mockResolvedValue({ winner: Winner.BLACK, ratingChange });
+
+            clientSocket.emit('resign', { gameId });
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mocks.gameService.getPlayerColor).toHaveBeenCalledWith(gameId, userId);
+            expect(mocks.chatService.createSystemChatMessage).toHaveBeenCalledWith(gameId, 'white resigned');
+            expect(mocks.chatService.getChatMessages).toHaveBeenCalledWith(gameId, userId);
+            expect(mocks.chatNotificationService.sendChatMessagesUpdatedNotification).toHaveBeenCalledWith(
+                gameId,
+                chatMessages
+            );
+            expect(mocks.gameService.resign).toHaveBeenCalledWith(userId, gameId);
+            expect(mocks.gameNotificationService.sendGameOverNotification).toHaveBeenCalledWith(
+                gameId,
+                Winner.BLACK,
+                ratingChange
+            );
+        });
+    });
+
+    describe('offerDraw', () => {
+        it('should log draw offer message and send draw offered notification', async () => {
+            const expiresAt = Date.now() + 30000;
+            const drawOffer = { offeredBy: 'white', expiresAt };
+            const chatMessages: ChatMessage[] = [
+                { messageId: '1', userId: 'SYSTEM', message: 'white offered a draw', timestamp: new Date() }
+            ];
+
+            mocks.gameService.getPlayerColor.mockResolvedValue(Color.WHITE);
+            mocks.chatService.createSystemChatMessage.mockResolvedValue(undefined);
+            mocks.chatService.getChatMessages.mockResolvedValue(chatMessages);
+            mocks.gameService.offerDraw.mockResolvedValue(drawOffer);
+
+            clientSocket.emit('offerDraw', { gameId });
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mocks.gameService.getPlayerColor).toHaveBeenCalledWith(gameId, userId);
+            expect(mocks.chatService.createSystemChatMessage).toHaveBeenCalledWith(gameId, 'white offered a draw');
+            expect(mocks.chatService.getChatMessages).toHaveBeenCalledWith(gameId, userId);
+            expect(mocks.chatNotificationService.sendChatMessagesUpdatedNotification).toHaveBeenCalledWith(
+                gameId,
+                chatMessages
+            );
+            expect(mocks.gameService.offerDraw).toHaveBeenCalledWith(gameId, userId);
+            expect(mocks.gameNotificationService.sendDrawOfferedNotification).toHaveBeenCalledWith(
+                gameId,
+                drawOffer.offeredBy,
+                drawOffer.expiresAt
+            );
+        });
+    });
+
+    describe('respondDrawOffer', () => {
+        it('should log accepted message and send game over notification when draw is accepted', async () => {
+            const ratingChange: RatingChange = {
+                whiteRatingChange: 0,
+                whiteNewRating: 400,
+                blackRatingChange: 0,
+                blackNewRating: 400
+            };
+            const chatMessages: ChatMessage[] = [
+                { messageId: '1', userId: 'SYSTEM', message: 'black accepted the draw request', timestamp: new Date() }
+            ];
+
+            mocks.gameService.getPlayerColor.mockResolvedValue(Color.BLACK);
+            mocks.chatService.createSystemChatMessage.mockResolvedValue(undefined);
+            mocks.chatService.getChatMessages.mockResolvedValue(chatMessages);
+            mocks.gameService.respondDrawOffer.mockResolvedValue(ratingChange);
+
+            clientSocket.emit('respondDrawOffer', { gameId, accepted: true });
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mocks.gameService.getPlayerColor).toHaveBeenCalledWith(gameId, userId);
+            expect(mocks.chatService.createSystemChatMessage).toHaveBeenCalledWith(
+                gameId,
+                'black accepted the draw request'
+            );
+            expect(mocks.chatService.getChatMessages).toHaveBeenCalledWith(gameId, userId);
+            expect(mocks.chatNotificationService.sendChatMessagesUpdatedNotification).toHaveBeenCalledWith(
+                gameId,
+                chatMessages
+            );
+            expect(mocks.gameService.respondDrawOffer).toHaveBeenCalledWith(gameId, userId, true);
+            expect(mocks.gameNotificationService.sendGameOverNotification).toHaveBeenCalledWith(
+                gameId,
+                Winner.DRAW,
+                ratingChange
+            );
+        });
+
+        it('should log declined message and send draw offer rejected notification when draw is declined', async () => {
+            const chatMessages: ChatMessage[] = [
+                { messageId: '1', userId: 'SYSTEM', message: 'black declined the draw request', timestamp: new Date() }
+            ];
+
+            mocks.gameService.getPlayerColor.mockResolvedValue(Color.BLACK);
+            mocks.chatService.createSystemChatMessage.mockResolvedValue(undefined);
+            mocks.chatService.getChatMessages.mockResolvedValue(chatMessages);
+            mocks.gameService.respondDrawOffer.mockResolvedValue(null);
+
+            clientSocket.emit('respondDrawOffer', { gameId, accepted: false });
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mocks.gameService.getPlayerColor).toHaveBeenCalledWith(gameId, userId);
+            expect(mocks.chatService.createSystemChatMessage).toHaveBeenCalledWith(
+                gameId,
+                'black declined the draw request'
+            );
+            expect(mocks.chatService.getChatMessages).toHaveBeenCalledWith(gameId, userId);
+            expect(mocks.chatNotificationService.sendChatMessagesUpdatedNotification).toHaveBeenCalledWith(
+                gameId,
+                chatMessages
+            );
+            expect(mocks.gameService.respondDrawOffer).toHaveBeenCalledWith(gameId, userId, false);
+            expect(mocks.gameNotificationService.sendDrawOfferRejectedNotification).toHaveBeenCalledWith(gameId);
+            expect(mocks.gameNotificationService.sendGameOverNotification).not.toHaveBeenCalled();
         });
     });
 });
