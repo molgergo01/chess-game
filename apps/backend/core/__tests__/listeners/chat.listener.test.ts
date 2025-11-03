@@ -69,6 +69,7 @@ describe('Chat Listener', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
+        clientSocket.removeAllListeners('chat-error');
     });
 
     describe('joinChat', () => {
@@ -82,6 +83,20 @@ describe('Chat Listener', () => {
             const serverSocket = Array.from(io.sockets.sockets.values())[0];
             expect(serverSocket.rooms.has(chatId)).toBe(true);
             expect(mocks.chatService.addParticipant).toHaveBeenCalledWith(chatId, userId);
+        });
+
+        it('should emit chat-error event when joinChat fails', (done) => {
+            mocks.chatService.addParticipant.mockRejectedValue(new Error('Failed to add participant'));
+
+            clientSocket.on('chat-error', (error) => {
+                expect(error).toEqual({
+                    message: 'An unexpected error occurred',
+                    code: undefined
+                });
+                done();
+            });
+
+            clientSocket.emit('joinChat', { chatId });
         });
     });
 
@@ -103,6 +118,31 @@ describe('Chat Listener', () => {
             expect(mocks.chatService.removeParticipant).toHaveBeenCalledWith(chatId, userId);
             expect(serverSocket.rooms.has(chatId)).toBe(false);
         });
+
+        it('should emit chat-error event when leaveChat fails', async () => {
+            mocks.chatService.addParticipant.mockResolvedValue(undefined);
+            clientSocket.emit('joinChat', { chatId });
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            mocks.chatService.removeParticipant.mockRejectedValue(new Error('Failed to remove participant'));
+
+            const errorPromise = new Promise<void>((resolve) => {
+                clientSocket.once('chat-error', (error) => {
+                    expect(error).toEqual({
+                        message: 'An unexpected error occurred',
+                        code: undefined
+                    });
+                    resolve();
+                });
+            });
+
+            clientSocket.emit('leaveChat', { chatId });
+
+            await Promise.race([
+                errorPromise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout waiting for chat-error')), 1000))
+            ]);
+        });
     });
 
     describe('sendChatMessage', () => {
@@ -123,6 +163,33 @@ describe('Chat Listener', () => {
                 chatId,
                 chatMessages
             );
+        });
+
+        it('should emit chat-error event when sendChatMessage fails', async () => {
+            const message = 'Hello, let us play chess!';
+            mocks.chatService.addParticipant.mockResolvedValue(undefined);
+            clientSocket.emit('joinChat', { chatId });
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            mocks.chatService.createChatMessage.mockRejectedValue(new Error('Failed to create message'));
+
+            const errorPromise = new Promise<void>((resolve) => {
+                clientSocket.once('chat-error', (error) => {
+                    expect(error).toEqual({
+                        message: 'An unexpected error occurred',
+                        code: undefined
+                    });
+                    expect(mocks.chatNotificationService.sendChatMessagesUpdatedNotification).not.toHaveBeenCalled();
+                    resolve();
+                });
+            });
+
+            clientSocket.emit('sendChatMessage', { chatId, message });
+
+            await Promise.race([
+                errorPromise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout waiting for chat-error')), 1000))
+            ]);
         });
     });
 });

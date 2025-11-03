@@ -14,35 +14,21 @@ import {
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { X } from 'lucide-react';
-import { MatchmakingColor } from '@/lib/models/request/matchmaking';
-import { getColorString } from '@/lib/utils/color.utils';
 
 interface DeclineDrawButtonProps {
     gameId: string;
-    color: MatchmakingColor;
-    onError?: (error: Error) => void;
-    onClickMessage?: (message: string) => void;
 }
 
-function DeclineDrawButton({ gameId, color, onError, onClickMessage }: DeclineDrawButtonProps) {
+function DeclineDrawButton({ gameId }: DeclineDrawButtonProps) {
     const { socket } = useCoreSocket();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const handleDeclineDraw = async () => {
         if (!socket) {
-            const error = new Error('Socket connection error');
-            onError?.(error);
             return;
         }
-        try {
-            await respondDrawOffer(socket, gameId, false);
-            onClickMessage?.(`${getColorString(color)} declined the draw offer`);
-            setIsDialogOpen(false);
-        } catch (error) {
-            if (error instanceof Error) {
-                onError?.(error);
-            }
-        }
+        await respondDrawOffer(socket, gameId, false);
+        setIsDialogOpen(false);
     };
 
     return (

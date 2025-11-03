@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/hooks/auth/useAuth';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/sidebar/app-sidebar';
+import { Toaster } from 'sonner';
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -37,6 +38,7 @@ export default function RootLayout({
                                 <SidebarTrigger />
                                 {children}
                             </div>
+                            <Toaster position="top-right" expand={false} richColors closeButton />
                         </ThemeProvider>
                     </AuthProvider>
                 </SidebarProvider>

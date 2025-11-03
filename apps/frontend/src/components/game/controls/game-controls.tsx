@@ -12,49 +12,28 @@ interface GameControlsProps {
     color: MatchmakingColor;
     drawOffer: DrawOffer | undefined;
     gameStarted: boolean;
-    onError?: (error: Error) => void;
-    onClickMessage?: (message: string) => void;
 }
 
 function getMatchmakingColor(color: Color): MatchmakingColor {
     return color === Color.BLACK ? MatchmakingColor.BLACK : MatchmakingColor.WHITE;
 }
 
-function GameControls({ gameId, color, drawOffer, gameStarted, onError, onClickMessage }: GameControlsProps) {
+function GameControls({ gameId, color, drawOffer, gameStarted }: GameControlsProps) {
     return (
         <TooltipProvider delayDuration={0}>
             <div className="flex flex-row gap-2 p-2 rounded-lg border bg-background shadow-md" data-cy="game-controls">
                 {drawOffer && getMatchmakingColor(drawOffer.offeredBy) !== color ? (
                     <>
-                        <AcceptDrawButton
-                            gameId={gameId}
-                            color={color}
-                            onError={onError}
-                            onClickMessage={onClickMessage}
-                        />
-                        <DeclineDrawButton
-                            gameId={gameId}
-                            color={color}
-                            onError={onError}
-                            onClickMessage={onClickMessage}
-                        />
+                        <AcceptDrawButton gameId={gameId} />
+                        <DeclineDrawButton gameId={gameId} />
                     </>
                 ) : (
                     <>
-                        <ResignButton
-                            gameId={gameId}
-                            color={color}
-                            gameStarted={gameStarted}
-                            onError={onError}
-                            onClickMessage={onClickMessage}
-                        />
+                        <ResignButton gameId={gameId} gameStarted={gameStarted} />
                         <DrawButton
                             gameId={gameId}
-                            color={color}
                             gameStarted={gameStarted}
                             disabled={!!(drawOffer && getMatchmakingColor(drawOffer.offeredBy) === color)}
-                            onError={onError}
-                            onClickMessage={onClickMessage}
                         />
                     </>
                 )}

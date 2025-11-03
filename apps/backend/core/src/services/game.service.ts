@@ -29,6 +29,8 @@ import ConflictError from 'chess-game-backend-common/errors/conflict.error';
 import RatingService from './rating.service';
 import ChatService from './chat.service';
 import { DEFAULT_START_TIMEOUT_IN_MINUTES } from '../config/constants';
+import InvalidMoveError from '../errors/invalid.move.error';
+import NotPlayersTurnError from '../errors/not.players.turn.error';
 
 @injectable()
 class GameService {
@@ -141,10 +143,15 @@ class GameService {
         if (!currentPlayer) throw new ForbiddenError(`User ${userId} is not part of game ${gameId}`);
         const userColor = currentPlayer.color;
 
-        if (game.turn() !== userColor) throw new ForbiddenError(`It is not ${userColor}'s turn`);
+        if (game.turn() !== userColor) throw new NotPlayersTurnError(`It is not ${userColor}'s turn`);
 
         const upcomingMoveNumber = game.moveNumber();
-        const move = game.move({ from: from, to: to, promotion: promotionPiece });
+        let move;
+        try {
+            move = game.move({ from: from, to: to, promotion: promotionPiece });
+        } catch {
+            throw new InvalidMoveError('Invalid move');
+        }
         this.refreshPlayerTimes(gameState, currentPlayer, requestTimestamp);
         gameState.lastMoveEpoch = requestTimestamp;
         await this.gameStateRepository.save(

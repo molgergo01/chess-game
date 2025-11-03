@@ -3,6 +3,9 @@ import { joinChat, leaveChat } from '@/lib/clients/core.socket.client';
 import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
 import { getChatMessages } from '@/lib/clients/core.rest.client';
 import { ChatMessage, ChatMessagesUpdatedMessage } from '@/lib/models/chat/chat';
+import { toast } from 'sonner';
+import { SocketErrorPayload } from '@/lib/models/errors/socket-error';
+import { getUserFriendlyErrorMessage } from '@/lib/utils/error-message.utils';
 
 function useChat(chatId: string | undefined) {
     const { socket } = useCoreSocket();
@@ -14,10 +17,17 @@ function useChat(chatId: string | undefined) {
             setMessages(request.chatMessages);
         };
 
+        const handleChatError = (error: SocketErrorPayload) => {
+            const friendlyMessage = getUserFriendlyErrorMessage(error.message, error.code, 'chat');
+            toast.error(friendlyMessage);
+        };
+
         socket.on('chat-messages-updated', handleChatMessagesUpdated);
+        socket.on('chat-error', handleChatError);
 
         return () => {
             socket.off('chat-messages-updated', handleChatMessagesUpdated);
+            socket.off('chat-error', handleChatError);
         };
     }, [socket]);
 
@@ -29,6 +39,7 @@ function useChat(chatId: string | undefined) {
                 const messagesResponse = await getChatMessages(chatId);
                 setMessages(messagesResponse);
             } catch (error) {
+                toast.error('Failed to load chat messages');
                 console.error('Failed to fetch chat messages:', error);
                 setMessages([]);
             }

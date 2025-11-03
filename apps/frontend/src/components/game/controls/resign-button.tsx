@@ -14,23 +14,17 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
 import { resign } from '@/lib/clients/core.socket.client';
 import { Flag, LogOut } from 'lucide-react';
-import { MatchmakingColor } from '@/lib/models/request/matchmaking';
-import { getColorString } from '@/lib/utils/color.utils';
 
 interface ResignButtonProps {
     gameId: string;
-    color: MatchmakingColor;
     gameStarted?: boolean;
-    onError?: (error: Error) => void;
-    onClickMessage?: (message: string) => void;
 }
 
-function ResignButton({ gameId, color, gameStarted = true, onError, onClickMessage }: ResignButtonProps) {
+function ResignButton({ gameId, gameStarted = true }: ResignButtonProps) {
     const { socket } = useCoreSocket();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const isAbandoning = !gameStarted;
-    const actionText = isAbandoning ? 'abandoned' : 'resigned';
     const dialogTitle = isAbandoning ? 'Abandon Game' : 'Resign Game';
     const dialogDescription = isAbandoning
         ? 'Are you sure you want to abandon the game?'
@@ -40,19 +34,10 @@ function ResignButton({ gameId, color, gameStarted = true, onError, onClickMessa
 
     const handleResign = async () => {
         if (!socket) {
-            const error = new Error('Socket connection error');
-            onError?.(error);
             return;
         }
-        try {
-            await resign(socket, gameId);
-            onClickMessage?.(`${getColorString(color)} ${actionText}`);
-            setIsDialogOpen(false);
-        } catch (error) {
-            if (error instanceof Error) {
-                onError?.(error);
-            }
-        }
+        await resign(socket, gameId);
+        setIsDialogOpen(false);
     };
 
     return (

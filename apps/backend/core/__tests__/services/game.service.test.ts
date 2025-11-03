@@ -15,6 +15,7 @@ import MovesRepository from '../../src/repositories/moves.repository';
 import ConflictError from 'chess-game-backend-common/errors/conflict.error';
 import RatingService from '../../src/services/rating.service';
 import ChatService from '../../src/services/chat.service';
+import NotPlayersTurnError from '../../src/errors/not.players.turn.error';
 
 const mockGame = {
     fen: jest.fn(),
@@ -388,7 +389,9 @@ describe('Game Service', () => {
             mockGameStateRepository.get.mockResolvedValue(storedGameState);
             mockGame.turn.mockReturnValue(Color.BLACK);
 
-            await expect(gameService.move(player1.id, '0000', 'e2', 'e3', 'wQ', NOW)).rejects.toThrow(ForbiddenError);
+            await expect(gameService.move(player1.id, '0000', 'e2', 'e3', 'wQ', NOW)).rejects.toThrow(
+                NotPlayersTurnError
+            );
         });
 
         it('should throw error if game not found', async () => {

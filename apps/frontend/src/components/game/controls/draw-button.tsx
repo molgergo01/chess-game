@@ -14,19 +14,14 @@ import {
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Handshake } from 'lucide-react';
-import { MatchmakingColor } from '@/lib/models/request/matchmaking';
-import { getColorString } from '@/lib/utils/color.utils';
 
 interface DrawButtonProps {
     gameId: string;
-    color: MatchmakingColor;
     disabled: boolean;
     gameStarted?: boolean;
-    onError?: (error: Error) => void;
-    onClickMessage?: (message: string) => void;
 }
 
-function DrawButton({ gameId, color, disabled, gameStarted = true, onError, onClickMessage }: DrawButtonProps) {
+function DrawButton({ gameId, disabled, gameStarted = true }: DrawButtonProps) {
     const { socket } = useCoreSocket();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -35,19 +30,10 @@ function DrawButton({ gameId, color, disabled, gameStarted = true, onError, onCl
 
     const handleOfferDraw = async () => {
         if (!socket) {
-            const error = new Error('Socket connection error');
-            onError?.(error);
             return;
         }
-        try {
-            await offerDraw(socket, gameId);
-            onClickMessage?.(`${getColorString(color)} offered a draw`);
-            setIsDialogOpen(false);
-        } catch (error) {
-            if (error instanceof Error) {
-                onError?.(error);
-            }
-        }
+        await offerDraw(socket, gameId);
+        setIsDialogOpen(false);
     };
 
     return (
