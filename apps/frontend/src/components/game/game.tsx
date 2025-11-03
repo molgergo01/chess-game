@@ -23,6 +23,7 @@ import GameControls from '@/components/game/controls/game-controls';
 import useChat from '@/hooks/chat/useChat';
 import { sendChatMessage } from '@/lib/clients/core.socket.client';
 import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
+import ErrorAlert from '@/components/ui/error-alert';
 
 function Game({ className, ...props }: React.ComponentProps<'div'>) {
     const router = useRouter();
@@ -39,7 +40,9 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
         ratingChange,
         gameId,
         drawOffer,
-        timeUntilAbandoned
+        timeUntilAbandoned,
+        criticalError,
+        clearCriticalError
     } = useChessGame();
     const { messages } = useChat(gameId);
     const { socket } = useCoreSocket();
@@ -118,6 +121,16 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
             <Timer ref={whiteTimerRef} defaultTime={timesRemaining.whiteTimeRemaining} onTick={handleWhiteTimerTick} />
             <Timer ref={blackTimerRef} defaultTime={timesRemaining.blackTimeRemaining} onTick={handleBlackTimerTick} />
 
+            {criticalError && (
+                <ErrorAlert
+                    title="Game Error"
+                    message={criticalError}
+                    className="mx-4 mt-4"
+                    onClick={clearCriticalError}
+                    data-cy="critical-error-alert"
+                />
+            )}
+
             <div className="flex flex-col flex-1 min-h-0 overflow-y-auto sm:overflow-visible sm:items-center sm:justify-center sm:p-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full h-full min-h-0 sm:w-auto sm:h-auto sm:max-h-[min(700px,calc(100vh-7rem))] lg:max-h-[min(850px,calc(100vh-7rem))] aspect-square sm:gap-2">
                     <div className="flex flex-col sm:gap-1 flex-shrink-0">
@@ -151,8 +164,6 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                                 color={color}
                                 drawOffer={drawOffer}
                                 gameStarted={gameStarted}
-                                onError={() => {}}
-                                onClickMessage={() => {}}
                             />
                         </div>
                     </div>

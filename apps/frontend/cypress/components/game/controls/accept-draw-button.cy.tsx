@@ -68,32 +68,8 @@ describe('<AcceptDrawButton />', () => {
     });
 
     describe('Action Execution', () => {
-        it('calls onClickMessage with correct message when confirmed', () => {
-            const onClickMessage = cy.stub().as('onClickMessage');
-            cy.mount(withAllProviders(<AcceptDrawButton {...defaultProps} onClickMessage={onClickMessage} />));
-            cy.getDataCy('game-control-button-accept-draw').click();
-            cy.getDataCy('accept-draw-confirm-button').click();
-            cy.get('@onClickMessage').should('have.been.calledWith', 'white accepted the draw');
-        });
-
-        it('calls onClickMessage with correct message for black player', () => {
-            const onClickMessage = cy.stub().as('onClickMessage');
-            cy.mount(
-                withAllProviders(
-                    <AcceptDrawButton
-                        {...defaultProps}
-                        color={MatchmakingColor.BLACK}
-                        onClickMessage={onClickMessage}
-                    />
-                )
-            );
-            cy.getDataCy('game-control-button-accept-draw').click();
-            cy.getDataCy('accept-draw-confirm-button').click();
-            cy.get('@onClickMessage').should('have.been.calledWith', 'black accepted the draw');
-        });
-
         it('closes the dialog after confirmation', () => {
-            cy.mount(withAllProviders(<AcceptDrawButton {...defaultProps} onClickMessage={cy.stub()} />));
+            cy.mount(withAllProviders(<AcceptDrawButton {...defaultProps} />));
             cy.getDataCy('game-control-button-accept-draw').click();
             cy.getDataCy('accept-draw-confirm-button').click();
             cy.getDataCy('accept-draw-confirmation-dialog').should('not.exist');

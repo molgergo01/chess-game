@@ -100,38 +100,8 @@ describe('<ResignButton />', () => {
     });
 
     describe('Action Execution', () => {
-        it('calls onClickMessage with "resigned" message when game started', () => {
-            const onClickMessage = cy.stub().as('onClickMessage');
-            cy.mount(withAllProviders(<ResignButton {...defaultProps} onClickMessage={onClickMessage} />));
-            cy.getDataCy('game-control-button-resign').click();
-            cy.getDataCy('resign-confirm-button').click();
-            cy.get('@onClickMessage').should('have.been.calledWith', 'white resigned');
-        });
-
-        it('calls onClickMessage with "abandoned" message when game not started', () => {
-            const onClickMessage = cy.stub().as('onClickMessage');
-            cy.mount(
-                withAllProviders(<ResignButton {...defaultProps} gameStarted={false} onClickMessage={onClickMessage} />)
-            );
-            cy.getDataCy('game-control-button-resign').click();
-            cy.getDataCy('resign-confirm-button').click();
-            cy.get('@onClickMessage').should('have.been.calledWith', 'white abandoned');
-        });
-
-        it('calls onClickMessage with correct message for black player', () => {
-            const onClickMessage = cy.stub().as('onClickMessage');
-            cy.mount(
-                withAllProviders(
-                    <ResignButton {...defaultProps} color={MatchmakingColor.BLACK} onClickMessage={onClickMessage} />
-                )
-            );
-            cy.getDataCy('game-control-button-resign').click();
-            cy.getDataCy('resign-confirm-button').click();
-            cy.get('@onClickMessage').should('have.been.calledWith', 'black resigned');
-        });
-
         it('closes the dialog after confirmation', () => {
-            cy.mount(withAllProviders(<ResignButton {...defaultProps} onClickMessage={cy.stub()} />));
+            cy.mount(withAllProviders(<ResignButton {...defaultProps} />));
             cy.getDataCy('game-control-button-resign').click();
             cy.getDataCy('resign-confirm-button').click();
             cy.getDataCy('resign-confirmation-dialog').should('not.exist');

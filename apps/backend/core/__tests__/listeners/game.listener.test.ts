@@ -114,6 +114,30 @@ describe('Game Listener', () => {
             const serverSocket = Array.from(io.sockets.sockets.values())[0];
             expect(serverSocket.rooms.has(gameId)).toBe(true);
         });
+
+        it('should emit game-error event when socket.join throws error', (done) => {
+            const errorMessage = 'Failed to join room';
+
+            clientSocket.on('game-error', (error) => {
+                expect(error).toEqual({
+                    message: 'An unexpected error occurred',
+                    code: undefined
+                });
+                done();
+            });
+
+            const serverSocket = Array.from(io.sockets.sockets.values())[0];
+            const originalJoin = serverSocket.join.bind(serverSocket);
+            serverSocket.join = jest.fn(() => {
+                throw new Error(errorMessage);
+            });
+
+            clientSocket.emit('joinGame', { gameId });
+
+            setTimeout(() => {
+                serverSocket.join = originalJoin;
+            }, 150);
+        });
     });
 
     describe('movePiece', () => {
@@ -254,6 +278,21 @@ describe('Game Listener', () => {
                 ratingChange
             );
         });
+
+        it('should emit game-error event when resign fails', (done) => {
+            mocks.gameService.getPlayerColor.mockRejectedValue(new Error('Player not found'));
+
+            clientSocket.on('game-error', (error) => {
+                expect(error).toEqual({
+                    message: 'An unexpected error occurred',
+                    code: undefined
+                });
+                expect(mocks.gameNotificationService.sendGameOverNotification).not.toHaveBeenCalled();
+                done();
+            });
+
+            clientSocket.emit('resign', { gameId });
+        });
     });
 
     describe('offerDraw', () => {
@@ -286,6 +325,21 @@ describe('Game Listener', () => {
                 drawOffer.offeredBy,
                 drawOffer.expiresAt
             );
+        });
+
+        it('should emit game-error event when offerDraw fails', (done) => {
+            mocks.gameService.getPlayerColor.mockRejectedValue(new Error('Draw offer failed'));
+
+            clientSocket.on('game-error', (error) => {
+                expect(error).toEqual({
+                    message: 'An unexpected error occurred',
+                    code: undefined
+                });
+                expect(mocks.gameNotificationService.sendDrawOfferedNotification).not.toHaveBeenCalled();
+                done();
+            });
+
+            clientSocket.emit('offerDraw', { gameId });
         });
     });
 
@@ -355,6 +409,22 @@ describe('Game Listener', () => {
             expect(mocks.gameService.respondDrawOffer).toHaveBeenCalledWith(gameId, userId, false);
             expect(mocks.gameNotificationService.sendDrawOfferRejectedNotification).toHaveBeenCalledWith(gameId);
             expect(mocks.gameNotificationService.sendGameOverNotification).not.toHaveBeenCalled();
+        });
+
+        it('should emit game-error event when respondDrawOffer fails', (done) => {
+            mocks.gameService.getPlayerColor.mockRejectedValue(new Error('Respond draw offer failed'));
+
+            clientSocket.on('game-error', (error) => {
+                expect(error).toEqual({
+                    message: 'An unexpected error occurred',
+                    code: undefined
+                });
+                expect(mocks.gameNotificationService.sendGameOverNotification).not.toHaveBeenCalled();
+                expect(mocks.gameNotificationService.sendDrawOfferRejectedNotification).not.toHaveBeenCalled();
+                done();
+            });
+
+            clientSocket.emit('respondDrawOffer', { gameId, accepted: true });
         });
     });
 });

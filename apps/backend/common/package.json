@@ -19,7 +19,8 @@
         "./errors/unauthorized.error": "./dist/errors/unauthorized.error.js",
         "./middlewares/error.handler": "./dist/middlewares/error.handler.js",
         "./models/user": "./dist/models/user.js",
-        "./types/authenticated.request": "./dist/types/authenticated.request.js"
+        "./types/authenticated.request": "./dist/types/authenticated.request.js",
+        "./utils/socket-error.handler": "./dist/utils/socket-error.handler.js"
     },
     "private": true,
     "scripts": {

@@ -16,11 +16,18 @@ class GameNotificationService {
     }
 
     sendGameOverNotification(gameId: string, winner: Winner, ratingChange: RatingChange) {
-        const message: GameOverNotification = {
-            winner: winner,
-            ratingChange: ratingChange
-        };
-        this.io.to(gameId).emit('game-over', message);
+        try {
+            const message: GameOverNotification = {
+                winner: winner,
+                ratingChange: ratingChange
+            };
+            this.io.to(gameId).emit('game-over', message);
+        } catch (error) {
+            console.error(
+                `[sendGameOverNotification] Failed to emit game-over notification (gameId=${gameId}):`,
+                (error as Error).message
+            );
+        }
     }
 
     sendPositionUpdateNotification(
@@ -31,27 +38,48 @@ class GameNotificationService {
         playerTimes: PlayerTimes,
         ratingChange: RatingChange | null
     ) {
-        const message: PositionUpdateNotification = {
-            position: fen,
-            isGameOver: isGameOver,
-            winner: winner,
-            playerTimes: playerTimes,
-            ratingChange: ratingChange
-        };
-        this.io.to(gameId).emit('update-position', message);
+        try {
+            const message: PositionUpdateNotification = {
+                position: fen,
+                isGameOver: isGameOver,
+                winner: winner,
+                playerTimes: playerTimes,
+                ratingChange: ratingChange
+            };
+            this.io.to(gameId).emit('update-position', message);
+        } catch (error) {
+            console.error(
+                `[sendPositionUpdateNotification] Failed to emit update-position notification (gameId=${gameId}):`,
+                (error as Error).message
+            );
+        }
     }
 
     sendDrawOfferedNotification(gameId: string, offeredBy: Color, expiresAt: Date) {
-        const message: DrawOfferedNotification = {
-            offeredBy: offeredBy,
-            expiresAt: expiresAt
-        };
+        try {
+            const message: DrawOfferedNotification = {
+                offeredBy: offeredBy,
+                expiresAt: expiresAt
+            };
 
-        this.io.to(gameId).emit('draw-offered', message);
+            this.io.to(gameId).emit('draw-offered', message);
+        } catch (error) {
+            console.error(
+                `[sendDrawOfferedNotification] Failed to emit draw-offered notification (gameId=${gameId}):`,
+                (error as Error).message
+            );
+        }
     }
 
     sendDrawOfferRejectedNotification(gameId: string) {
-        this.io.to(gameId).emit('draw-offer-rejected', gameId);
+        try {
+            this.io.to(gameId).emit('draw-offer-rejected', gameId);
+        } catch (error) {
+            console.error(
+                `[sendDrawOfferRejectedNotification] Failed to emit draw-offer-rejected notification (gameId=${gameId}):`,
+                (error as Error).message
+            );
+        }
     }
 }
 

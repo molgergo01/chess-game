@@ -14,35 +14,21 @@ import {
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Check } from 'lucide-react';
-import { MatchmakingColor } from '@/lib/models/request/matchmaking';
-import { getColorString } from '@/lib/utils/color.utils';
 
 interface AcceptDrawButtonProps {
     gameId: string;
-    color: MatchmakingColor;
-    onError?: (error: Error) => void;
-    onClickMessage?: (message: string) => void;
 }
 
-function AcceptDrawButton({ gameId, color, onError, onClickMessage }: AcceptDrawButtonProps) {
+function AcceptDrawButton({ gameId }: AcceptDrawButtonProps) {
     const { socket } = useCoreSocket();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const handleAcceptDraw = async () => {
         if (!socket) {
-            const error = new Error('Socket connection error');
-            onError?.(error);
             return;
         }
-        try {
-            await respondDrawOffer(socket, gameId, true);
-            onClickMessage?.(`${getColorString(color)} accepted the draw`);
-            setIsDialogOpen(false);
-        } catch (error) {
-            if (error instanceof Error) {
-                onError?.(error);
-            }
-        }
+        await respondDrawOffer(socket, gameId, true);
+        setIsDialogOpen(false);
     };
 
     return (

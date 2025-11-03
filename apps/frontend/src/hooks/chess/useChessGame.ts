@@ -18,6 +18,9 @@ import { MatchmakingColor } from '@/lib/models/request/matchmaking';
 import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { getActiveGame } from '@/lib/clients/core.rest.client';
+import { toast } from 'sonner';
+import { SocketErrorPayload, getErrorSeverity } from '@/lib/models/errors/socket-error';
+import { getUserFriendlyErrorMessage } from '@/lib/utils/error-message.utils';
 
 function useChessGame() {
     const router = useRouter();
@@ -33,6 +36,7 @@ function useChessGame() {
     const [ratingChange, setRatingChange] = useState<RatingChange | null>(null);
     const [drawOffer, setDrawOffer] = useState<DrawOffer | undefined>(undefined);
     const [timeUntilAbandoned, setTimeUntilAbandoned] = useState<number | null>(null);
+    const [criticalError, setCriticalError] = useState<string | null>(null);
     const { socket } = useCoreSocket();
     const { userId } = useAuth();
 
@@ -66,16 +70,29 @@ function useChessGame() {
             setDrawOffer(undefined);
         };
 
+        const handleGameError = (error: SocketErrorPayload) => {
+            const friendlyMessage = getUserFriendlyErrorMessage(error.message, error.code, 'game');
+            const severity = getErrorSeverity(error.code);
+
+            if (severity === 'alert') {
+                setCriticalError(friendlyMessage);
+            } else {
+                toast.error(friendlyMessage);
+            }
+        };
+
         socket.on('update-position', handleUpdatePosition);
         socket.on('game-over', handleGameOver);
         socket.on('draw-offered', handleDrawOffered);
         socket.on('draw-offer-rejected', handleDrawOfferRejected);
+        socket.on('game-error', handleGameError);
 
         return () => {
             socket.off('update-position', handleUpdatePosition);
             socket.off('game-over', handleGameOver);
             socket.off('draw-offered', handleDrawOffered);
             socket.off('draw-offer-rejected', handleDrawOfferRejected);
+            socket.off('game-error', handleGameError);
         };
     }, [socket]);
 
@@ -104,8 +121,10 @@ function useChessGame() {
                 }
             } catch (error) {
                 if (error instanceof Error && 'status' in error && error.status === 404) {
+                    toast.error('Game not found');
                     router.push('/play');
                 } else {
+                    toast.error('Failed to load game');
                     console.error('Failed to fetch game data:', error);
                     router.push('/play');
                 }
@@ -181,7 +200,9 @@ function useChessGame() {
         ratingChange,
         gameId,
         drawOffer,
-        timeUntilAbandoned
+        timeUntilAbandoned,
+        criticalError,
+        clearCriticalError: () => setCriticalError(null)
     };
 }
 

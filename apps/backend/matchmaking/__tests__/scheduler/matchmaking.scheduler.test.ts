@@ -61,4 +61,43 @@ describe('Matchmaking Scheduler', () => {
             expect(mockCronJob.start).toHaveBeenCalled();
         });
     });
+
+    describe('Error Handling', () => {
+        it('should log error and reset failure count on subsequent success', async () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+            const cronConfig = (CronJob.from as jest.Mock).mock.calls[0][0];
+            const onTickFunction = cronConfig.onTick;
+
+            mockMatchmakingService.matchMake.mockRejectedValueOnce(new Error('Matchmaking failed'));
+
+            await onTickFunction();
+
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Matchmaking scheduler failed (1/10):', expect.any(Error));
+
+            mockMatchmakingService.matchMake.mockResolvedValueOnce(undefined);
+            await onTickFunction();
+
+            expect(mockMatchmakingService.matchMake).toHaveBeenCalledTimes(2);
+
+            consoleErrorSpy.mockRestore();
+        });
+
+        it('should stop cron job after 10 consecutive failures', async () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+            mockCronJob.stop = jest.fn();
+            const cronConfig = (CronJob.from as jest.Mock).mock.calls[0][0];
+            const onTickFunction = cronConfig.onTick;
+
+            mockMatchmakingService.matchMake.mockRejectedValue(new Error('Matchmaking failed'));
+
+            for (let i = 0; i < 10; i++) {
+                await onTickFunction();
+            }
+
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Matchmaking scheduler exceeded max failures, stopping...');
+            expect(mockCronJob.stop).toHaveBeenCalled();
+
+            consoleErrorSpy.mockRestore();
+        });
+    });
 });

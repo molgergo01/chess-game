@@ -69,32 +69,8 @@ describe('<DeclineDrawButton />', () => {
     });
 
     describe('Action Execution', () => {
-        it('calls onClickMessage with correct message when confirmed', () => {
-            const onClickMessage = cy.stub().as('onClickMessage');
-            cy.mount(withAllProviders(<DeclineDrawButton {...defaultProps} onClickMessage={onClickMessage} />));
-            cy.getDataCy('game-control-button-decline-draw').click();
-            cy.getDataCy('decline-draw-confirm-button').click();
-            cy.get('@onClickMessage').should('have.been.calledWith', 'white declined the draw offer');
-        });
-
-        it('calls onClickMessage with correct message for black player', () => {
-            const onClickMessage = cy.stub().as('onClickMessage');
-            cy.mount(
-                withAllProviders(
-                    <DeclineDrawButton
-                        {...defaultProps}
-                        color={MatchmakingColor.BLACK}
-                        onClickMessage={onClickMessage}
-                    />
-                )
-            );
-            cy.getDataCy('game-control-button-decline-draw').click();
-            cy.getDataCy('decline-draw-confirm-button').click();
-            cy.get('@onClickMessage').should('have.been.calledWith', 'black declined the draw offer');
-        });
-
         it('closes the dialog after confirmation', () => {
-            cy.mount(withAllProviders(<DeclineDrawButton {...defaultProps} onClickMessage={cy.stub()} />));
+            cy.mount(withAllProviders(<DeclineDrawButton {...defaultProps} />));
             cy.getDataCy('game-control-button-decline-draw').click();
             cy.getDataCy('decline-draw-confirm-button').click();
             cy.getDataCy('decline-draw-confirmation-dialog').should('not.exist');

@@ -36,7 +36,11 @@ class TimerWatcher {
         }
 
         for (const gameStateKey of gameStateKeys) {
-            await this.checkGameTimers(gameStateKey);
+            try {
+                await this.checkGameTimers(gameStateKey);
+            } catch (error) {
+                console.error(`timer checking failed for game state ${gameStateKey}`, error);
+            }
         }
     }
 

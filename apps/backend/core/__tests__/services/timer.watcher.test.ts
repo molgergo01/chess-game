@@ -227,5 +227,133 @@ describe('Timer Watcher', () => {
             expect(mockGameService.reset).not.toHaveBeenCalled();
             expect(mockGameNotificationService.sendGameOverNotification).not.toHaveBeenCalled();
         });
+
+        it('should log error and continue when getGameState fails', async () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+            const gameId = '1234';
+            const gameStateKey = 'game-state:' + gameId;
+            mockGameStateRepository.getKeys.mockResolvedValueOnce([gameStateKey]);
+            mockGameStateRepository.getKeys.mockResolvedValueOnce([]);
+
+            mockGameService.getGameState.mockRejectedValue(new Error('Failed to get game state'));
+
+            timerWatcher.start();
+            await jest.runAllTimersAsync();
+
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                `timer checking failed for game state ${gameStateKey}`,
+                expect.any(Error)
+            );
+            expect(mockGameService.reset).not.toHaveBeenCalled();
+            expect(mockGameNotificationService.sendGameOverNotification).not.toHaveBeenCalled();
+
+            consoleErrorSpy.mockRestore();
+        });
+
+        it('should log error and continue when reset fails', async () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+            const gameId = '1234';
+            const gameStateKey = 'game-state:' + gameId;
+            mockGameStateRepository.getKeys.mockResolvedValueOnce([gameStateKey]);
+            mockGameStateRepository.getKeys.mockResolvedValueOnce([]);
+
+            const player1: Player = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: new Timer(50)
+            };
+
+            const player2: Player = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: new Timer(50000)
+            };
+
+            const mockGame = new Chess() as jest.Mocked<Chess>;
+            mockGame.turn = jest.fn();
+            const gameState: GameState = {
+                game: mockGame,
+                players: [player1, player2],
+                lastMoveEpoch: NOW - 100,
+                startedAt: NOW - 200,
+                drawOffer: undefined
+            };
+
+            mockGameService.getGameState.mockResolvedValue(gameState);
+            mockGame.turn.mockReturnValue(Color.WHITE);
+            mockGameService.reset.mockRejectedValue(new Error('Failed to reset game'));
+
+            timerWatcher.start();
+            await jest.runAllTimersAsync();
+
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                `timer checking failed for game state ${gameStateKey}`,
+                expect.any(Error)
+            );
+            expect(mockGameNotificationService.sendGameOverNotification).not.toHaveBeenCalled();
+
+            consoleErrorSpy.mockRestore();
+        });
+
+        it('should continue checking other games when one game fails', async () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+            const gameId1 = '1234';
+            const gameId2 = '5678';
+            const gameStateKey1 = 'game-state:' + gameId1;
+            const gameStateKey2 = 'game-state:' + gameId2;
+            mockGameStateRepository.getKeys.mockResolvedValueOnce([gameStateKey1, gameStateKey2]);
+            mockGameStateRepository.getKeys.mockResolvedValueOnce([]);
+
+            mockGameService.getGameState.mockRejectedValueOnce(new Error('Failed for game 1'));
+
+            const player1: Player = {
+                id: '1234',
+                color: Color.WHITE,
+                timer: new Timer(50)
+            };
+
+            const player2: Player = {
+                id: '5678',
+                color: Color.BLACK,
+                timer: new Timer(50000)
+            };
+
+            const mockGame = new Chess() as jest.Mocked<Chess>;
+            mockGame.turn = jest.fn();
+            const gameState: GameState = {
+                game: mockGame,
+                players: [player1, player2],
+                lastMoveEpoch: NOW - 100,
+                startedAt: NOW - 200,
+                drawOffer: undefined
+            };
+
+            mockGameService.getGameState.mockResolvedValueOnce(gameState);
+            mockGame.turn.mockReturnValue(Color.WHITE);
+
+            const ratingChange: RatingChange = {
+                whiteRatingChange: 0,
+                whiteNewRating: 400,
+                blackRatingChange: 0,
+                blackNewRating: 400
+            };
+            mockGameService.reset.mockResolvedValue(ratingChange);
+
+            timerWatcher.start();
+            await jest.runAllTimersAsync();
+
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                `timer checking failed for game state ${gameStateKey1}`,
+                expect.any(Error)
+            );
+            expect(mockGameService.reset).toHaveBeenCalledWith(gameId2);
+            expect(mockGameNotificationService.sendGameOverNotification).toHaveBeenCalledWith(
+                gameId2,
+                Winner.BLACK,
+                ratingChange
+            );
+
+            consoleErrorSpy.mockRestore();
+        });
     });
 });

@@ -15,10 +15,17 @@ class ChatNotificationService {
     }
 
     sendChatMessagesUpdatedNotification(chatId: string, messages: ChatMessage[]) {
-        const message: ChatMessagesUpdatedNotification = {
-            chatMessages: messages
-        };
-        this.io.to(chatId).emit('chat-messages-updated', message);
+        try {
+            const message: ChatMessagesUpdatedNotification = {
+                chatMessages: messages
+            };
+            this.io.to(chatId).emit('chat-messages-updated', message);
+        } catch (error) {
+            console.error(
+                `[sendChatMessagesUpdatedNotification] Failed to emit chat-messages-updated notification (chatId=${chatId}):`,
+                (error as Error).message
+            );
+        }
     }
 }
 
