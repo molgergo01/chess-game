@@ -4,15 +4,19 @@ import { JoinChatRoomRequest, LeaveChatRoomRequest, SendChatMessageRequest } fro
 import ChatService from '../services/chat.service';
 import ChatNotificationService from '../services/chat.notification.service';
 import { handleCoreSocketError } from '../middlewares/core.socket.error.handler';
+import { JoinChatRoomCallback } from '../models/callbacks';
 
 const chatService = container.get(ChatService);
 const chatNotificationService = container.get(ChatNotificationService);
 
 const chatListener = (io: Server, socket: Socket) => {
-    const joinChat = async function (request: JoinChatRoomRequest) {
+    const joinChat = async function (request: JoinChatRoomRequest, callback: JoinChatRoomCallback): Promise<void> {
         try {
             socket.join(request.chatId);
             await chatService.addParticipant(request.chatId, socket.data.user!.id);
+            callback({
+                success: true
+            });
         } catch (error) {
             handleCoreSocketError(
                 io,
@@ -25,6 +29,9 @@ const chatListener = (io: Server, socket: Socket) => {
                 },
                 'chat-error'
             );
+            callback({
+                success: false
+            });
         }
     };
 

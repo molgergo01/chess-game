@@ -8,7 +8,7 @@ import {
     SendChatMessageRequest
 } from '@/lib/models/request/game';
 import { Socket } from 'socket.io-client';
-import { JoinChatRequest, LeaveChatRequest } from '@/lib/models/chat/chat';
+import { JoinChatRequest, JoinChatRoomResponse, LeaveChatRequest } from '@/lib/models/chat/chat';
 
 export function joinGame(socket: Socket, gameId: string) {
     const requestBody: JoinGameRequest = {
@@ -59,7 +59,7 @@ export async function respondDrawOffer(socket: Socket, gameId: string, accepted:
     return socket.emit('respond-draw-offer', requestBody);
 }
 
-export async function joinChat(socket: Socket, chatId: string) {
+export async function joinChat(socket: Socket, chatId: string): Promise<JoinChatRoomResponse> {
     const requestBody: JoinChatRequest = {
         chatId: chatId
     };
