@@ -8,6 +8,7 @@ import MatchmakingNotificationService from './matchmaking.notification.service';
 import { v4 as uuidv4 } from 'uuid';
 import QueuedPlayerRepository from '../repositories/queuedPlayer.repository';
 import { matchPlayersByElo } from './helpers/matchmaking.elo.helper';
+import { RedisTransactional } from 'chess-game-backend-common/transaction/redis-transactional.decorator';
 
 @injectable()
 class MatchmakingService {
@@ -24,10 +25,12 @@ class MatchmakingService {
         private readonly matchmakingNotificationService: MatchmakingNotificationService
     ) {}
 
+    @RedisTransactional()
     async setSocketIdForUser(userId: string, socketId: string) {
         return this.socketIdRepository.setSocketIdForUser(userId, socketId);
     }
 
+    @RedisTransactional()
     async joinQueue(userId: string, elo: number) {
         if ((await this.queuedPlayerRepository.getQueueId(userId)) !== null) {
             throw new ConflictError(`User with id ${userId} is already in queue`);
@@ -40,6 +43,7 @@ class MatchmakingService {
         await this.queuedPlayerRepository.save(userId, queueTimeStamp, elo, null);
     }
 
+    @RedisTransactional()
     async createPrivateQueue(userId: string, elo: number): Promise<string> {
         if ((await this.queuedPlayerRepository.getQueueId(userId)) !== null) {
             throw new ConflictError(`User with id ${userId} is already in queue`);
@@ -56,6 +60,7 @@ class MatchmakingService {
         return queueId;
     }
 
+    @RedisTransactional()
     async joinPrivateQueue(userId: string, elo: number, queueId: string) {
         if ((await this.queuedPlayerRepository.getQueueId(userId)) !== null) {
             throw new ConflictError(`User with id ${userId} is already in queue`);
@@ -79,6 +84,7 @@ class MatchmakingService {
         }
     }
 
+    @RedisTransactional()
     async leaveQueue(userId: string, queueId: string | null) {
         if ((await this.queuedPlayerRepository.getQueueId(userId)) === null) {
             throw new NotFoundError(`User with id ${userId} is not in queue`);
@@ -98,6 +104,7 @@ class MatchmakingService {
         };
     }
 
+    @RedisTransactional()
     async matchMake(queueId: string | null) {
         const queueCount = await this.queueRepository.getQueueCount(queueId);
         if (queueCount < 2) return;

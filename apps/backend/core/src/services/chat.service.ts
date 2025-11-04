@@ -4,6 +4,8 @@ import MessageRepository from '../repositories/message.repository';
 import { v4 as uuidv4 } from 'uuid';
 import { ChatMessage } from '../models/chat';
 import ForbiddenError from 'chess-game-backend-common/errors/forbidden.error';
+import { Transactional } from 'chess-game-backend-common/transaction/transactional.decorator';
+import { RedisTransactional } from 'chess-game-backend-common/transaction/redis-transactional.decorator';
 
 @injectable()
 class ChatService {
@@ -14,14 +16,17 @@ class ChatService {
         private readonly messageRepository: MessageRepository
     ) {}
 
+    @RedisTransactional()
     async addParticipant(chatId: string, userId: string): Promise<void> {
         await this.chatRepository.addParticipant(chatId, userId);
     }
 
+    @RedisTransactional()
     async removeParticipant(chatId: string, userId: string): Promise<void> {
         await this.chatRepository.removeParticipant(chatId, userId);
     }
 
+    @RedisTransactional()
     async deleteChat(chatId: string): Promise<void> {
         const messageIds = await this.chatRepository.getChatMessageIds(chatId);
 
@@ -29,6 +34,7 @@ class ChatService {
         await this.chatRepository.removeChat(chatId);
     }
 
+    @RedisTransactional()
     async createChatMessage(chatId: string, userId: string, message: string) {
         if (!(await this.chatRepository.isParticipant(chatId, userId))) {
             throw new ForbiddenError('User is not a member of the chat');
@@ -41,6 +47,8 @@ class ChatService {
         await this.messageRepository.saveMessage(messageId, message, userId, timestamp);
     }
 
+    @Transactional()
+    @RedisTransactional()
     async createSystemChatMessage(chatId: string, message: string) {
         const timestamp = new Date();
         const messageId = uuidv4();

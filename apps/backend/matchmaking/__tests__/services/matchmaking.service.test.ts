@@ -65,11 +65,11 @@ describe('Matchmaking Service', () => {
     });
 
     describe('Set Socket Id For User', () => {
-        it('should call socketIdRepository.setSocketIdForUser with correct parameters', () => {
+        it('should call socketIdRepository.setSocketIdForUser with correct parameters', async () => {
             const userId = '1234';
             const socketId = 'socket-1234';
 
-            matchmakingService.setSocketIdForUser(userId, socketId);
+            await matchmakingService.setSocketIdForUser(userId, socketId);
 
             expect(mockSocketIdRepository.setSocketIdForUser).toHaveBeenCalledWith(userId, socketId);
         });

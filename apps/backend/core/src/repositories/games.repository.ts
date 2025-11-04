@@ -3,12 +3,14 @@ import { injectable } from 'inversify';
 import { Game, GameWithMoves, GameWithPlayers } from '../models/game';
 import { GameEntity, MoveEntity } from '../models/entities';
 import { User } from '../models/user';
+import { getDbConnection } from 'chess-game-backend-common/transaction/db-helper';
 
 @injectable()
 class GamesRepository {
     async findById(id: string): Promise<Game | null> {
+        const connection = getDbConnection(db);
         const sql = 'SELECT * FROM chess_game.games WHERE id = $1';
-        const result: Array<GameEntity> = await db.query(sql, [id]);
+        const result: Array<GameEntity> = await connection.query(sql, [id]);
         if (result.length == 0) {
             return null;
         }
@@ -24,6 +26,7 @@ class GamesRepository {
     }
 
     async existsActiveGameByUserIds(userIds: string[]): Promise<boolean> {
+        const connection = getDbConnection(db);
         const sql = `
             SELECT COUNT(1)
             FROM chess_game.games
@@ -35,12 +38,13 @@ class GamesRepository {
                 ended_at IS NULL
         `;
 
-        const result = await db.query(sql, [userIds[0], userIds[1]]);
+        const result = await connection.query(sql, [userIds[0], userIds[1]]);
 
         return Number(result[0].count) > 0;
     }
 
     async findActiveGameByUserId(userId: string): Promise<GameWithPlayers | null> {
+        const connection = getDbConnection(db);
         const sql = `
             SELECT g.*,
                    wU.id        as white_user_id,
@@ -74,7 +78,7 @@ class GamesRepository {
                 black_user_elo: number;
                 black_user_avatar_url: string | null;
             }
-        > = await db.query(sql, [userId]);
+        > = await connection.query(sql, [userId]);
 
         if (result.length === 0) {
             return null;
@@ -111,6 +115,7 @@ class GamesRepository {
         limit: number | undefined,
         offset: number | undefined
     ): Promise<Array<GameWithPlayers>> {
+        const connection = getDbConnection(db);
         let sql = `
             SELECT g.*,
                    wU.id    as white_user_id,
@@ -154,7 +159,7 @@ class GamesRepository {
                 black_user_elo: number;
                 black_user_avatar_url: string | null;
             }
-        > = await db.query(sql, params);
+        > = await connection.query(sql, params);
 
         return result.map((row) => {
             if (!row.ended_at || !row.winner) {
@@ -186,6 +191,7 @@ class GamesRepository {
     }
 
     async findByIdWithMoves(id: string): Promise<GameWithMoves | null> {
+        const connection = getDbConnection(db);
         const sql = `
             SELECT g.*,
                    wU.id        as white_user_id,
@@ -230,7 +236,7 @@ class GamesRepository {
                     black_user_elo: number;
                     black_user_avatar_url: string | null;
                 }
-        > = await db.query(sql, [id]);
+        > = await connection.query(sql, [id]);
 
         if (result.length === 0) {
             return null;
@@ -281,6 +287,7 @@ class GamesRepository {
     }
 
     async countAllByUserId(userId: string): Promise<number> {
+        const connection = getDbConnection(db);
         const sql = `
             SELECT COUNT(*)
             FROM chess_game.games
@@ -289,28 +296,30 @@ class GamesRepository {
                 ended_at IS NOT NULL
         `;
 
-        const result = await db.query(sql, [userId]);
+        const result = await connection.query(sql, [userId]);
         return Number(result[0].count);
     }
 
     async countAllNonDrawsByUserId(userId: string): Promise<number> {
+        const connection = getDbConnection(db);
         const sql = `
             SELECT COUNT(*)
             FROM chess_game.games
-            WHERE 
+            WHERE
                 (black_player_id = $1 OR white_player_id = $1) AND
                 ended_at IS NOT NULL AND
                 winner IS NOT NULL AND
                 winner != 'd'
         `;
 
-        const result = await db.query(sql, [userId]);
+        const result = await connection.query(sql, [userId]);
         return Number(result[0].count);
     }
 
     async save(game: Game) {
+        const connection = getDbConnection(db);
         const sql = 'INSERT INTO chess_game.games VALUES ($1, $2, $3, $4, $5, $6)';
-        await db.none(sql, [
+        await connection.none(sql, [
             game.id,
             game.whitePlayerId,
             game.blackPlayerId,
@@ -321,9 +330,10 @@ class GamesRepository {
     }
 
     async update(game: Game) {
+        const connection = getDbConnection(db);
         const sql = `
             UPDATE chess_game.games
-            SET 
+            SET
                 white_player_id = $2,
                 black_player_id = $3,
                 started_at = $4,
@@ -332,7 +342,7 @@ class GamesRepository {
             WHERE id = $1
         `;
 
-        await db.none(sql, [
+        await connection.none(sql, [
             game.id,
             game.whitePlayerId,
             game.blackPlayerId,
