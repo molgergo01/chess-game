@@ -59,11 +59,11 @@ export async function respondDrawOffer(socket: Socket, gameId: string, accepted:
     return socket.emit('respond-draw-offer', requestBody);
 }
 
-export function joinChat(socket: Socket, chatId: string) {
+export async function joinChat(socket: Socket, chatId: string) {
     const requestBody: JoinChatRequest = {
         chatId: chatId
     };
-    socket.emit('join-chat', requestBody);
+    return socket.emitWithAck('join-chat', requestBody);
 }
 
 export function leaveChat(socket: Socket, chatId: string) {
