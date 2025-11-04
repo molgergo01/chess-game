@@ -8,7 +8,10 @@ import MatchmakingNotificationService from './matchmaking.notification.service';
 import { v4 as uuidv4 } from 'uuid';
 import QueuedPlayerRepository from '../repositories/queuedPlayer.repository';
 import { matchPlayersByElo } from './helpers/matchmaking.elo.helper';
-import { RedisTransactional } from 'chess-game-backend-common/transaction/redis-transactional.decorator';
+import {
+    RedisTransactional,
+    TransactionPropagation
+} from 'chess-game-backend-common/transaction/redis-transactional.decorator';
 
 @injectable()
 class MatchmakingService {
@@ -104,7 +107,7 @@ class MatchmakingService {
         };
     }
 
-    @RedisTransactional()
+    @RedisTransactional({ propagation: TransactionPropagation.REQUIRES_NEW })
     async matchMake(queueId: string | null) {
         const queueCount = await this.queueRepository.getQueueCount(queueId);
         if (queueCount < 2) return;

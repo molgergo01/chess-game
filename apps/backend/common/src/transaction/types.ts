@@ -11,6 +11,7 @@ export interface TransactionContext {
 
 export interface RedisTransactionContext {
     multi: RedisMulti;
+    afterCommitCallbacks?: Array<() => Promise<void>>;
 }
 
 export interface TransactionalOptions {

@@ -3,6 +3,12 @@ jest.mock('chess-game-backend-common/transaction/redis-transactional.decorator',
         return function (target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
             return descriptor;
         };
+    },
+
+    TransactionPropagation: {
+        REQUIRED: 'REQUIRED',
+        REQUIRES_NEW: 'REQUIRES_NEW',
+        AFTER_COMMIT: 'AFTER_COMMIT'
     }
 }));
 

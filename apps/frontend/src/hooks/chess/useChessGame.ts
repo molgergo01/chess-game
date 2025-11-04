@@ -19,7 +19,7 @@ import { useCoreSocket } from '@/hooks/chess/useCoreSocket';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { getActiveGame } from '@/lib/clients/core.rest.client';
 import { toast } from 'sonner';
-import { SocketErrorPayload, getErrorSeverity } from '@/lib/models/errors/socket-error';
+import { getErrorSeverity, SocketErrorPayload } from '@/lib/models/errors/socket-error';
 import { getUserFriendlyErrorMessage } from '@/lib/utils/error-message.utils';
 
 function useChessGame() {
