@@ -52,11 +52,6 @@ function History() {
             try {
                 const historyResponse = await getGameHistory(entriesPerPage, entriesPerPage * (pageNumber - 1));
                 setHistory(historyResponse);
-                if (entriesPerPage === 0 || historyResponse.totalCount === 0) {
-                    setTotalPages(1);
-                } else {
-                    setTotalPages(Math.ceil(historyResponse.totalCount / entriesPerPage));
-                }
             } catch (error) {
                 console.error('Failed to get history', error);
                 if (error instanceof Error) {
@@ -67,6 +62,18 @@ function History() {
 
         getHistory();
     }, [pageNumber, entriesPerPage]);
+
+    useEffect(() => {
+        if (!history) {
+            return;
+        }
+
+        if (entriesPerPage === 0 || history.totalCount === 0) {
+            setTotalPages(1);
+        } else {
+            setTotalPages(Math.ceil(history.totalCount / entriesPerPage));
+        }
+    }, [entriesPerPage, history]);
 
     if (errorMessage) {
         return <ErrorAlertScreen errorMessage={errorMessage} title="History Error" dataCy="history-error-alert" />;

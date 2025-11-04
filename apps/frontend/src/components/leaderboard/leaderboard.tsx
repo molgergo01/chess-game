@@ -50,11 +50,6 @@ function Leaderboard() {
                     entriesPerPage * (pageNumber - 1)
                 );
                 setLeaderboard(leaderboardResponse);
-                if (entriesPerPage === 0 || leaderboardResponse.totalCount === 0) {
-                    setTotalPages(1);
-                } else {
-                    setTotalPages(Math.ceil(leaderboardResponse.totalCount / entriesPerPage));
-                }
             } catch (error) {
                 console.error('Failed to get leaderboard', error);
                 if (error instanceof Error) {
@@ -65,6 +60,18 @@ function Leaderboard() {
 
         getLeaderboard();
     }, [pageNumber, entriesPerPage]);
+
+    useEffect(() => {
+        if (!leaderboard) {
+            return;
+        }
+
+        if (entriesPerPage === 0 || leaderboard.totalCount === 0) {
+            setTotalPages(1);
+        } else {
+            setTotalPages(Math.ceil(leaderboard.totalCount / entriesPerPage));
+        }
+    }, [leaderboard, entriesPerPage]);
 
     if (errorMessage) {
         return (
