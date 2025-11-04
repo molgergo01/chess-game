@@ -1,0 +1,119 @@
+{{- if .Values.frontend.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "chess-game.fullname" . }}-frontend
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "frontend" | nindent 4 }}
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+  - port: {{ .Values.frontend.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    {{ include "chess-game.selectorLabels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "frontend" | nindent 4 }}
+---
+{{- end }}
+{{- if .Values.auth.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "chess-game.fullname" . }}-auth
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "auth" | nindent 4 }}
+spec:
+  type: {{ .Values.auth.service.type }}
+  ports:
+  - port: {{ .Values.auth.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    {{ include "chess-game.selectorLabels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "auth" | nindent 4 }}
+---
+{{- end }}
+{{- if .Values.core.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "chess-game.fullname" . }}-core
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "core" | nindent 4 }}
+spec:
+  type: {{ .Values.core.service.type }}
+  ports:
+  - port: {{ .Values.core.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    {{ include "chess-game.selectorLabels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "core" | nindent 4 }}
+---
+{{- end }}
+{{- if .Values.matchmaking.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "chess-game.fullname" . }}-matchmaking
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "matchmaking" | nindent 4 }}
+spec:
+  type: {{ .Values.matchmaking.service.type }}
+  ports:
+  - port: {{ .Values.matchmaking.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    {{ include "chess-game.selectorLabels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "matchmaking" | nindent 4 }}
+---
+{{- end }}
+{{- if .Values.postgresql.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "chess-game.fullname" . }}-postgresql
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "postgresql" | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ .Values.postgresql.service.port }}
+    targetPort: postgresql
+    protocol: TCP
+    name: postgresql
+  selector:
+    {{ include "chess-game.selectorLabels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "postgresql" | nindent 4 }}
+---
+{{- end }}
+{{- if .Values.redis.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "chess-game.fullname" . }}-redis
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "redis" | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ .Values.redis.service.port }}
+    targetPort: redis
+    protocol: TCP
+    name: redis
+  selector:
+    {{ include "chess-game.selectorLabels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "redis" | nindent 4 }}
+{{- end }}

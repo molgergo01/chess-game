@@ -261,7 +261,7 @@ describe('/games/history Page', () => {
         });
 
         it('Should display error alert when API fails', () => {
-            cy.intercept('GET', '**/api/games*', {
+            cy.intercept('GET', '**/api/core/games*', {
                 statusCode: 500,
                 body: { message: 'Internal server error' }
             }).as('getGamesError');
@@ -273,7 +273,7 @@ describe('/games/history Page', () => {
         });
 
         it('Should show appropriate error message', () => {
-            cy.intercept('GET', '**/api/games*', {
+            cy.intercept('GET', '**/api/core/games*', {
                 statusCode: 500,
                 body: { message: 'Database connection failed' }
             }).as('getGamesError');

@@ -1,0 +1,72 @@
+{{- if .Values.matchmaking.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chess-game.fullname" . }}-matchmaking
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "matchmaking" | nindent 4 }}
+spec:
+  replicas: {{ .Values.matchmaking.replicaCount }}
+  selector:
+    matchLabels:
+      {{ include "chess-game.selectorLabels" . | nindent 6 }}
+      {{ include "chess-game.componentLabels" "matchmaking" | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/sealed-secrets.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{ toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{ include "chess-game.selectorLabels" . | nindent 8 }}
+        {{ include "chess-game.componentLabels" "matchmaking" | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "chess-game.serviceAccountName" . }}
+      securityContext:
+        {{ toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: matchmaking
+        securityContext:
+          {{ toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.matchmaking.image.repository }}:{{ .Values.matchmaking.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8081
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: {{ include "chess-game.fullname" . }}-backend-config
+        - secretRef:
+            name: chess-secrets
+        env:
+        - name: MATCHMAKING_PORT
+          value: {{ .Values.matchmaking.env.MATCHMAKING_PORT | quote }}
+        - name: FRONTEND_URL
+          value: {{ .Values.matchmaking.env.FRONTEND_URL | quote }}
+        livenessProbe:
+          {{ toYaml .Values.matchmaking.livenessProbe | nindent 12 }}
+        readinessProbe:
+          {{ toYaml .Values.matchmaking.readinessProbe | nindent 12 }}
+        resources:
+          {{ toYaml .Values.matchmaking.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

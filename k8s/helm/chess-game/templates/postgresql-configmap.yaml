@@ -1,0 +1,17 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chess-game.fullname" . }}-postgresql-init
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "postgresql" | nindent 4 }}
+data:
+  init-db.sh: |
+    #!/bin/bash
+    set -e
+
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        CREATE DATABASE chess_game_db;
+    EOSQL
+{{- end }}

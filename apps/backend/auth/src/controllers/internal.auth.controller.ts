@@ -21,7 +21,6 @@ class InternalAuthController {
             }
 
             const user = await this.authService.getUserFromToken(token);
-
             const response: GetMeResponse = {
                 user: user
             };

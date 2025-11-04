@@ -80,7 +80,7 @@ function ChessboardWithBanners({
             </div>
 
             <Banner
-                className="hidden sm:flex flex-col sm:w-[min(500px,min(45vw,calc(100vh-12rem)))] lg:w-[min(650px,min(50vw,calc(100vh-10rem)))] sm:rounded-lg sm:border-2 sm:border-border sm:overflow-hidden"
+                className="hidden sm:flex flex-col sm:w-[min(500px,min(45vw,calc(100vh-12rem)))] lg:w-[min(600px,min(50vw,calc(100vh-10rem)))] sm:rounded-lg sm:border-2 sm:border-border sm:overflow-hidden"
                 playerColor={topPlayerColor}
                 isOpponent={true}
                 turnColor={turnColor}
@@ -92,14 +92,14 @@ function ChessboardWithBanners({
             />
 
             <div
-                className="w-full max-w-[min(100vw,calc(100vh-22rem))] aspect-square mx-auto flex-shrink-0 sm:w-[min(500px,min(45vw,calc(100vh-12rem)))] sm:h-[min(500px,min(45vw,calc(100vh-12rem)))] lg:w-[min(650px,min(50vw,calc(100vh-10rem)))] lg:h-[min(650px,min(50vw,calc(100vh-10rem)))] sm:max-w-none sm:aspect-auto"
+                className="w-full max-w-[min(100vw,calc(100vh-22rem))] aspect-square mx-auto flex-shrink-0 sm:w-[min(500px,min(45vw,calc(100vh-12rem)))] sm:h-[min(500px,min(45vw,calc(100vh-12rem)))] lg:w-[min(600px,min(50vw,calc(100vh-10rem)))] lg:h-[min(600px,min(50vw,calc(100vh-10rem)))] sm:max-w-none sm:aspect-auto"
                 data-cy="game-chessboard-container"
             >
                 <ClientOnlyChessboard options={chessboardOptions} />
             </div>
 
             <Banner
-                className="hidden sm:flex flex-col sm:w-[min(500px,min(45vw,calc(100vh-12rem)))] lg:w-[min(650px,min(50vw,calc(100vh-10rem)))] sm:rounded-lg sm:border-2 sm:border-border sm:overflow-hidden"
+                className="hidden sm:flex flex-col sm:w-[min(500px,min(45vw,calc(100vh-12rem)))] lg:w-[min(600px,min(50vw,calc(100vh-10rem)))] sm:rounded-lg sm:border-2 sm:border-border sm:overflow-hidden"
                 playerColor={bottomPlayerColor}
                 isOpponent={false}
                 turnColor={turnColor}

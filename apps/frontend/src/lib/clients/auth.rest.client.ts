@@ -4,7 +4,7 @@ import { AuthUser, GetMeResponse } from '@/lib/models/response/auth';
 
 export async function getUser(): Promise<AuthUser> {
     try {
-        const response: AxiosResponse<GetMeResponse> = await axios.get(`${env.REST_URLS.AUTH}/api/user/me`, {
+        const response: AxiosResponse<GetMeResponse> = await axios.get(`${env.REST_URLS.AUTH}/api/auth/user/me`, {
             withCredentials: true
         });
 

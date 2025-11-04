@@ -12,3 +12,6 @@ yarn.lock
 charts/
 
 docs/**/*.md
+
+k8s/helm/**/*.yaml
+k8s/helm/**/*.yml

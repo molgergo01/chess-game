@@ -5,7 +5,7 @@ import { AuthUser } from 'chess-game-backend-common/models/user';
 
 @injectable()
 class SocketAuthMiddleware {
-    private readonly authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:8082';
+    private readonly authServiceUrl = process.env.AUTH_URL || 'http://localhost:8082';
 
     async authenticate(socket: Socket, next: (err?: Error) => void): Promise<void> {
         try {

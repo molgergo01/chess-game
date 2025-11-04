@@ -21,9 +21,10 @@ describe('initializeMatchmakingSocket', () => {
 
         (io as jest.Mock).mockReturnValue(mockSocket);
 
-        env.WS_URLS = {
-            CORE: 'ws://localhost:8080',
-            MATCHMAKING: 'ws://localhost:8081'
+        env.REST_URLS = {
+            CORE: 'http://localhost:8080',
+            MATCHMAKING: 'http://localhost:8081',
+            AUTH: 'http://localhost:8082'
         };
     });
 
@@ -35,8 +36,10 @@ describe('initializeMatchmakingSocket', () => {
         const result = initializeMatchmakingSocket();
 
         expect(result).toBe(mockSocket);
-        expect(io).toHaveBeenCalledWith('ws://localhost:8081', {
+        expect(io).toHaveBeenCalledWith('http://localhost:8081', {
+            path: '/api/matchmaking/socket.io',
             reconnectionDelayMax: 10000,
+            transports: ['polling', 'websocket'],
             withCredentials: true
         });
     });

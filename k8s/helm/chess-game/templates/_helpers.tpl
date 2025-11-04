@@ -7,8 +7,6 @@ Expand the name of the chart.
 
 {{/*
 Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
 */}}
 {{- define "chess-game.fullname" -}}
 {{- if .Values.fullnameOverride }}
@@ -59,4 +57,11 @@ Create the name of the service account to use
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
+{{- end }}
+
+{{/*
+Component-specific labels
+*/}}
+{{- define "chess-game.componentLabels" -}}
+app.kubernetes.io/component: {{ . }}
 {{- end }}

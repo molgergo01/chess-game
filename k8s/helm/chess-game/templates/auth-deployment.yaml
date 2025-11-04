@@ -1,0 +1,74 @@
+{{- if .Values.auth.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chess-game.fullname" . }}-auth
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "auth" | nindent 4 }}
+spec:
+  replicas: {{ .Values.auth.replicaCount }}
+  selector:
+    matchLabels:
+      {{ include "chess-game.selectorLabels" . | nindent 6 }}
+      {{ include "chess-game.componentLabels" "auth" | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/sealed-secrets.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{ toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{ include "chess-game.selectorLabels" . | nindent 8 }}
+        {{ include "chess-game.componentLabels" "auth" | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "chess-game.serviceAccountName" . }}
+      securityContext:
+        {{ toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: auth
+        securityContext:
+          {{ toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.auth.image.repository }}:{{ .Values.auth.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8082
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: {{ include "chess-game.fullname" . }}-backend-config
+        - secretRef:
+            name: chess-secrets
+        env:
+        - name: AUTH_PORT
+          value: {{ .Values.auth.env.AUTH_PORT | quote }}
+        - name: FRONTEND_URL
+          value: {{ .Values.auth.env.FRONTEND_URL | quote }}
+        - name: FRONTEND_HOST
+          value: {{ .Values.auth.env.FRONTEND_HOST | quote }}
+        livenessProbe:
+          {{ toYaml .Values.auth.livenessProbe | nindent 12 }}
+        readinessProbe:
+          {{ toYaml .Values.auth.readinessProbe | nindent 12 }}
+        resources:
+          {{ toYaml .Values.auth.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

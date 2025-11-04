@@ -12,8 +12,6 @@ const config = {
     password: env.DB_PASSWORD
 };
 
-console.log(env.NODE_ENV);
-
 const db = pgp(config);
 export const dbTransactionManager = new DbTransactionManager(db);
 

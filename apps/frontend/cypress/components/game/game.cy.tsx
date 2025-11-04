@@ -27,7 +27,7 @@ describe('<Game />', () => {
     };
 
     beforeEach(() => {
-        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me*`, {
+        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/auth/user/me*`, {
             statusCode: 200,
             body: {
                 user: {
@@ -43,7 +43,7 @@ describe('<Game />', () => {
 
     describe('loading state', () => {
         it('should render loading screen when API call is pending', () => {
-            cy.intercept('GET', `${env.REST_URLS.CORE}/api/games/active*`, (req) => {
+            cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games/active*`, (req) => {
                 req.reply(() => new Promise(() => {}));
             });
 
@@ -56,7 +56,7 @@ describe('<Game />', () => {
 
     describe('active game rendering', () => {
         beforeEach(() => {
-            cy.intercept('GET', `${env.REST_URLS.CORE}/api/games/active*`, {
+            cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games/active*`, {
                 statusCode: 200,
                 body: mockActiveGameData
             }).as('getActiveGame');
@@ -89,7 +89,7 @@ describe('<Game />', () => {
 
     describe('game controls', () => {
         beforeEach(() => {
-            cy.intercept('GET', `${env.REST_URLS.CORE}/api/games/active*`, {
+            cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games/active*`, {
                 statusCode: 200,
                 body: mockActiveGameData
             }).as('getActiveGame');
@@ -106,7 +106,7 @@ describe('<Game />', () => {
 
     describe('game state variations', () => {
         it('should render when game is not started', () => {
-            cy.intercept('GET', `${env.REST_URLS.CORE}/api/games/active*`, {
+            cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games/active*`, {
                 statusCode: 200,
                 body: {
                     ...mockActiveGameData,
@@ -123,7 +123,7 @@ describe('<Game />', () => {
         });
 
         it('should render when game is in progress with different position', () => {
-            cy.intercept('GET', `${env.REST_URLS.CORE}/api/games/active*`, {
+            cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games/active*`, {
                 statusCode: 200,
                 body: {
                     ...mockActiveGameData,
@@ -140,7 +140,7 @@ describe('<Game />', () => {
         });
 
         it('should render game controls when draw offer is present', () => {
-            cy.intercept('GET', `${env.REST_URLS.CORE}/api/games/active*`, {
+            cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games/active*`, {
                 statusCode: 200,
                 body: {
                     ...mockActiveGameData,

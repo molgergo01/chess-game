@@ -13,6 +13,11 @@ jest.mock('chess-game-backend-common/config/env', () => ({
             MATCHMAKING: '8081',
             AUTH: '8082'
         },
+        URLS: {
+            CORE: 'http://localhost:8080',
+            MATCHMAKING: 'http://localhost:8081',
+            AUTH: 'http://localhost:8082'
+        },
         JWT_SECRET: 'test_jwt_secret',
         GOOGLE_CLIENT_ID: 'test_google_client_id',
         GOOGLE_CLIENT_SECRET: 'test_google_client_secret',
@@ -105,7 +110,7 @@ describe('Game routes', () => {
             await createGame(game1Id, 'user1', 'user2', now, game1EndedAt, Winner.WHITE);
             await createGame(game2Id, 'user3', 'user1', now, game2EndedAt, Winner.BLACK);
 
-            const res = await authenticatedRequest(request(app).get('/api/games'), 'user1');
+            const res = await authenticatedRequest(request(app).get('/api/core/games'), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('games');
@@ -136,7 +141,7 @@ describe('Game routes', () => {
                 avatarUrl: 'avatar_url.com'
             });
 
-            const res = await authenticatedRequest(request(app).get('/api/games'), 'user1');
+            const res = await authenticatedRequest(request(app).get('/api/core/games'), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body.games).toEqual([]);
@@ -184,7 +189,7 @@ describe('Game routes', () => {
                 Winner.DRAW
             );
 
-            const res = await authenticatedRequest(request(app).get('/api/games'), 'user1').query({ limit: 2 });
+            const res = await authenticatedRequest(request(app).get('/api/core/games'), 'user1').query({ limit: 2 });
 
             expect(res.status).toBe(200);
             expect(res.body.games).toHaveLength(2);
@@ -232,7 +237,7 @@ describe('Game routes', () => {
                 Winner.DRAW
             );
 
-            const res = await authenticatedRequest(request(app).get('/api/games'), 'user1').query({ offset: 1 });
+            const res = await authenticatedRequest(request(app).get('/api/core/games'), 'user1').query({ offset: 1 });
 
             expect(res.status).toBe(200);
             expect(res.body.games).toHaveLength(2);
@@ -282,7 +287,7 @@ describe('Game routes', () => {
                 Winner.DRAW
             );
 
-            const res = await authenticatedRequest(request(app).get('/api/games'), 'user1').query({
+            const res = await authenticatedRequest(request(app).get('/api/core/games'), 'user1').query({
                 offset: 1,
                 limit: 1
             });
@@ -313,7 +318,7 @@ describe('Game routes', () => {
             expect(createRes.status).toBe(201);
             const gameId = createRes.body.gameId;
 
-            const res = await authenticatedRequest(request(app).get('/api/games/active'), 'user1');
+            const res = await authenticatedRequest(request(app).get('/api/core/games/active'), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('gameId');
@@ -346,7 +351,7 @@ describe('Game routes', () => {
                 avatarUrl: 'avatar_url.com'
             });
 
-            const res = await authenticatedRequest(request(app).get('/api/games/active'), 'user1');
+            const res = await authenticatedRequest(request(app).get('/api/core/games/active'), 'user1');
 
             expect(res.status).toBe(404);
             expect(res.body).toHaveProperty('message');
@@ -395,7 +400,7 @@ describe('Game routes', () => {
                 new Date(now.getTime() + 2000)
             );
 
-            const res = await authenticatedRequest(request(app).get(`/api/games/${gameId}`), 'user1');
+            const res = await authenticatedRequest(request(app).get(`/api/core/games/${gameId}`), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body.gameId).toBe(gameId);
@@ -426,7 +431,7 @@ describe('Game routes', () => {
 
             await createGame(gameId, 'user1', 'user2', now, null, null);
 
-            const res = await authenticatedRequest(request(app).get(`/api/games/${gameId}`), 'user1');
+            const res = await authenticatedRequest(request(app).get(`/api/core/games/${gameId}`), 'user1');
 
             expect(res.status).toBe(400);
             expect(res.body).toHaveProperty('message');
@@ -446,7 +451,7 @@ describe('Game routes', () => {
 
             const gameId = '550e8400-e29b-41d4-a716-446655440000';
 
-            const res = await authenticatedRequest(request(app).get(`/api/games/${gameId}`), 'user1');
+            const res = await authenticatedRequest(request(app).get(`/api/core/games/${gameId}`), 'user1');
 
             expect(res.status).toBe(404);
             expect(res.body).toHaveProperty('message');
@@ -464,7 +469,7 @@ describe('Game routes', () => {
 
             const invalidGameId = 'invalid-uuid';
 
-            const res = await authenticatedRequest(request(app).get(`/api/games/${invalidGameId}`), 'user1');
+            const res = await authenticatedRequest(request(app).get(`/api/core/games/${invalidGameId}`), 'user1');
 
             expect(res.status).toBe(400);
             expect(res.body).toHaveProperty('message');

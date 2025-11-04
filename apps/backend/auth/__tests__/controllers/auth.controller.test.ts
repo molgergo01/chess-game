@@ -6,7 +6,12 @@ import { AuthenticatedRequest } from 'chess-game-backend-common/types/authentica
 jest.mock('chess-game-backend-common/config/env', () => ({
     __esModule: true,
     default: {
-        FRONTEND_URL: 'localhost:3000'
+        FRONTEND_URL: 'localhost:3000',
+        URLS: {
+            CORE: 'http://localhost:8080',
+            MATCHMAKING: 'http://localhost:8081',
+            AUTH: 'http://localhost:8082'
+        }
     }
 }));
 
@@ -43,10 +48,9 @@ describe('Auth Controller', () => {
 
             await authController.loginUser(req as Request, res as Response, next as NextFunction);
             expect(res.cookie).toHaveBeenCalledWith('token', 'tokenValue', {
-                domain: 'localhost',
-                path: '/',
                 httpOnly: true,
-                sameSite: 'lax'
+                sameSite: 'none',
+                secure: true
             });
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.redirect).toHaveBeenCalledWith('localhost:3000');
@@ -89,10 +93,9 @@ describe('Auth Controller', () => {
             authController.logoutUser(req as AuthenticatedRequest, res as Response, next as NextFunction);
 
             expect(res.clearCookie).toHaveBeenCalledWith('token', {
-                domain: 'localhost',
-                path: '/',
                 httpOnly: true,
-                sameSite: 'lax'
+                sameSite: 'none',
+                secure: true
             });
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({ message: 'Logged out' });

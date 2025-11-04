@@ -1,0 +1,107 @@
+frontend:
+    replicaCount: 3
+    image:
+        tag: stable
+    resources:
+        limits:
+            cpu: 1000m
+            memory: 1Gi
+        requests:
+            cpu: 500m
+            memory: 512Mi
+
+auth:
+    replicaCount: 3
+    image:
+        tag: stable
+    resources:
+        limits:
+            cpu: 1000m
+            memory: 1Gi
+        requests:
+            cpu: 500m
+            memory: 512Mi
+    autoscaling:
+        enabled: true
+        minReplicas: 3
+        maxReplicas: 10
+        targetCPUUtilizationPercentage: 70
+
+core:
+    replicaCount: 3
+    image:
+        tag: stable
+    resources:
+        limits:
+            cpu: 2000m
+            memory: 2Gi
+        requests:
+            cpu: 1000m
+            memory: 1Gi
+    autoscaling:
+        enabled: true
+        minReplicas: 3
+        maxReplicas: 20
+        targetCPUUtilizationPercentage: 70
+
+matchmaking:
+    replicaCount: 3
+    image:
+        tag: stable
+    resources:
+        limits:
+            cpu: 1000m
+            memory: 1Gi
+        requests:
+            cpu: 500m
+            memory: 512Mi
+    autoscaling:
+        enabled: true
+        minReplicas: 3
+        maxReplicas: 10
+        targetCPUUtilizationPercentage: 70
+
+postgresql:
+    persistence:
+        size: 50Gi
+        storageClass: 'fast-ssd'
+    resources:
+        limits:
+            cpu: 2000m
+            memory: 4Gi
+        requests:
+            cpu: 1000m
+            memory: 2Gi
+
+redis:
+    persistence:
+        size: 20Gi
+        storageClass: 'fast-ssd'
+    resources:
+        limits:
+            cpu: 1000m
+            memory: 2Gi
+        requests:
+            cpu: 500m
+            memory: 1Gi
+
+migrations:
+    image:
+        tag: stable
+
+ingress:
+    enabled: true
+    className: 'nginx'
+    annotations:
+        cert-manager.io/cluster-issuer: 'letsencrypt-prod'
+        nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    hosts:
+        - host: chess-game.yourdomain.com
+          paths:
+              - path: /
+                pathType: Prefix
+                service: frontend
+    tls:
+        - secretName: chess-game-tls
+          hosts:
+              - chess-game.yourdomain.com

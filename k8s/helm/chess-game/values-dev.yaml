@@ -1,0 +1,92 @@
+frontend:
+    replicaCount: 1
+    image:
+        tag: latest
+    resources:
+        limits:
+            cpu: 200m
+            memory: 256Mi
+        requests:
+            cpu: 100m
+            memory: 128Mi
+
+auth:
+    replicaCount: 1
+    image:
+        tag: latest
+    resources:
+        limits:
+            cpu: 200m
+            memory: 256Mi
+        requests:
+            cpu: 100m
+            memory: 128Mi
+    env:
+        NODE_ENV: development
+    autoscaling:
+        enabled: false
+
+core:
+    replicaCount: 1
+    image:
+        tag: latest
+    resources:
+        limits:
+            cpu: 500m
+            memory: 512Mi
+        requests:
+            cpu: 200m
+            memory: 256Mi
+    env:
+        NODE_ENV: development
+    autoscaling:
+        enabled: false
+
+matchmaking:
+    replicaCount: 1
+    image:
+        tag: latest
+    resources:
+        limits:
+            cpu: 200m
+            memory: 256Mi
+        requests:
+            cpu: 100m
+            memory: 128Mi
+    env:
+        NODE_ENV: dev
+    autoscaling:
+        enabled: false
+
+postgresql:
+    persistence:
+        enabled: true
+        storageClass: standard
+        size: 5Gi
+    resources:
+        limits:
+            cpu: 500m
+            memory: 512Mi
+        requests:
+            cpu: 100m
+            memory: 128Mi
+
+redis:
+    persistence:
+        enabled: true
+        storageClass: standard
+        size: 2Gi
+    resources:
+        limits:
+            cpu: 200m
+            memory: 256Mi
+        requests:
+            cpu: 50m
+            memory: 64Mi
+
+migrations:
+    image:
+        tag: latest
+
+ingress:
+    enabled: true

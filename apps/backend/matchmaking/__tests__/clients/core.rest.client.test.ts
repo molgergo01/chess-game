@@ -7,6 +7,9 @@ jest.mock('axios');
 jest.mock('chess-game-backend-common/config/env', () => ({
     PORTS: {
         CORE: 3001
+    },
+    URLS: {
+        CORE: 'http://localhost:3001'
     }
 }));
 
@@ -25,7 +28,7 @@ describe('Core Rest Client', () => {
     describe('createGame', () => {
         it('should call axios.post with correct URL and request body', async () => {
             const players = ['user1', 'user2'];
-            const expectedUrl = `http://localhost:${env.PORTS.CORE}/internal/games`;
+            const expectedUrl = `${env.URLS.CORE}/internal/games`;
             const expectedRequestBody: CreateGameRequest = {
                 players: players
             };
@@ -55,7 +58,7 @@ describe('Core Rest Client', () => {
 
         it('should propagate error if axios.post fails', async () => {
             const players = ['user1', 'user2'];
-            const expectedUrl = `http://localhost:${env.PORTS.CORE}/internal/games`;
+            const expectedUrl = `${env.URLS.CORE}/internal/games`;
             const expectedRequestBody: CreateGameRequest = {
                 players: players
             };
@@ -72,7 +75,7 @@ describe('Core Rest Client', () => {
     describe('checkActiveGame', () => {
         it('should return true when user has an active game', async () => {
             const userId = 'user1';
-            const expectedUrl = `http://localhost:${env.PORTS.CORE}/internal/games/active`;
+            const expectedUrl = `${env.URLS.CORE}/internal/games/active`;
             const mockResponse = { data: { gameId: 'game-0000' } };
 
             (axios.get as jest.Mock).mockResolvedValue(mockResponse);
@@ -87,7 +90,7 @@ describe('Core Rest Client', () => {
 
         it('should return false when axios error with response occurs', async () => {
             const userId = 'user1';
-            const expectedUrl = `http://localhost:${env.PORTS.CORE}/internal/games/active`;
+            const expectedUrl = `${env.URLS.CORE}/internal/games/active`;
             const axiosError = {
                 isAxiosError: true,
                 response: { status: 404, data: { message: 'No active game found' } }
@@ -106,7 +109,7 @@ describe('Core Rest Client', () => {
 
         it('should propagate error when non-axios error occurs', async () => {
             const userId = 'user1';
-            const expectedUrl = `http://localhost:${env.PORTS.CORE}/internal/games/active`;
+            const expectedUrl = `${env.URLS.CORE}/internal/games/active`;
             const expectedError = new Error('Network error');
 
             (axios.get as jest.Mock).mockRejectedValue(expectedError);

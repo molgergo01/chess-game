@@ -55,7 +55,7 @@ const mixedMessages: ChatMessage[] = [userMessages[0], opponentMessages[0], syst
 
 describe('<ChatBox />', () => {
     beforeEach(() => {
-        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
+        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/auth/user/me`, {
             statusCode: 200,
             body: { user: { id: TEST_USER_ID, email: 'test@example.com' } }
         }).as('getUser');

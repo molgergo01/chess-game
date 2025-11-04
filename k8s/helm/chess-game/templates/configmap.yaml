@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chess-game.fullname" . }}-backend-config
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+data:
+  NODE_ENV: {{ .Values.auth.env.NODE_ENV | quote }}
+  CORE_PORT: {{ .Values.core.env.CORE_PORT | quote }}
+  MATCHMAKING_PORT: {{ .Values.matchmaking.env.MATCHMAKING_PORT | quote }}
+  AUTH_PORT: {{ .Values.auth.env.AUTH_PORT | quote }}
+  FRONTEND_URL: {{ .Values.auth.env.FRONTEND_URL | quote }}
+  FRONTEND_HOST: {{ .Values.auth.env.FRONTEND_HOST | quote }}
+  CORE_URL: {{ .Values.auth.env.CORE_URL | quote }}
+  AUTH_URL: {{ .Values.auth.env.AUTH_URL | quote }}
+  MATCHMAKING_URL: {{ .Values.auth.env.MATCHMAKING_URL | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chess-game.fullname" . }}-frontend-config
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+data:
+  NEXT_PUBLIC_CORE_ADDRESS: {{ .Values.frontend.env.NEXT_PUBLIC_CORE_ADDRESS | quote }}
+  NEXT_PUBLIC_MATCHMAKING_ADDRESS: {{ .Values.frontend.env.NEXT_PUBLIC_MATCHMAKING_ADDRESS | quote }}
+  NEXT_PUBLIC_AUTH_ADDRESS: {{ .Values.frontend.env.NEXT_PUBLIC_AUTH_ADDRESS | quote }}

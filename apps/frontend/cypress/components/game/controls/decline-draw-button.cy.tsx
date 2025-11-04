@@ -11,7 +11,7 @@ describe('<DeclineDrawButton />', () => {
     };
 
     beforeEach(() => {
-        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
+        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/auth/user/me`, {
             statusCode: 200,
             body: {
                 user: {

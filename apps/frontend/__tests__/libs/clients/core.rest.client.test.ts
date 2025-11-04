@@ -48,7 +48,7 @@ describe('core.rest.client', () => {
 
             const result = await getGameHistory(limit, offset);
 
-            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/games', {
+            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/core/games', {
                 params: { limit, offset },
                 withCredentials: true
             });
@@ -141,7 +141,7 @@ describe('core.rest.client', () => {
 
             const result = await getGame(gameId, 'token');
 
-            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/games/game123', {
+            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/core/games/game123', {
                 headers: {
                     Cookie: 'token'
                 },
@@ -261,7 +261,7 @@ describe('core.rest.client', () => {
 
             const result = await getPlayerLeaderboard(limit, offset);
 
-            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/leaderboard', {
+            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/core/leaderboard', {
                 params: { limit, offset },
                 withCredentials: true
             });
@@ -358,7 +358,7 @@ describe('core.rest.client', () => {
 
             const result = await getActiveGame();
 
-            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/games/active', {
+            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/core/games/active', {
                 withCredentials: true
             });
             expect(result).toEqual({
@@ -450,7 +450,7 @@ describe('core.rest.client', () => {
 
             const result = await getChatMessages(chatId);
 
-            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/chat/chat123/messages', {
+            expect(axios.get).toHaveBeenCalledWith('http://localhost:8080/api/core/chat/chat123/messages', {
                 withCredentials: true
             });
             expect(result).toEqual([

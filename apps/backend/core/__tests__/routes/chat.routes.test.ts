@@ -12,6 +12,11 @@ jest.mock('chess-game-backend-common/config/env', () => ({
             MATCHMAKING: '8081',
             AUTH: '8082'
         },
+        URLS: {
+            CORE: 'http://localhost:8080',
+            MATCHMAKING: 'http://localhost:8081',
+            AUTH: 'http://localhost:8082'
+        },
         JWT_SECRET: 'test_jwt_secret',
         GOOGLE_CLIENT_ID: 'test_google_client_id',
         GOOGLE_CLIENT_SECRET: 'test_google_client_secret',
@@ -89,7 +94,7 @@ describe('Chat routes', () => {
             await createChatMessage(chatId, 'msg2', 'user2', 'Hi there!', message2Time);
             await createChatMessage(chatId, 'msg3', 'user1', 'How are you?', message3Time);
 
-            const res = await authenticatedRequest(request(app).get(`/api/chat/${chatId}/messages`), 'user1');
+            const res = await authenticatedRequest(request(app).get(`/api/core/chat/${chatId}/messages`), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('messages');
@@ -122,7 +127,7 @@ describe('Chat routes', () => {
             const chatId = 'empty-chat-id';
             await addChatParticipant(chatId, 'user1');
 
-            const res = await authenticatedRequest(request(app).get(`/api/chat/${chatId}/messages`), 'user1');
+            const res = await authenticatedRequest(request(app).get(`/api/core/chat/${chatId}/messages`), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('messages');
@@ -152,7 +157,7 @@ describe('Chat routes', () => {
             await createChatMessage(chatId, 'msg2', 'user1', 'Good luck!', message2Time);
             await createChatMessage(chatId, 'msg3', 'SYSTEM', 'Game ended', message3Time);
 
-            const res = await authenticatedRequest(request(app).get(`/api/chat/${chatId}/messages`), 'user1');
+            const res = await authenticatedRequest(request(app).get(`/api/core/chat/${chatId}/messages`), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body.messages).toHaveLength(3);
@@ -188,7 +193,7 @@ describe('Chat routes', () => {
             const now = new Date();
             await createChatMessage(chatId, 'msg1', 'user2', 'Secret message', now);
 
-            const res = await authenticatedRequest(request(app).get(`/api/chat/${chatId}/messages`), 'user1');
+            const res = await authenticatedRequest(request(app).get(`/api/core/chat/${chatId}/messages`), 'user1');
 
             expect(res.status).toBe(403);
             expect(res.body).toHaveProperty('message');
@@ -198,7 +203,7 @@ describe('Chat routes', () => {
         it('should return 403 Forbidden without authentication', async () => {
             const chatId = 'test-chat-id';
 
-            const res = await request(app).get(`/api/chat/${chatId}/messages`);
+            const res = await request(app).get(`/api/core/chat/${chatId}/messages`);
 
             expect(res.status).toBe(403);
             expect(res.body).toHaveProperty('message');

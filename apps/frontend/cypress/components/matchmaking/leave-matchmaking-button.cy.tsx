@@ -4,7 +4,7 @@ import env from '@/lib/config/env';
 
 describe('<LeaveMatchmakingButton />', () => {
     beforeEach(() => {
-        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
+        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/auth/user/me`, {
             statusCode: 200,
             body: { id: 'test-user-123', name: 'Test User' }
         });
