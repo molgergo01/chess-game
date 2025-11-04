@@ -2,6 +2,7 @@ import { inject, injectable } from 'inversify';
 import { DrawOffer, StoredGameState } from '../models/game';
 import { Player, StoredPlayer } from '../models/player';
 import Redis from 'chess-game-backend-common/config/redis';
+import { getRedisConnection } from 'chess-game-backend-common/transaction/redis-helper';
 
 @injectable()
 class GameStateRepository {
@@ -18,6 +19,7 @@ class GameStateRepository {
         startedAt: number,
         drawOffer: DrawOffer | undefined
     ): Promise<void> {
+        const connection = getRedisConnection(this.redis);
         const data: Record<string, string> = {
             players: JSON.stringify(players),
             position: fen,
@@ -28,10 +30,10 @@ class GameStateRepository {
         if (drawOffer) {
             data.drawOffer = JSON.stringify(drawOffer);
         } else {
-            await this.redis.hDel(`game-state:${gameId}`, 'drawOffer');
+            await connection.hDel(`game-state:${gameId}`, 'drawOffer');
         }
 
-        await this.redis.hSet(`game-state:${gameId}`, data);
+        await connection.hSet(`game-state:${gameId}`, data);
     }
 
     async get(gameId: string): Promise<StoredGameState | null> {
@@ -62,7 +64,8 @@ class GameStateRepository {
     }
 
     async remove(gameId: string): Promise<void> {
-        await this.redis.del(`game-state:${gameId}`);
+        const connection = getRedisConnection(this.redis);
+        await connection.del(`game-state:${gameId}`);
     }
 }
 

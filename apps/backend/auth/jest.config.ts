@@ -3,7 +3,7 @@ import type { Config } from 'jest';
 const config: Config = {
     preset: 'ts-jest',
     verbose: true,
-    testPathIgnorePatterns: ['<rootDir>/__tests__/fixtures/'],
+    testPathIgnorePatterns: ['<rootDir>/__tests__/fixtures/', '<rootDir>/__tests__/setup.ts'],
     collectCoverage: true,
     collectCoverageFrom: [
         'src/**/*.{js,ts}',
@@ -20,6 +20,7 @@ const config: Config = {
         '!**/coverage/**',
         '!**/*.d.ts'
     ],
+    setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
     coverageDirectory: '<rootDir>/coverage',
     coverageThreshold: {
         global: {

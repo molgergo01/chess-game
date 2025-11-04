@@ -1,12 +1,3 @@
-import { ChatMessage } from '../../src/models/chat';
-import { NextFunction, Request, Response } from 'express';
-import { createServer, Server as NodeServer } from 'node:http';
-import { type AddressInfo } from 'node:net';
-import { io as ioc, type Socket as ClientSocket } from 'socket.io-client';
-import { Server, type Socket as ServerSocket } from 'socket.io';
-import { Color, RatingChange, Winner } from '../../src/models/game';
-import { MoveCallback } from '../../src/models/callbacks';
-
 const mocks = {
     gameService: {
         getGameId: jest.fn(),
@@ -66,6 +57,14 @@ jest.mock('../../src/config/container', () => ({
     toConstantValue: jest.fn()
 }));
 
+import { ChatMessage } from '../../src/models/chat';
+import { NextFunction, Request, Response } from 'express';
+import { createServer, Server as NodeServer } from 'node:http';
+import { type AddressInfo } from 'node:net';
+import { io as ioc, type Socket as ClientSocket } from 'socket.io-client';
+import { Server, type Socket as ServerSocket } from 'socket.io';
+import { Color, RatingChange, Winner } from '../../src/models/game';
+import { MoveCallback } from '../../src/models/callbacks';
 import gameListener from '../../src/listeners/game.listener';
 
 describe('Game Listener', () => {
@@ -154,14 +153,17 @@ describe('Game Listener', () => {
             mocks.gameService.getWinner.mockResolvedValue(null);
             mocks.gameService.getTimes.mockResolvedValue(playerTimes);
 
-            clientSocket.emit('movePiece', {
+            const result: MoveCallback = await clientSocket.emitWithAck('movePiece', {
                 gameId,
                 from: 'e2',
                 to: 'e4',
                 promotionPiece: undefined
             });
 
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            expect(result).toEqual({
+                success: true,
+                position: newFen
+            });
 
             expect(mocks.gameService.move).toHaveBeenCalledWith(
                 userId,
@@ -221,14 +223,17 @@ describe('Game Listener', () => {
             mocks.gameService.getTimes.mockResolvedValue(playerTimes);
             mocks.gameService.reset.mockResolvedValue(ratingChange);
 
-            clientSocket.emit('movePiece', {
+            const result: MoveCallback = await clientSocket.emitWithAck('movePiece', {
                 gameId,
                 from: 'e7',
                 to: 'e5',
                 promotionPiece: undefined
             });
 
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            expect(result).toEqual({
+                success: true,
+                position: finalFen
+            });
 
             expect(mocks.gameService.isGameOver).toHaveBeenCalledWith(gameId);
             expect(mocks.gameService.reset).toHaveBeenCalledWith(gameId);

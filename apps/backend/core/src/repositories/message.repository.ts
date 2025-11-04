@@ -1,13 +1,15 @@
 import { injectable } from 'inversify';
 import redis from 'chess-game-backend-common/config/redis';
 import { ChatMessage } from '../models/chat';
+import { getRedisConnection } from 'chess-game-backend-common/transaction/redis-helper';
 
 @injectable()
 class MessageRepository {
     async saveMessage(messageId: string, message: string, userId: string, timestamp: Date) {
+        const connection = getRedisConnection(redis);
         const messageKey = this.getMessageKey(messageId);
 
-        await redis.hSet(messageKey, {
+        return connection.hSet(messageKey, {
             userId: userId,
             message: message,
             timestamp: JSON.stringify(timestamp)
@@ -42,31 +44,12 @@ class MessageRepository {
     }
 
     async removeMessages(messageIds: string[]) {
-        const multi = redis.multi();
+        const connection = getRedisConnection(redis);
 
         messageIds.forEach((messageId) => {
             const messageKey = this.getMessageKey(messageId);
-            multi.del(messageKey);
+            connection.del(messageKey);
         });
-
-        return multi.exec();
-    }
-
-    async getMessage(messageId: string): Promise<ChatMessage | null> {
-        const messageKey = this.getMessageKey(messageId);
-
-        const data = await redis.hGetAll(messageKey);
-
-        if (!data) {
-            return null;
-        }
-
-        return {
-            messageId: messageId,
-            userId: data.userId,
-            message: data.message,
-            timestamp: new Date(data.timestamp)
-        };
     }
 
     private getMessageKey(messageId: string) {

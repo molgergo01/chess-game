@@ -2,6 +2,7 @@ import { inject, injectable } from 'inversify';
 import UsersRepository from '../repositories/users.repository';
 import { RatingChange, Winner } from '../models/game';
 import GamesRepository from '../repositories/games.repository';
+import { Transactional } from 'chess-game-backend-common/transaction/transactional.decorator';
 
 @injectable()
 class RatingService {
@@ -12,6 +13,7 @@ class RatingService {
         private readonly gamesRepository: GamesRepository
     ) {}
 
+    @Transactional()
     async adjustRatings(whitePlayerId: string, blackPlayerId: string, winner: Winner): Promise<RatingChange> {
         const whitePlayerRating = await this.usersRepository.findEloById(whitePlayerId);
         const blackPlayerRating = await this.usersRepository.findEloById(blackPlayerId);

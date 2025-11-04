@@ -5,6 +5,7 @@ import { AuthUser, User } from '../models/user';
 import env from 'chess-game-backend-common/config/env';
 import FailedLoginError from '../errors/failed.login.error';
 import UnauthorizedError from 'chess-game-backend-common/errors/unauthorized.error';
+import { Transactional } from 'chess-game-backend-common/transaction/transactional.decorator';
 
 @injectable()
 class AuthService {
@@ -13,6 +14,7 @@ class AuthService {
         private readonly userRepository: UserRepository
     ) {}
 
+    @Transactional()
     async login(reqUser: Express.User | undefined): Promise<string> {
         if (!reqUser) {
             throw new FailedLoginError('User is missing from auth request');
@@ -35,6 +37,7 @@ class AuthService {
         return jwt.sign(payload, env.JWT_SECRET!);
     }
 
+    @Transactional({ readOnly: true })
     async getUserFromToken(token: string | undefined): Promise<AuthUser> {
         if (!token) {
             throw new UnauthorizedError('Token not found');

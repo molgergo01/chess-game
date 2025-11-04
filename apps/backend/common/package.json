@@ -20,7 +20,13 @@
         "./middlewares/error.handler": "./dist/middlewares/error.handler.js",
         "./models/user": "./dist/models/user.js",
         "./types/authenticated.request": "./dist/types/authenticated.request.js",
-        "./utils/socket-error.handler": "./dist/utils/socket-error.handler.js"
+        "./utils/socket-error.handler": "./dist/utils/socket-error.handler.js",
+        "./transaction/transactional.decorator": "./dist/transaction/transactional.decorator.js",
+        "./transaction/redis-transactional.decorator": "./dist/transaction/redis-transactional.decorator.js",
+        "./transaction/types": "./dist/transaction/types.js",
+        "./transaction/context": "./dist/transaction/context.js",
+        "./transaction/db-helper": "./dist/transaction/db-helper.js",
+        "./transaction/redis-helper": "./dist/transaction/redis-helper.js"
     },
     "private": true,
     "scripts": {

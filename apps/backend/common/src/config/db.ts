@@ -1,5 +1,6 @@
 import pgPromise from 'pg-promise';
 import env from './env';
+import { DbTransactionManager } from '../transaction/db-transaction-manager';
 
 const pgp = pgPromise();
 
@@ -14,5 +15,6 @@ const config = {
 console.log(env.NODE_ENV);
 
 const db = pgp(config);
+export const dbTransactionManager = new DbTransactionManager(db);
 
 export default db;

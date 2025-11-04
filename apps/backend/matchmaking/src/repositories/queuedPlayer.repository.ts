@@ -1,12 +1,14 @@
 import { injectable } from 'inversify';
 import redis from 'chess-game-backend-common/config/redis';
 import { QueuedPlayer } from '../models/matchmaking';
+import { getRedisConnection } from 'chess-game-backend-common/transaction/redis-helper';
 
 @injectable()
 class QueuedPlayerRepository {
     async save(userId: string, queueTimestamp: number, elo: number, queueId: string | null) {
+        const connection = getRedisConnection(redis);
         const setId = this.getSetKey(userId);
-        return redis.hSet(setId, {
+        return connection.hSet(setId, {
             queueTimestamp: queueTimestamp,
             elo: elo,
             queueId: queueId ? queueId : ''
@@ -14,8 +16,9 @@ class QueuedPlayerRepository {
     }
 
     async delete(userId: string) {
+        const connection = getRedisConnection(redis);
         const setId = this.getSetKey(userId);
-        return redis.del(setId);
+        return connection.del(setId);
     }
 
     async getBatch(userIds: string[]): Promise<QueuedPlayer[]> {

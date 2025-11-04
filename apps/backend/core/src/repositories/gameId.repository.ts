@@ -1,5 +1,6 @@
 import { inject, injectable } from 'inversify';
 import Redis from 'chess-game-backend-common/config/redis';
+import { getRedisConnection } from 'chess-game-backend-common/transaction/redis-helper';
 
 @injectable()
 class GameIdRepository {
@@ -8,7 +9,8 @@ class GameIdRepository {
         private readonly redis: typeof Redis
     ) {}
     async save(userId: string, gameId: string) {
-        this.redis.set(`game-id:${userId}`, gameId);
+        const connection = getRedisConnection(this.redis);
+        return connection.set(`game-id:${userId}`, gameId);
     }
 
     async get(userId: string): Promise<string | null> {
@@ -16,6 +18,7 @@ class GameIdRepository {
     }
 
     async remove(gameId: string) {
+        const connection = getRedisConnection(this.redis);
         const pattern = 'game-id:*';
         const keys = await this.redis.keys(pattern);
 
@@ -32,8 +35,8 @@ class GameIdRepository {
             }
         }
 
-        keysToDelete.forEach((key) => {
-            this.redis.del(key);
+        return keysToDelete.forEach((key) => {
+            connection.del(key);
         });
     }
 }

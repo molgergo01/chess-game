@@ -31,6 +31,8 @@ import ChatService from './chat.service';
 import { DEFAULT_START_TIMEOUT_IN_MINUTES } from '../config/constants';
 import InvalidMoveError from '../errors/invalid.move.error';
 import NotPlayersTurnError from '../errors/not.players.turn.error';
+import { Transactional } from 'chess-game-backend-common/transaction/transactional.decorator';
+import { RedisTransactional } from 'chess-game-backend-common/transaction/redis-transactional.decorator';
 
 @injectable()
 class GameService {
@@ -53,6 +55,8 @@ class GameService {
         this.games = new Map();
     }
 
+    @Transactional()
+    @RedisTransactional()
     async create(playerIds: string[]): Promise<GameCreated> {
         if (playerIds.length !== 2) {
             throw new BadRequestError('playerIds must be exactly 2 players');
@@ -128,6 +132,8 @@ class GameService {
         return this.getPlayerTimesFromGameState(gameState, requestTimeStamp);
     }
 
+    @Transactional()
+    @RedisTransactional()
     async move(
         userId: string,
         gameId: string,
@@ -226,6 +232,8 @@ class GameService {
         return null;
     }
 
+    @Transactional()
+    @RedisTransactional()
     async reset(gameId: string, winner?: Winner): Promise<RatingChange> {
         const game = await this.gamesRepository.findById(gameId);
         if (!game) throw new Error('Game not found');
@@ -273,6 +281,7 @@ class GameService {
         return gameState;
     }
 
+    @Transactional({ readOnly: true })
     async getGameHistory(
         userId: string,
         limit: number | undefined,
@@ -294,6 +303,7 @@ class GameService {
         };
     }
 
+    @Transactional({ readOnly: true })
     async getGameWithMoves(gameId: string): Promise<GameWithMoves> {
         if (!validateUuid(gameId)) {
             throw new BadRequestError(`Invalid game with id ${gameId}`);
@@ -309,6 +319,7 @@ class GameService {
         return game;
     }
 
+    @Transactional({ readOnly: true })
     async getActiveGame(userId: string): Promise<ActiveGame> {
         const game = await this.gamesRepository.findActiveGameByUserId(userId);
         if (!game) {
@@ -337,6 +348,8 @@ class GameService {
         };
     }
 
+    @Transactional()
+    @RedisTransactional()
     async resign(userId: string, gameId: string): Promise<GameOverResult> {
         const gameState = await this.getGameState(gameId);
 
@@ -354,6 +367,7 @@ class GameService {
         };
     }
 
+    @RedisTransactional()
     async offerDraw(gameId: string, userId: string): Promise<DrawOffer> {
         const requestTime = Date.now();
 
@@ -385,6 +399,7 @@ class GameService {
         return drawOffer;
     }
 
+    @RedisTransactional()
     async respondDrawOffer(gameId: string, userId: string, accepted: boolean): Promise<RatingChange | null> {
         const gameState = await this.getGameState(gameId);
         const game = gameState.game;
