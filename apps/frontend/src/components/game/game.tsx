@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import Fen from 'chess-fen';
 import useChessGame from '@/hooks/chess/useChessGame';
 import ChatBox from '@/components/game/chat/chat-box';
 import {
@@ -51,6 +50,7 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
     const blackTimerRef = useRef<TimerRef>(null);
     const [whiteTimeLeft, setWhiteTimeLeft] = useState(10 * 60 * 1000);
     const [blackTimeLeft, setBlackTimeLeft] = useState(10 * 60 * 1000);
+    const [abandonTimerInitialized, setAbandonTimerInitialized] = useState(false);
 
     const handleWhiteTimerTick = useCallback((time: number) => {
         setWhiteTimeLeft(time);
@@ -60,16 +60,15 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
         setBlackTimeLeft(time);
     }, []);
 
-    const gameStarted = boardPosition.toString() !== Fen.startingPosition;
-
     useEffect(() => {
         if (gameOver) return;
 
-        if (!gameStarted) {
-            if (timeUntilAbandoned) {
+        if (timeUntilAbandoned) {
+            if (!abandonTimerInitialized && whiteTimerRef.current) {
                 whiteTimerRef.current?.setTimeLeft(timeUntilAbandoned);
                 whiteTimerRef.current?.start();
                 blackTimerRef.current?.stop();
+                setAbandonTimerInitialized(true);
             }
             return;
         }
@@ -87,7 +86,7 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
         } else if (turnColor === MatchmakingColor.BLACK) {
             blackTimerRef.current?.start();
         }
-    }, [turnColor, gameStarted, gameOver, timesRemaining, timeUntilAbandoned]);
+    }, [turnColor, gameOver, timesRemaining, timeUntilAbandoned, abandonTimerInitialized]);
 
     useEffect(() => {
         if (gameOver) {
@@ -163,7 +162,7 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                                 gameId={gameId}
                                 color={color}
                                 drawOffer={drawOffer}
-                                gameStarted={gameStarted}
+                                gameStarted={timeUntilAbandoned === null}
                             />
                         </div>
                     </div>
