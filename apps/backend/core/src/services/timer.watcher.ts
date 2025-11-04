@@ -5,7 +5,10 @@ import GameService from './game.service';
 import { Color, Winner } from '../models/game';
 import GameNotificationService from './game.notification.service';
 import { Transactional } from 'chess-game-backend-common/transaction/transactional.decorator';
-import { RedisTransactional } from 'chess-game-backend-common/transaction/redis-transactional.decorator';
+import {
+    RedisTransactional,
+    TransactionPropagation
+} from 'chess-game-backend-common/transaction/redis-transactional.decorator';
 
 @injectable()
 class TimerWatcher {
@@ -47,7 +50,7 @@ class TimerWatcher {
     }
 
     @Transactional()
-    @RedisTransactional()
+    @RedisTransactional({ propagation: TransactionPropagation.REQUIRES_NEW })
     private async checkGameTimers(gameStateKey: string) {
         const gameId = gameStateKey.split(':')[1];
         const gameState = await this.gameService.getGameState(gameId);
