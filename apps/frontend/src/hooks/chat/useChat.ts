@@ -35,7 +35,7 @@ function useChat(chatId: string | undefined) {
         const fetchMessages = async () => {
             if (!socket || !chatId) return;
             try {
-                joinChat(socket, chatId);
+                await joinChat(socket, chatId);
                 const messagesResponse = await getChatMessages(chatId);
                 setMessages(messagesResponse);
             } catch (error) {

@@ -1,11 +1,11 @@
 import {
-    joinGame,
-    movePiece,
-    resign,
-    offerDraw,
-    respondDrawOffer,
     joinChat,
+    joinGame,
     leaveChat,
+    movePiece,
+    offerDraw,
+    resign,
+    respondDrawOffer,
     sendChatMessage
 } from '@/lib/clients/core.socket.client';
 import { Socket } from 'socket.io-client';
@@ -129,12 +129,12 @@ describe('core.socket.client', () => {
     });
 
     describe('joinChat', () => {
-        it('should call socket.emit with correct event name and request body', () => {
+        it('should call socket.emitWithAck with correct event name and request body', async () => {
             const chatId = 'chat123';
 
-            joinChat(mockSocket as Socket, chatId);
+            await joinChat(mockSocket as Socket, chatId);
 
-            expect(mockSocket.emit).toHaveBeenCalledWith('join-chat', {
+            expect(mockSocket.emitWithAck).toHaveBeenCalledWith('join-chat', {
                 chatId: chatId
             });
         });
