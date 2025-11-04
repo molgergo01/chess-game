@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { SocketErrorPayload } from '@/lib/models/errors/socket-error';
 import { getUserFriendlyErrorMessage } from '@/lib/utils/error-message.utils';
 
-function useChat(chatId: string | undefined) {
+function useChat(chatId: string | undefined, disableFetch: boolean = false) {
     const { socket } = useCoreSocket();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
 
@@ -33,9 +33,12 @@ function useChat(chatId: string | undefined) {
 
     useEffect(() => {
         const fetchMessages = async () => {
-            if (!socket || !chatId) return;
+            if (!socket || !chatId || disableFetch) return;
             try {
-                await joinChat(socket, chatId);
+                const response = await joinChat(socket, chatId);
+                if (!response.success) {
+                    return;
+                }
                 const messagesResponse = await getChatMessages(chatId);
                 setMessages(messagesResponse);
             } catch (error) {
@@ -51,7 +54,7 @@ function useChat(chatId: string | undefined) {
             if (!socket || !chatId) return;
             leaveChat(socket, chatId);
         };
-    }, [chatId, socket]);
+    }, [chatId, disableFetch, socket]);
 
     return {
         messages

@@ -20,3 +20,7 @@ export type JoinChatRequest = {
 export type LeaveChatRequest = {
     chatId: string;
 };
+
+export interface JoinChatRoomResponse {
+    success: boolean;
+}

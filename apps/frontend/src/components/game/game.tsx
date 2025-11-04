@@ -43,7 +43,7 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
         criticalError,
         clearCriticalError
     } = useChessGame();
-    const { messages } = useChat(gameId);
+    const { messages } = useChat(gameId, gameOver);
     const { socket } = useCoreSocket();
 
     const whiteTimerRef = useRef<TimerRef>(null);

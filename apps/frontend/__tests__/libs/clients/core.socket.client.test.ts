@@ -131,9 +131,13 @@ describe('core.socket.client', () => {
     describe('joinChat', () => {
         it('should call socket.emitWithAck with correct event name and request body', async () => {
             const chatId = 'chat123';
+            const mockResponse = { success: true };
 
-            await joinChat(mockSocket as Socket, chatId);
+            (mockSocket.emitWithAck as jest.Mock).mockResolvedValue(mockResponse);
 
+            const response = await joinChat(mockSocket as Socket, chatId);
+
+            expect(response).toEqual(mockResponse);
             expect(mockSocket.emitWithAck).toHaveBeenCalledWith('join-chat', {
                 chatId: chatId
             });
