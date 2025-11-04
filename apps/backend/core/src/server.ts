@@ -16,8 +16,17 @@ const PORT = env.PORTS.CORE || 8080;
 const server = createServer(app);
 
 export const io = new Server(server, {
-    connectionStateRecovery: {},
-    cors: corsConfig
+    path: '/api/core/socket.io',
+    cors: corsConfig,
+    allowEIO3: true,
+    transports: ['polling', 'websocket'],
+    cookie: {
+        name: 'io',
+        path: '/api/core/socket.io',
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+    }
 });
 
 container.bind('SocketIO').toConstantValue(io);

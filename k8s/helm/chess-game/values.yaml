@@ -1,0 +1,290 @@
+global:
+    imageRegistry: ghcr.io
+    imagePullSecrets:
+        - name: ghcr-secret
+
+image:
+    pullPolicy: Always
+
+nameOverride: ''
+fullnameOverride: ''
+
+frontend:
+    enabled: true
+    replicaCount: 2
+    image:
+        repository: ghcr.io/molgergo01/chess-game-frontend
+        tag: latest
+    service:
+        type: ClusterIP
+        port: 3000
+    resources:
+        limits:
+            cpu: 500m
+            memory: 512Mi
+        requests:
+            cpu: 250m
+            memory: 256Mi
+    env:
+        NEXT_PUBLIC_CORE_ADDRESS: 'https://welcome-happy-redbird.ngrok-free.app'
+        NEXT_PUBLIC_MATCHMAKING_ADDRESS: 'https://welcome-happy-redbird.ngrok-free.app'
+        NEXT_PUBLIC_AUTH_ADDRESS: 'https://welcome-happy-redbird.ngrok-free.app'
+    livenessProbe:
+        httpGet:
+            path: /api/health
+            port: 3000
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
+    readinessProbe:
+        httpGet:
+            path: /api/health
+            port: 3000
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        timeoutSeconds: 3
+        failureThreshold: 3
+
+auth:
+    enabled: true
+    replicaCount: 2
+    image:
+        repository: ghcr.io/molgergo01/chess-game-auth
+        tag: latest
+    service:
+        type: ClusterIP
+        port: 8082
+    resources:
+        limits:
+            cpu: 500m
+            memory: 512Mi
+        requests:
+            cpu: 250m
+            memory: 256Mi
+    env:
+        NODE_ENV: production
+        AUTH_PORT: '8082'
+        FRONTEND_URL: 'https://welcome-happy-redbird.ngrok-free.app'
+        FRONTEND_HOST: 'welcome-happy-redbird.ngrok-free.app'
+        CORE_URL: 'http://chess-game-core:8080'
+        AUTH_URL: 'http://chess-game-auth:8082'
+        MATCHMAKING_URL: 'http://chess-game-matchmaking:8081'
+    livenessProbe:
+        httpGet:
+            path: /api/auth/health
+            port: 8082
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
+    readinessProbe:
+        httpGet:
+            path: /api/auth/health
+            port: 8082
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        timeoutSeconds: 3
+        failureThreshold: 3
+    autoscaling:
+        enabled: false
+        minReplicas: 2
+        maxReplicas: 5
+        targetCPUUtilizationPercentage: 80
+
+core:
+    enabled: true
+    replicaCount: 2
+    image:
+        repository: ghcr.io/molgergo01/chess-game-core
+        tag: latest
+    service:
+        type: ClusterIP
+        port: 8080
+    resources:
+        limits:
+            cpu: 1000m
+            memory: 1Gi
+        requests:
+            cpu: 500m
+            memory: 512Mi
+    env:
+        NODE_ENV: production
+        CORE_PORT: '8080'
+        FRONTEND_URL: 'https://welcome-happy-redbird.ngrok-free.app'
+        CORE_URL: 'http://chess-game-core:8080'
+        AUTH_URL: 'http://chess-game-auth:8082'
+        MATCHMAKING_URL: 'http://chess-game-matchmaking:8081'
+    livenessProbe:
+        httpGet:
+            path: /api/core/health
+            port: 8080
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
+    readinessProbe:
+        httpGet:
+            path: /api/core/health
+            port: 8080
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        timeoutSeconds: 3
+        failureThreshold: 3
+    autoscaling:
+        enabled: false
+        minReplicas: 2
+        maxReplicas: 10
+        targetCPUUtilizationPercentage: 80
+
+matchmaking:
+    enabled: true
+    replicaCount: 2
+    image:
+        repository: ghcr.io/molgergo01/chess-game-matchmaking
+        tag: latest
+    service:
+        type: ClusterIP
+        port: 8081
+    resources:
+        limits:
+            cpu: 500m
+            memory: 512Mi
+        requests:
+            cpu: 250m
+            memory: 256Mi
+    env:
+        NODE_ENV: production
+        MATCHMAKING_PORT: '8081'
+        FRONTEND_URL: 'https://welcome-happy-redbird.ngrok-free.app'
+        CORE_URL: 'http://chess-game-core:8080'
+        AUTH_URL: 'http://chess-game-auth:8082'
+        MATCHMAKING_URL: 'http://chess-game-matchmaking:8081'
+    livenessProbe:
+        httpGet:
+            path: /api/matchmaking/health
+            port: 8081
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
+    readinessProbe:
+        httpGet:
+            path: /api/matchmaking/health
+            port: 8081
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        timeoutSeconds: 3
+        failureThreshold: 3
+    autoscaling:
+        enabled: false
+        minReplicas: 2
+        maxReplicas: 5
+        targetCPUUtilizationPercentage: 80
+
+postgresql:
+    enabled: true
+    image:
+        repository: postgres
+        tag: '14.18-alpine'
+    service:
+        port: 5432
+    persistence:
+        enabled: true
+        storageClass: ''
+        size: 10Gi
+    resources:
+        limits:
+            cpu: 1000m
+            memory: 1Gi
+        requests:
+            cpu: 250m
+            memory: 256Mi
+
+redis:
+    enabled: true
+    image:
+        repository: redis
+        tag: '8.0.3-alpine'
+    service:
+        port: 6379
+    persistence:
+        enabled: true
+        storageClass: ''
+        size: 5Gi
+    resources:
+        limits:
+            cpu: 500m
+            memory: 512Mi
+        requests:
+            cpu: 100m
+            memory: 128Mi
+
+migrations:
+    enabled: true
+    image:
+        repository: ghcr.io/molgergo01/chess-game-migrations
+        tag: latest
+    resources:
+        limits:
+            cpu: 500m
+            memory: 512Mi
+        requests:
+            cpu: 250m
+            memory: 256Mi
+
+ingress:
+    enabled: true
+    className: 'nginx'
+    annotations:
+        nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+        nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+        nginx.ingress.kubernetes.io/proxy-connect-timeout: '3600'
+        nginx.ingress.kubernetes.io/affinity: 'cookie'
+        nginx.ingress.kubernetes.io/session-cookie-name: 'route'
+        nginx.ingress.kubernetes.io/session-cookie-max-age: '172800'
+        nginx.ingress.kubernetes.io/websocket-services: 'chess-game-matchmaking,chess-game-core'
+        nginx.org/websocket-services: 'chess-game-matchmaking,chess-game-core'
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+    hosts:
+        - host: welcome-happy-redbird.ngrok-free.app
+          paths:
+              - path: /api/auth
+                pathType: Prefix
+                service: auth
+              - path: /api/core
+                pathType: Prefix
+                service: core
+              - path: /api/matchmaking
+                pathType: Prefix
+                service: matchmaking
+              - path: /
+                pathType: Prefix
+                service: frontend
+    tls: []
+
+serviceAccount:
+    create: true
+    annotations: {}
+    name: ''
+
+podAnnotations: {}
+
+podSecurityContext:
+    fsGroup: 1001
+
+securityContext:
+    capabilities:
+        drop:
+            - ALL
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    runAsUser: 1001
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

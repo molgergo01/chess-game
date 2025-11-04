@@ -19,10 +19,13 @@ export async function getGameHistory(limit: number | null, offset: number | null
             limit: limit,
             offset: offset
         };
-        const response: AxiosResponse<GetGameHistoryResponse> = await axios.get(`${env.REST_URLS.CORE}/api/games`, {
-            params: params,
-            withCredentials: true
-        });
+        const response: AxiosResponse<GetGameHistoryResponse> = await axios.get(
+            `${env.REST_URLS.CORE}/api/core/games`,
+            {
+                params: params,
+                withCredentials: true
+            }
+        );
         return {
             games: response.data.games.map((game: GameDto) => ({
                 gameId: game.gameId,
@@ -56,12 +59,15 @@ export async function getGameHistory(limit: number | null, offset: number | null
 
 export async function getGame(gameId: string, cookieHeader?: string): Promise<GameWithMoves> {
     try {
-        const response: AxiosResponse<GetGameResponse> = await axios.get(`${env.REST_URLS.CORE}/api/games/${gameId}`, {
-            withCredentials: true,
-            headers: {
-                Cookie: cookieHeader
+        const response: AxiosResponse<GetGameResponse> = await axios.get(
+            `${env.REST_URLS.CORE}/api/core/games/${gameId}`,
+            {
+                withCredentials: true,
+                headers: {
+                    Cookie: cookieHeader
+                }
             }
-        });
+        );
         return {
             gameId: response.data.gameId,
             whitePlayer: {
@@ -109,7 +115,7 @@ export async function getPlayerLeaderboard(limit: number | null, offset: number 
             offset: offset
         };
         const response: AxiosResponse<GetLeaderboardResponse> = await axios.get(
-            `${env.REST_URLS.CORE}/api/leaderboard`,
+            `${env.REST_URLS.CORE}/api/core/leaderboard`,
             {
                 params: params,
                 withCredentials: true
@@ -142,7 +148,7 @@ export async function getPlayerLeaderboard(limit: number | null, offset: number 
 export async function getActiveGame(): Promise<ActiveGame> {
     try {
         const response: AxiosResponse<GetActiveGameResponse> = await axios.get(
-            `${env.REST_URLS.CORE}/api/games/active`,
+            `${env.REST_URLS.CORE}/api/core/games/active`,
             {
                 withCredentials: true
             }
@@ -182,7 +188,7 @@ export async function getActiveGame(): Promise<ActiveGame> {
 export async function getChatMessages(chatId: string): Promise<ChatMessage[]> {
     try {
         const response: AxiosResponse<GetChatMessagesResponse> = await axios.get(
-            `${env.REST_URLS.CORE}/api/chat/${chatId}/messages`,
+            `${env.REST_URLS.CORE}/api/core/chat/${chatId}/messages`,
             {
                 withCredentials: true
             }

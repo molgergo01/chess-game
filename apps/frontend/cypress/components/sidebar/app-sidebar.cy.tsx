@@ -9,7 +9,7 @@ function withSidebarProvider(component: React.ReactNode) {
 
 describe('<AppSidebar />', () => {
     beforeEach(() => {
-        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
+        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/auth/user/me`, {
             statusCode: 200,
             body: {
                 user: {
@@ -101,7 +101,7 @@ describe('<AppSidebar />', () => {
             });
 
             it('should display fallback initials when no avatar URL', () => {
-                cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
+                cy.intercept('GET', `${env.REST_URLS.AUTH}/api/auth/user/me`, {
                     statusCode: 200,
                     body: {
                         user: {
@@ -122,7 +122,7 @@ describe('<AppSidebar />', () => {
             });
 
             it('should display "Unknown user" when no username', () => {
-                cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
+                cy.intercept('GET', `${env.REST_URLS.AUTH}/api/auth/user/me`, {
                     statusCode: 200,
                     body: {
                         user: {

@@ -1,0 +1,8 @@
+apiVersion: v2
+name: chess-game
+description: Online chess game platform
+type: application
+version: 1.0.0
+appVersion: '1.0.0'
+maintainers:
+    - name: mol.gergo01@gmail.com

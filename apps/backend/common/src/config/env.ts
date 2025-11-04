@@ -8,11 +8,17 @@ const env = {
         MATCHMAKING: process.env.MATCHMAKING_PORT || 8081,
         AUTH: process.env.AUTH_PORT || 8082
     },
+    URLS: {
+        CORE: process.env.CORE_URL || 'http://localhost:8080',
+        MATCHMAKING: process.env.MATCHMAKING_URL || 'http://localhost:8081',
+        AUTH: process.env.AUTH_URL || 'http://localhost:8082'
+    },
     JWT_SECRET: process.env.JWT_SECRET!,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET!,
     NODE_ENV: process.env.NODE_ENV,
     FRONTEND_URL: process.env.FRONTEND_URL,
+    FRONTEND_HOST: process.env.FRONTEND_HOST,
     DB_HOST: process.env.DB_HOST,
     DB_DATABASE: process.env.DB_DATABASE,
     DB_TEST_DATABASE: process.env.DB_TEST_DATABASE,

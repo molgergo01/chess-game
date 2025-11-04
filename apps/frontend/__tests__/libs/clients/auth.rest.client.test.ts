@@ -38,7 +38,7 @@ describe('auth.rest.client', () => {
 
             const result = await getUser();
 
-            expect(axios.get).toHaveBeenCalledWith('http://localhost:8082/api/user/me', {
+            expect(axios.get).toHaveBeenCalledWith('http://localhost:8082/api/auth/user/me', {
                 withCredentials: true
             });
             expect(result).toBe(authUser);

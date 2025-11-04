@@ -1,0 +1,71 @@
+{{- if .Values.auth.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "chess-game.fullname" . }}-auth
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "auth" | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "chess-game.fullname" . }}-auth
+  minReplicas: {{ .Values.auth.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.auth.autoscaling.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.auth.autoscaling.targetCPUUtilizationPercentage }}
+---
+{{- end }}
+{{- if .Values.core.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "chess-game.fullname" . }}-core
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "core" | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "chess-game.fullname" . }}-core
+  minReplicas: {{ .Values.core.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.core.autoscaling.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.core.autoscaling.targetCPUUtilizationPercentage }}
+---
+{{- end }}
+{{- if .Values.matchmaking.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "chess-game.fullname" . }}-matchmaking
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "matchmaking" | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "chess-game.fullname" . }}-matchmaking
+  minReplicas: {{ .Values.matchmaking.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.matchmaking.autoscaling.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.matchmaking.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}

@@ -45,7 +45,7 @@ describe('<Leaderboard />', () => {
     });
 
     it('should show loading screen initially', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/leaderboard*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/leaderboard*`, {
             statusCode: 200,
             delay: 10000,
             body: { users: [], totalCount: 0 }
@@ -57,7 +57,7 @@ describe('<Leaderboard />', () => {
     });
 
     it('should render table with leaderboard data', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/leaderboard*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/leaderboard*`, {
             statusCode: 200,
             body: mockLeaderboard
         });
@@ -71,7 +71,7 @@ describe('<Leaderboard />', () => {
     });
 
     it('should display player cells correctly', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/leaderboard*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/leaderboard*`, {
             statusCode: 200,
             body: mockLeaderboard
         });
@@ -82,7 +82,7 @@ describe('<Leaderboard />', () => {
     });
 
     it('should display ranks correctly', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/leaderboard*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/leaderboard*`, {
             statusCode: 200,
             body: mockLeaderboard
         });
@@ -95,7 +95,7 @@ describe('<Leaderboard />', () => {
     });
 
     it('should display ELO ratings correctly', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/leaderboard*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/leaderboard*`, {
             statusCode: 200,
             body: mockLeaderboard
         });
@@ -108,7 +108,7 @@ describe('<Leaderboard />', () => {
     });
 
     it('should show error alert on API failure', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/leaderboard*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/leaderboard*`, {
             statusCode: 500,
             body: { message: 'Failed to fetch leaderboard' }
         });
@@ -131,7 +131,7 @@ describe('<Leaderboard />', () => {
             totalCount: 50
         };
 
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/leaderboard*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/leaderboard*`, {
             statusCode: 200,
             body: largeLeaderboard
         });
@@ -143,7 +143,7 @@ describe('<Leaderboard />', () => {
     });
 
     it('should hide pagination when only one page', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/leaderboard*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/leaderboard*`, {
             statusCode: 200,
             body: mockLeaderboard
         });
@@ -154,7 +154,7 @@ describe('<Leaderboard />', () => {
     });
 
     it('should display correct table caption with entry counts', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/leaderboard*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/leaderboard*`, {
             statusCode: 200,
             body: mockLeaderboard
         });

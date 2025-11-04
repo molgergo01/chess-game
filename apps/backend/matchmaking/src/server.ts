@@ -2,10 +2,10 @@ import app from './app';
 import env from 'chess-game-backend-common/config/env';
 import { createServer } from 'node:http';
 import { Server, Socket } from 'socket.io';
-import corsConfig from 'chess-game-backend-common/config/cors';
 import MatchmakingService from './services/matchmaking.service';
 import container from './config/container';
 import SocketAuthMiddleware from './middlewares/socket.auth.middleware';
+import corsConfig from 'chess-game-backend-common/config/cors';
 
 const matchmakingService = container.get(MatchmakingService);
 const socketAuthMiddleware = container.get(SocketAuthMiddleware);
@@ -13,8 +13,17 @@ const socketAuthMiddleware = container.get(SocketAuthMiddleware);
 const PORT = env.PORTS.MATCHMAKING || 8082;
 const server = createServer(app);
 export const io = new Server(server, {
-    connectionStateRecovery: {},
-    cors: corsConfig
+    path: '/api/matchmaking/socket.io',
+    cors: corsConfig,
+    allowEIO3: true,
+    transports: ['polling', 'websocket'],
+    cookie: {
+        name: 'io',
+        path: '/api/matchmaking/socket.io',
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+    }
 });
 
 container.bind('SocketIO').toConstantValue(io);

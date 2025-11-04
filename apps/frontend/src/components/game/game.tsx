@@ -131,7 +131,7 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
             )}
 
             <div className="flex flex-col flex-1 min-h-0 overflow-y-auto sm:overflow-visible sm:items-center sm:justify-center sm:p-4">
-                <div className="flex flex-col sm:flex-row gap-4 w-full h-full min-h-0 sm:w-auto sm:h-auto sm:max-h-[min(700px,calc(100vh-7rem))] lg:max-h-[min(850px,calc(100vh-7rem))] aspect-square sm:gap-2">
+                <div className="flex flex-col sm:flex-row gap-4 w-full h-full min-h-0 aspect-square sm:aspect-auto sm:w-auto sm:h-auto sm:max-w-[90vw] sm:items-start sm:gap-2">
                     <div className="flex flex-col sm:gap-1 flex-shrink-0">
                         <ChessboardWithBanners
                             boardPosition={boardPosition.toString()}
@@ -147,7 +147,7 @@ function Game({ className, ...props }: React.ComponentProps<'div'>) {
                     </div>
 
                     <div
-                        className="flex-1 min-h-[200px] sm:min-h-0 sm:w-auto sm:min-w-[250px] sm:max-w-[350px] sm:self-stretch"
+                        className="flex-1 min-h-[200px] sm:min-h-0 sm:flex-initial sm:w-auto sm:min-w-[200px] sm:max-w-[300px] md:min-w-[250px] md:max-w-[350px] sm:h-[calc(min(350px,min(45vw,calc(100vh-12rem)))+13rem)] md:h-[calc(min(425px,min(45vw,calc(100vh-12rem)))+14rem)] lg:h-[calc(min(500px,min(45vw,calc(100vh-12rem)))+18.7rem)]"
                         data-cy="game-chatbox"
                     >
                         <div className="flex flex-col h-full w-full gap-2">

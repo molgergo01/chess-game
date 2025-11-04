@@ -1,0 +1,68 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+{{- if .Values.ingress.enabled }}
+
+The application is available at:
+{{- range .Values.ingress.hosts }}
+  - http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+
+{{- else }}
+
+To access the application locally, run:
+
+  $ kubectl port-forward service/{{ include "chess-game.fullname" . }}-frontend {{ .Values.frontend.service.port }}:{{ .Values.frontend.service.port }}
+
+Then visit http://localhost:{{ .Values.frontend.service.port }}
+
+{{- end }}
+
+Services:
+  - Frontend: {{ include "chess-game.fullname" . }}-frontend:{{ .Values.frontend.service.port }}
+  - Auth: {{ include "chess-game.fullname" . }}-auth:{{ .Values.auth.service.port }}
+  - Core: {{ include "chess-game.fullname" . }}-core:{{ .Values.core.service.port }}
+  - Matchmaking: {{ include "chess-game.fullname" . }}-matchmaking:{{ .Values.matchmaking.service.port }}
+{{- if .Values.postgresql.enabled }}
+  - PostgreSQL: {{ include "chess-game.fullname" . }}-postgresql:{{ .Values.postgresql.service.port }}
+{{- end }}
+{{- if .Values.redis.enabled }}
+  - Redis: {{ include "chess-game.fullname" . }}-redis:{{ .Values.redis.service.port }}
+{{- end }}
+
+To view the status of your pods:
+
+  $ kubectl get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+
+To view logs from a specific service:
+
+  $ kubectl logs -l app.kubernetes.io/component=core
+  $ kubectl logs -l app.kubernetes.io/component=auth
+  $ kubectl logs -l app.kubernetes.io/component=matchmaking
+  $ kubectl logs -l app.kubernetes.io/component=frontend
+
+{{- if .Values.migrations.enabled }}
+
+Database migrations run automatically as a Helm hook.
+To check migration status:
+
+  $ kubectl get jobs -l app.kubernetes.io/component=migration
+  $ kubectl logs job/{{ include "chess-game.fullname" . }}-migration-{{ .Release.Revision }}
+
+{{- end }}
+
+{{- if or .Values.auth.autoscaling.enabled .Values.core.autoscaling.enabled .Values.matchmaking.autoscaling.enabled }}
+
+Horizontal Pod Autoscaling is enabled. To view HPA status:
+
+  $ kubectl get hpa
+
+{{- end }}
+
+For more information, see the documentation at k8s/README.md

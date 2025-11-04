@@ -12,11 +12,13 @@ export function initializeCoreSocket() {
         core_socket.disconnect();
     }
 
-    const CORE_SOCKET_SERVER_URL = env.WS_URLS.CORE;
+    const CORE_SOCKET_SERVER_URL = env.REST_URLS.CORE;
 
     core_socket = io(CORE_SOCKET_SERVER_URL, {
+        path: '/api/core/socket.io',
         reconnectionDelayMax: 10000,
-        withCredentials: true
+        withCredentials: true,
+        transports: ['polling', 'websocket']
     });
 
     return core_socket;

@@ -1,0 +1,62 @@
+{{- if .Values.redis.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chess-game.fullname" . }}-redis
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "redis" | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{ include "chess-game.selectorLabels" . | nindent 6 }}
+      {{ include "chess-game.componentLabels" "redis" | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{ include "chess-game.selectorLabels" . | nindent 8 }}
+        {{ include "chess-game.componentLabels" "redis" | nindent 8 }}
+    spec:
+      containers:
+      - name: redis
+        image: "{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: redis
+          containerPort: 6379
+          protocol: TCP
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          {{ toYaml .Values.redis.resources | nindent 12 }}
+      volumes:
+      - name: redis-data
+        {{- if .Values.redis.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "chess-game.fullname" . }}-redis-pvc
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
+{{- end }}

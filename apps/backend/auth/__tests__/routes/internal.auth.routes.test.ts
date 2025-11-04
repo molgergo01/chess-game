@@ -6,6 +6,11 @@ import { createTestUser, generateTestToken } from '../fixtures/auth.fixture';
 jest.mock('chess-game-backend-common/config/env', () => ({
     __esModule: true,
     default: {
+        URLS: {
+            CORE: 'http://localhost:8080',
+            MATCHMAKING: 'http://localhost:8081',
+            AUTH: 'http://localhost:8082'
+        },
         GOOGLE_CLIENT_ID: 'mocked_google_client_id',
         GOOGLE_CLIENT_SECRET: 'mocked_google_client_secret',
         JWT_SECRET: 'mocked_jwt_secret',

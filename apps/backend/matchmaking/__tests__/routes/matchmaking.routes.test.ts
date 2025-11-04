@@ -23,6 +23,11 @@ jest.mock('chess-game-backend-common/config/env', () => ({
             MATCHMAKING: '8081',
             AUTH: '8082'
         },
+        URLS: {
+            CORE: 'http://localhost:8080',
+            MATCHMAKING: 'http://localhost:8081',
+            AUTH: 'http://localhost:8082'
+        },
         JWT_SECRET: 'test_jwt_secret',
         GOOGLE_CLIENT_ID: 'test_google_client_id',
         GOOGLE_CLIENT_SECRET: 'test_google_client_secret',

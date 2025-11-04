@@ -3709,6 +3709,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/cookie-parser@npm:^1.4.10":
+  version: 1.4.10
+  resolution: "@types/cookie-parser@npm:1.4.10"
+  peerDependencies:
+    "@types/express": "*"
+  checksum: 10c0/5e2c0e0fd9cb47eae5bd7cd73768b36b7711594cbd07969a03f015118d57b832291726d9cb7bd350c9e3a1707e5e2f082e7e0635e8ce335474897ab940d55771
+  languageName: node
+  linkType: hard
+
 "@types/cookie-parser@npm:^1.4.8":
   version: 1.4.8
   resolution: "@types/cookie-parser@npm:1.4.8"
@@ -5397,6 +5406,7 @@ __metadata:
   resolution: "chess-game-backend-common@workspace:apps/backend/common"
   dependencies:
     "@types/jest": "npm:^30.0.0"
+    "@types/socket.io": "npm:^3.0.2"
     jest: "npm:^30.2.0"
     ts-jest: "npm:^29.4.4"
   languageName: unknown
@@ -5406,12 +5416,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "chess-game-backend-core@workspace:apps/backend/core"
   dependencies:
+    "@types/cookie-parser": "npm:^1.4.10"
     "@types/jest": "npm:^30.0.0"
     "@types/nock": "npm:^11.1.0"
     "@types/socket.io": "npm:^3.0.2"
     axios: "npm:^1.7.9"
     chess-game-backend-common: "workspace:*"
     chess.js: "npm:^1.1.0"
+    cookie-parser: "npm:^1.4.7"
     jest: "npm:^30.2.0"
     nock: "npm:^14.0.10"
     socket.io: "npm:^4.8.1"
@@ -5423,11 +5435,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "chess-game-backend-matchmaking@workspace:apps/backend/matchmaking"
   dependencies:
+    "@types/cookie-parser": "npm:^1.4.8"
     "@types/jest": "npm:^30.0.0"
     "@types/nock": "npm:^11.1.0"
     "@types/socket.io": "npm:^3.0.2"
     axios: "npm:^1.11.0"
     chess-game-backend-common: "workspace:*"
+    cookie-parser: "npm:^1.4.7"
     cron: "npm:^4.3.2"
     jest: "npm:^30.2.0"
     nock: "npm:^14.0.10"

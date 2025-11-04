@@ -12,6 +12,11 @@ jest.mock('chess-game-backend-common/config/env', () => ({
             MATCHMAKING: '8081',
             AUTH: '8082'
         },
+        URLS: {
+            CORE: 'http://localhost:8080',
+            MATCHMAKING: 'http://localhost:8081',
+            AUTH: 'http://localhost:8082'
+        },
         JWT_SECRET: 'test_jwt_secret',
         GOOGLE_CLIENT_ID: 'test_google_client_id',
         GOOGLE_CLIENT_SECRET: 'test_google_client_secret',
@@ -55,7 +60,7 @@ describe('Leaderboard routes', () => {
                 avatarUrl: 'avatar1.com'
             });
 
-            const res = await authenticatedRequest(request(app).get('/api/leaderboard'), 'user1');
+            const res = await authenticatedRequest(request(app).get('/api/core/leaderboard'), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body).toHaveProperty('users');
@@ -99,7 +104,7 @@ describe('Leaderboard routes', () => {
                 avatarUrl: 'avatar1.com'
             });
 
-            const res = await authenticatedRequest(request(app).get('/api/leaderboard'), 'user1').query({
+            const res = await authenticatedRequest(request(app).get('/api/core/leaderboard'), 'user1').query({
                 limit: '2'
             });
 
@@ -124,7 +129,7 @@ describe('Leaderboard routes', () => {
                 avatarUrl: 'avatar1.com'
             });
 
-            const res = await authenticatedRequest(request(app).get('/api/leaderboard'), 'user1').query({
+            const res = await authenticatedRequest(request(app).get('/api/core/leaderboard'), 'user1').query({
                 offset: '1'
             });
 
@@ -150,7 +155,7 @@ describe('Leaderboard routes', () => {
                 avatarUrl: 'avatar1.com'
             });
 
-            const res = await authenticatedRequest(request(app).get('/api/leaderboard'), 'user1').query({
+            const res = await authenticatedRequest(request(app).get('/api/core/leaderboard'), 'user1').query({
                 limit: '2',
                 offset: '1'
             });
@@ -171,7 +176,7 @@ describe('Leaderboard routes', () => {
                 avatarUrl: 'avatar1.com'
             });
 
-            const res = await authenticatedRequest(request(app).get('/api/leaderboard'), 'user1');
+            const res = await authenticatedRequest(request(app).get('/api/core/leaderboard'), 'user1');
 
             expect(res.status).toBe(200);
             expect(res.body.users).toEqual([]);

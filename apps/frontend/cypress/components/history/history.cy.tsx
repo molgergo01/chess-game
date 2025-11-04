@@ -58,7 +58,7 @@ describe('<History />', () => {
             dispatchEvent: () => true
         });
 
-        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/user/me`, {
+        cy.intercept('GET', `${env.REST_URLS.AUTH}/api/auth/user/me`, {
             statusCode: 200,
             body: {
                 user: {
@@ -73,7 +73,7 @@ describe('<History />', () => {
     });
 
     it('should show loading screen initially', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/games*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games*`, {
             statusCode: 200,
             delay: 10000,
             body: { games: [], totalCount: 0 }
@@ -85,7 +85,7 @@ describe('<History />', () => {
     });
 
     it('should render table with game history', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/games*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games*`, {
             statusCode: 200,
             body: {
                 games: mockGameHistory.games.map((game) => ({
@@ -107,7 +107,7 @@ describe('<History />', () => {
     });
 
     it('should display player cells correctly', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/games*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games*`, {
             statusCode: 200,
             body: {
                 games: mockGameHistory.games.map((game) => ({
@@ -127,7 +127,7 @@ describe('<History />', () => {
     });
 
     it('should display winner cells correctly', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/games*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games*`, {
             statusCode: 200,
             body: {
                 games: mockGameHistory.games.map((game) => ({
@@ -147,7 +147,7 @@ describe('<History />', () => {
     });
 
     it('should show error alert on API failure', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/games*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games*`, {
             statusCode: 500,
             body: { message: 'Failed to fetch history' }
         });
@@ -180,7 +180,7 @@ describe('<History />', () => {
             totalCount: 25
         };
 
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/games*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games*`, {
             statusCode: 200,
             body: {
                 games: largeGameHistory.games.map((game) => ({
@@ -200,7 +200,7 @@ describe('<History />', () => {
     });
 
     it('should hide pagination when only one page', () => {
-        cy.intercept('GET', `${env.REST_URLS.CORE}/api/games*`, {
+        cy.intercept('GET', `${env.REST_URLS.CORE}/api/core/games*`, {
             statusCode: 200,
             body: {
                 games: mockGameHistory.games.map((game) => ({

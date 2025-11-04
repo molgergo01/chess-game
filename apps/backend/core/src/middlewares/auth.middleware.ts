@@ -3,10 +3,11 @@ import { NextFunction, Request, Response } from 'express';
 import axios from 'axios';
 import ForbiddenError from 'chess-game-backend-common/errors/forbidden.error';
 import { AuthUser } from 'chess-game-backend-common/models/user';
+import env from 'chess-game-backend-common/config/env';
 
 @injectable()
 class AuthMiddleware {
-    private readonly authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:8082';
+    private readonly authServiceUrl = env.URLS.AUTH || 'http://localhost:8082';
 
     async authenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {

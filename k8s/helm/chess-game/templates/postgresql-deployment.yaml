@@ -1,0 +1,89 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chess-game.fullname" . }}-postgresql
+  labels:
+    {{ include "chess-game.labels" . | nindent 4 }}
+    {{ include "chess-game.componentLabels" "postgresql" | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{ include "chess-game.selectorLabels" . | nindent 6 }}
+      {{ include "chess-game.componentLabels" "postgresql" | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{ include "chess-game.selectorLabels" . | nindent 8 }}
+        {{ include "chess-game.componentLabels" "postgresql" | nindent 8 }}
+    spec:
+      containers:
+      - name: postgresql
+        image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: postgresql
+          containerPort: 5432
+          protocol: TCP
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+              secretKeyRef:
+                  name: chess-secrets
+                  key: DB_DATABASE
+        - name: POSTGRES_USER
+          valueFrom:
+              secretKeyRef:
+                  name: chess-secrets
+                  key: DB_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: chess-secrets
+              key: DB_PASSWORD
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql/data
+        - name: postgresql-init
+          mountPath: /docker-entrypoint-initdb.d
+          readOnly: true
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U $POSTGRES_USER
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U $POSTGRES_USER
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          {{ toYaml .Values.postgresql.resources | nindent 12 }}
+      volumes:
+      - name: postgresql-data
+        {{- if .Values.postgresql.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "chess-game.fullname" . }}-postgresql-pvc
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
+      - name: postgresql-init
+        configMap:
+          name: {{ include "chess-game.fullname" . }}-postgresql-init
+          defaultMode: 0755
+{{- end }}

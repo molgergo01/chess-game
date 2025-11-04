@@ -1,11 +1,9 @@
 import dotenv from 'dotenv';
+import type { Knex } from 'knex';
 
 dotenv.config();
 
-/**
- * @type { Object.<string, import("knex").Knex.Config> }
- */
-module.exports = {
+const config: { [key: string]: Knex.Config } = {
     dev: {
         client: 'postgresql',
         connection: {
@@ -42,9 +40,11 @@ module.exports = {
     production: {
         client: 'postgresql',
         connection: {
-            database: 'my_db',
-            user: 'username',
-            password: 'password'
+            host: process.env.DB_HOST,
+            port: 5432,
+            database: process.env.DB_DATABASE,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD
         },
         pool: {
             min: 2,
@@ -55,3 +55,5 @@ module.exports = {
         }
     }
 };
+
+export default config;

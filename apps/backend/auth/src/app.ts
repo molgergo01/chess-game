@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import passport from 'chess-game-backend-common/config/passport';
@@ -11,6 +11,8 @@ import internalAuthRoutes from './routes/internal.auth.routes';
 
 const app = express();
 
+app.set('trust proxy', true);
+
 // Middlewares
 app.use(cors(corsConfig));
 app.use(cookieParser());
@@ -18,8 +20,11 @@ app.use(express.json());
 app.use(passport.initialize());
 
 // Routes
+app.get('/api/auth/health', (req: Request, res: Response) => {
+    res.status(200).send({ healthy: true });
+});
 app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
+app.use('/api/auth/user', userRoutes);
 
 // Internal Routes
 app.use('/internal/auth', internalAuthRoutes);

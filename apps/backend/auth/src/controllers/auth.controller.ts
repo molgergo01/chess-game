@@ -17,10 +17,9 @@ class AuthController {
 
             res.status(200)
                 .cookie('token', token, {
-                    domain: 'localhost',
-                    path: '/',
                     httpOnly: true,
-                    sameSite: 'lax'
+                    sameSite: 'none',
+                    secure: true
                 })
                 .redirect(`${env.FRONTEND_URL}`);
         } catch (error) {
@@ -32,10 +31,9 @@ class AuthController {
         try {
             res.status(200)
                 .clearCookie('token', {
-                    domain: 'localhost',
-                    path: '/',
                     httpOnly: true,
-                    sameSite: 'lax'
+                    sameSite: 'none',
+                    secure: true
                 })
                 .json({ message: 'Logged out' });
         } catch (error) {

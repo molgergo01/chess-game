@@ -14,11 +14,13 @@ export function initializeMatchmakingSocket() {
         matchmaking_socket.disconnect();
     }
 
-    const MATCHMAKING_SOCKET_SERVER_URL = env.WS_URLS.MATCHMAKING;
+    const MATCHMAKING_SOCKET_SERVER_URL = env.REST_URLS.MATCHMAKING;
 
     matchmaking_socket = io(MATCHMAKING_SOCKET_SERVER_URL, {
+        path: '/api/matchmaking/socket.io',
         reconnectionDelayMax: 10000,
-        withCredentials: true
+        withCredentials: true,
+        transports: ['polling', 'websocket']
     });
 
     return matchmaking_socket;
