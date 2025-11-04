@@ -46,6 +46,7 @@ describe('useChat', () => {
         };
 
         mockUseCoreSocket.mockReturnValue({ socket: mockSocket as Socket });
+        mockJoinChat.mockResolvedValue({ success: true });
 
         jest.clearAllMocks();
         console.error = jest.fn();
