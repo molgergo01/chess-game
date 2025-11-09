@@ -1,0 +1,206 @@
+direction: down
+
+title: Matchmaking Service Architecture {
+  near: top-center
+  shape: text
+  style: {
+    font-size: 16
+    bold: true
+  }
+}
+
+EntryPoints: {
+  label: "Entry Points"
+  style: {
+    fill: "#f3e5f5"
+    stroke: "#7b1fa2"
+    stroke-width: 2
+  }
+
+  REST: {
+    shape: rectangle
+    label: "REST Endpoints\n• POST /queue\n• POST /queue/private\n• POST /queue/private/:queueId\n• DELETE /queue\n• DELETE /queue/private/:queueId\n• GET /queue/status"
+    style: {
+      fill: "#f3e5f5"
+      stroke: "#7b1fa2"
+      font-size: 9
+    }
+  }
+
+  SocketIO: {
+    shape: rectangle
+    label: "Socket.IO Events\n• connection"
+    style: {
+      fill: "#f3e5f5"
+      stroke: "#7b1fa2"
+      font-size: 9
+    }
+  }
+
+  Cron: {
+    shape: rectangle
+    label: "Cron Jobs\n• MatchmakingScheduler (*/5s)"
+    style: {
+      fill: "#f3e5f5"
+      stroke: "#7b1fa2"
+      font-size: 9
+    }
+  }
+}
+
+Controllers: {
+  label: "Controllers"
+  style: {
+    fill: "#e3f2fd"
+    stroke: "#1976d2"
+    stroke-width: 2
+  }
+
+  MatchmakingController: {
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    joinQueue(): void
+    createPrivateQueue(): string
+    joinPrivateQueue(): void
+    leaveQueue(): void
+    leavePrivateQueue(): void
+    getQueueStatus(): QueueStatus
+  }
+}
+
+Services: {
+  label: "Services"
+  style: {
+    fill: "#fff3e0"
+    stroke: "#f57c00"
+    stroke-width: 2
+  }
+
+  MatchmakingService: {
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    setSocketIdForUser(): void
+    joinQueue(): void
+    createPrivateQueue(): string
+    joinPrivateQueue(): void
+    leaveQueue(): void
+    getQueueStatus(): QueueStatus
+    matchMake(): void
+  }
+
+  MatchmakingScheduler: {
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    start(): void
+  }
+
+  MatchmakingNotificationService: {
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    sendMatchmakeNotification(): void
+  }
+}
+
+Repositories: {
+  label: "Repositories"
+  style: {
+    fill: "#e8f5e9"
+    stroke: "#388e3c"
+    stroke-width: 2
+  }
+
+  QueueRepository: {
+    label: "QueueRepository (Redis)"
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    pushToQueue(): void
+    removeFromQueue(): void
+    getQueueCount(): number
+    popQueue(): "QueuedPlayer[]"
+  }
+
+  QueuedPlayerRepository: {
+    label: "QueuedPlayerRepository (Redis)"
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    save(): void
+    delete(): void
+    getBatch(): "QueuedPlayer[]"
+    getQueueId(): "string | null"
+  }
+
+  SocketIdRepository: {
+    label: "SocketIdRepository (Redis)"
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    setSocketIdForUser(): void
+    getSocketIdForUser(): "string | null"
+  }
+}
+
+ExternalServices: {
+  label: "External Services"
+  style: {
+    fill: "#fce4ec"
+    stroke: "#c2185b"
+    stroke-width: 2
+  }
+
+  CoreService: {
+    shape: rectangle
+    label: "Core Service\n(Game Creation)"
+    style: {
+      fill: "#fce4ec"
+      stroke: "#c2185b"
+      font-size: 9
+    }
+  }
+}
+
+EntryPoints.REST -> Controllers.MatchmakingController: "routes"
+EntryPoints.SocketIO -> Services.MatchmakingService: "setSocketIdForUser"
+EntryPoints.Cron -> Services.MatchmakingScheduler: "triggers"
+
+Controllers.MatchmakingController -> Services.MatchmakingService: "calls"
+Services.MatchmakingScheduler -> Services.MatchmakingService: "matchMake()"
+
+Services.MatchmakingService -> Repositories.QueueRepository: "uses"
+Services.MatchmakingService -> Repositories.QueuedPlayerRepository: "uses"
+Services.MatchmakingService -> Repositories.SocketIdRepository: "uses"
+Services.MatchmakingService -> Services.MatchmakingNotificationService: "notifies"
+Services.MatchmakingService -> ExternalServices.CoreService: "createGame()"

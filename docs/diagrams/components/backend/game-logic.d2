@@ -1,0 +1,248 @@
+direction: down
+
+title: Game Logic Service Architecture {
+  near: top-center
+  shape: text
+  style: {
+    font-size: 16
+    bold: true
+  }
+}
+
+EntryPoints: {
+  label: "Entry Points"
+  style: {
+    fill: "#f3e5f5"
+    stroke: "#7b1fa2"
+    stroke-width: 2
+  }
+
+  REST: {
+    shape: rectangle
+    label: "REST Endpoints\n• GET /games/active\n• POST /internal/games (create)\n• GET /internal/games/active"
+    style: {
+      fill: "#f3e5f5"
+      stroke: "#7b1fa2"
+      font-size: 9
+    }
+  }
+
+  SocketIO: {
+    shape: rectangle
+    label: "Socket.IO Events\n• joinGame\n• movePiece\n• resign-game\n• offer-draw\n• respond-draw-offer"
+    style: {
+      fill: "#f3e5f5"
+      stroke: "#7b1fa2"
+      font-size: 9
+    }
+  }
+
+  Interval: {
+    shape: rectangle
+    label: "Interval Jobs\n• TimerWatcher (*/1s)"
+    style: {
+      fill: "#f3e5f5"
+      stroke: "#7b1fa2"
+      font-size: 9
+    }
+  }
+}
+
+Controllers: {
+  label: "Controllers"
+  style: {
+    fill: "#e3f2fd"
+    stroke: "#1976d2"
+    stroke-width: 2
+  }
+
+  GameController: {
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    getActiveGame(): "ActiveGame | null"
+  }
+
+  InternalGameController: {
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    createGame(): string
+    getActiveGame(): "ActiveGame | null"
+  }
+}
+
+Services: {
+  label: "Services"
+  style: {
+    fill: "#fff3e0"
+    stroke: "#f57c00"
+    stroke-width: 2
+  }
+
+  GameService: {
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    create(): string
+    move(): void
+    getFen(): string
+    isGameOver(): boolean
+    getWinner(): "Winner | null"
+    reset(): void
+    getGameState(): GameState
+    getActiveGame(): "ActiveGame | null"
+    resign(): void
+    offerDraw(): void
+    respondDrawOffer(): void
+    getPlayerColor(): Color
+    getTimes(): PlayerTimes
+  }
+
+  RatingService: {
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    adjustRatings(): RatingChange
+  }
+
+  TimerWatcher: {
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    start(): void
+    checkAllGames(): void
+    checkGameTimers(): void
+  }
+
+  GameNotificationService: {
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    sendGameOverNotification(): void
+    sendPositionUpdateNotification(): void
+    sendDrawOfferedNotification(): void
+    sendDrawOfferRejectedNotification(): void
+  }
+}
+
+Repositories: {
+  label: "Repositories"
+  style: {
+    fill: "#e8f5e9"
+    stroke: "#388e3c"
+    stroke-width: 2
+  }
+
+  GamesRepository: {
+    label: "GamesRepository (PostgreSQL)"
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    existsActiveGameByUserIds(): boolean
+    findActiveGameByUserId(): "Game | null"
+    save(): void
+    update(): void
+  }
+
+  MovesRepository: {
+    label: "MovesRepository (PostgreSQL)"
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    save(): void
+  }
+
+  UsersRepository: {
+    label: "UsersRepository (PostgreSQL)"
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    findEloById(): number
+    updateEloById(): void
+  }
+
+  GameStateRepository: {
+    label: "GameStateRepository (Redis)"
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    save(): void
+    get(): "GameState | null"
+    getKeys(): "string[]"
+    remove(): void
+  }
+
+  GameIdRepository: {
+    label: "GameIdRepository (Redis)"
+    shape: class
+    style: {
+      fill: "white"
+      stroke: "black"
+      font-size: 9
+    }
+
+    save(): void
+    get(): "string | null"
+    remove(): void
+  }
+}
+
+EntryPoints.REST -> Controllers.GameController: "routes"
+EntryPoints.REST -> Controllers.InternalGameController: "internal routes"
+EntryPoints.SocketIO -> Services.GameService: "game events"
+EntryPoints.Interval -> Services.TimerWatcher: "triggers"
+
+Controllers.GameController -> Services.GameService: "calls"
+Controllers.InternalGameController -> Services.GameService: "calls"
+Services.TimerWatcher -> Services.GameService: "checkGameTimers"
+
+Services.GameService -> Repositories.GamesRepository: "uses"
+Services.GameService -> Repositories.MovesRepository: "uses"
+Services.GameService -> Repositories.GameStateRepository: "uses"
+Services.GameService -> Repositories.GameIdRepository: "uses"
+Services.GameService -> Services.RatingService: "adjustRatings"
+Services.GameService -> Services.GameNotificationService: "notifies"
+
+Services.RatingService -> Repositories.UsersRepository: "uses"
+Services.RatingService -> Repositories.GamesRepository: "uses"
