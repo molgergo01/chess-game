@@ -1,16 +1,18 @@
 Matchmaking Redis Data Model: {
+  grid-rows: 2
+
   DefaultQueue: {
     shape: rectangle
     label: "matchmaking-queue"
-    type: "List"
-    description: "Queue of user IDs waiting for random matches"
+    type: "Sorted List"
+    description: "Queue of user IDs waiting for random matches, \nsorted by the time of entering queue"
   }
 
   InviteQueue: {
     shape: rectangle
     label: "matchmaking-queue:{queueId}"
-    type: "List"
-    description: "Queue of user IDs waiting in specific invite-based match"
+    type: "Sorted List"
+    description: "Queue of user IDs waiting in specific invite-based match, \nsorted by the time of entering queue"
   }
 
   SocketMapping: {
@@ -18,5 +20,16 @@ Matchmaking Redis Data Model: {
     label: "{userId}:socketId"
     type: "String"
     description: "Socket.IO connection ID for user"
+  }
+
+  QueuedPlayer: {
+    shape: rectangle
+    label: "player:{userId}"
+    type: "Hash"
+    fields: |md
+      - queueTimestamp
+      - elo
+      - queueId
+    |
   }
 }
