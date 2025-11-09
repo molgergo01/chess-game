@@ -1,0 +1,27 @@
+Chat Redis Data Model: {
+  Chat: {
+    shape: rectangle
+    label: "chat:{chatId}"
+    type: "Sorted List"
+    descriptions: "List of chat message IDs in the specific chat room,\nsorted by the time of message sent"
+  }
+
+  ChatParticipants: {
+    shape: rectangle
+    label: "chat:{chatId}:participants"
+    type: "Set"
+    descriptions: Participants of the specific chat room
+  }
+
+  Messages: {
+    shape: rectangle
+    label: "message:{messageId}"
+    type: "Hash"
+        fields: |md
+          - messageId
+          - userId
+          - message
+          - timestamp
+        |
+  }
+}

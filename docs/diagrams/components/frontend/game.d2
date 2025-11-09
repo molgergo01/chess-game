@@ -1,0 +1,190 @@
+direction: right
+
+title: Game Page Component Architecture {
+  near: top-center
+  shape: text
+  style: {
+    font-size: 20
+    bold: true
+  }
+}
+
+Page: {
+  label: "Page"
+  style: {
+    fill: "#f5f5f5"
+    stroke: "#424242"
+    stroke-width: 2
+  }
+
+  GamePage: {
+    shape: rectangle
+    label: "/app/game/page.tsx"
+    style: {
+      fill: "#e3f2fd"
+      stroke: "#1976d2"
+      font-size: 14
+      bold: true
+    }
+  }
+}
+
+Components: {
+  label: "Components"
+  style: {
+    fill: "#f5f5f5"
+    stroke: "#424242"
+    stroke-width: 2
+  }
+
+  Game: {
+    shape: rectangle
+    label: "Game\n(Main component)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 13
+    }
+  }
+
+  ChessboardWithBanners: {
+    shape: rectangle
+    label: "ChessboardWithBanners\n(Board and player data display)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 13
+    }
+  }
+
+  GameControls: {
+    shape: rectangle
+    label: "GameControls\n(Resign, Draw buttons)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 13
+    }
+  }
+
+  ChatBox: {
+    shape: rectangle
+    label: "ChatBox\n(Game chat)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 13
+    }
+  }
+
+  Timer: {
+    shape: rectangle
+    label: "Timer\n(Game clock)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 13
+    }
+  }
+
+  UIComponents: {
+    shape: rectangle
+    label: "UI Components\n(Dialog, Loading, Error)"
+    style: {
+      fill: "#fff3e0"
+      stroke: "#f57c00"
+      font-size: 13
+    }
+  }
+}
+
+Hooks: {
+  label: "Hooks"
+  style: {
+    fill: "#f5f5f5"
+    stroke: "#424242"
+    stroke-width: 2
+  }
+
+  ReactHooks: {
+    shape: rectangle
+    label: "React Hooks\n(useState, useEffect, useCallback, useRef)"
+    style: {
+      fill: "#e8f5e9"
+      stroke: "#388e3c"
+      font-size: 13
+    }
+  }
+
+  NavigationHooks: {
+    shape: rectangle
+    label: "Navigation Hooks\n(useRouter)"
+    style: {
+      fill: "#e8f5e9"
+      stroke: "#388e3c"
+      font-size: 13
+    }
+  }
+
+  ChessGame: {
+    shape: rectangle
+    label: "useChessGame\n(Game logic hook)"
+    style: {
+      fill: "#e8f5e9"
+      stroke: "#388e3c"
+      font-size: 13
+    }
+  }
+
+  Chat: {
+    shape: rectangle
+    label: "useChat\n(Chat hook)"
+    style: {
+      fill: "#e8f5e9"
+      stroke: "#388e3c"
+      font-size: 13
+    }
+  }
+
+  CoreSocket: {
+    shape: rectangle
+    label: "useCoreSocket\n(Socket.IO hook)"
+    style: {
+      fill: "#e8f5e9"
+      stroke: "#388e3c"
+      font-size: 13
+    }
+  }
+}
+
+Lib: {
+  label: "Libraries"
+  style: {
+    fill: "#f5f5f5"
+    stroke: "#424242"
+    stroke-width: 2
+  }
+
+  Libraries: {
+    shape: rectangle
+    label: "Libraries\n(Socket.IO, REST, Chess.js, Utils)"
+    style: {
+      fill: "#f5f5f5"
+      stroke: "#616161"
+      font-size: 13
+    }
+  }
+}
+
+Page.GamePage -> Components.Game: "uses"
+Page.GamePage -> Components.ChessboardWithBanners: "uses"
+Page.GamePage -> Components.GameControls: "uses"
+Page.GamePage -> Components.ChatBox: "uses"
+Page.GamePage -> Components.Timer: "uses"
+Page.GamePage -> Components.UIComponents: "uses"
+Page.GamePage -> Hooks.ReactHooks: "uses"
+Page.GamePage -> Hooks.NavigationHooks: "uses"
+Page.GamePage -> Hooks.ChessGame: "uses"
+Page.GamePage -> Hooks.Chat: "uses"
+Page.GamePage -> Hooks.CoreSocket: "uses"
+Page.GamePage -> Lib.Libraries: "uses"

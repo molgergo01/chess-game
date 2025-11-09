@@ -12,8 +12,6 @@ import {
 
 @injectable()
 class TimerWatcher {
-    //TODO Leader election
-    //TODO Make cron job
     constructor(
         @inject(GameStateRepository)
         private readonly gameStateRepository: GameStateRepository,
