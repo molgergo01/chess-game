@@ -7,7 +7,7 @@ passport.use(
         {
             clientID: env.GOOGLE_CLIENT_ID,
             clientSecret: env.GOOGLE_CLIENT_SECRET,
-            callbackURL: `${env.URLS.AUTH}/api/auth/google/callback`
+            callbackURL: `${env.URLS.AUTH_PUBLIC}/api/auth/google/callback`
         },
         (accessToken, refreshToken, profile, done) => {
             const user = {

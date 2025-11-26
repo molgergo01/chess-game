@@ -53,6 +53,8 @@ spec:
           value: {{ .Values.auth.env.FRONTEND_URL | quote }}
         - name: FRONTEND_HOST
           value: {{ .Values.auth.env.FRONTEND_HOST | quote }}
+        - name: AUTH_PUBLIC_URL
+          value: {{ .Values.auth.env.AUTH_PUBLIC_URL | quote }}
         livenessProbe:
           {{ toYaml .Values.auth.livenessProbe | nindent 12 }}
         readinessProbe:

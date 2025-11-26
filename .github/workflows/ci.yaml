@@ -63,6 +63,7 @@ jobs:
                   echo "AUTH_URL=http://localhost:8082" >> ./apps/backend/.env
                   echo "MATCHMAKING_URL=http://localhost:8081" >> ./apps/backend/.env
                   echo "CORE_URL=http://localhost:8080" >> ./apps/backend/.env
+                  echo "AUTH_PUBLIC_URL=http://localhost:8082" ./apps/backend/.env
                   cp ./apps/backend/.env ./apps/backend/core/.env
                   cp ./apps/backend/.env ./apps/backend/matchmaking/.env
                   cp ./apps/backend/.env ./apps/backend/auth/.env
