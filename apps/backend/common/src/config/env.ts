@@ -9,6 +9,7 @@ const env = {
         AUTH: process.env.AUTH_PORT || 8082
     },
     URLS: {
+        AUTH_PUBLIC: process.env.AUTH_PUBLIC_URL,
         CORE: process.env.CORE_URL || 'http://localhost:8080',
         MATCHMAKING: process.env.MATCHMAKING_URL || 'http://localhost:8081',
         AUTH: process.env.AUTH_URL || 'http://localhost:8082'
